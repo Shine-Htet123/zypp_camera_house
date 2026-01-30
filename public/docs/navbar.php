@@ -262,7 +262,7 @@
                         <div class="search-result">
                             <a href="#" class="result-item">
                                 <div class="item-img">
-                                    <img src="../storage/uploads/products/placeholder-camera.png" alt="Item Image">
+                                    <img src="../../storage/uploads/products/placeholder-camera.png" alt="Item Image">
                                 </div>
                                 <div class="specs">
                                     <span>Specifications</span>
@@ -287,7 +287,7 @@
                             </a>
                             <a href="#" class="result-item">
                                 <div class="item-img">
-                                    <img src="../storage/uploads/products/placeholder-camera.png" alt="Item Image">
+                                    <img src="../../storage/uploads/products/placeholder-camera.png" alt="Item Image">
                                 </div>
                                 <div class="specs">
                                     <span>Specifications</span>
@@ -312,7 +312,7 @@
                             </a>
                             <a href="#" class="result-item">
                                 <div class="item-img">
-                                    <img src="../storage/uploads/products/placeholder-camera.png" alt="Item Image">
+                                    <img src="../../storage/uploads/products/placeholder-camera.png" alt="Item Image">
                                 </div>
                                 <div class="specs">
                                     <span>Specifications</span>
@@ -337,7 +337,7 @@
                             </a>
                             <a href="#" class="result-item">
                                 <div class="item-img">
-                                    <img src="../storage/uploads/products/placeholder-camera.png" alt="Item Image">
+                                    <img src="../../storage/uploads/products/placeholder-camera.png" alt="Item Image">
                                 </div>
                                 <div class="specs">
                                     <span>Specifications</span>
@@ -498,7 +498,7 @@
                         <div class="search-result">
                             <a href="#" class="result-item">
                                 <div class="item-img">
-                                    <img src="../storage/uploads/products/placeholder-camera.png" alt="Item Image">
+                                    <img src="../../storage/uploads/products/placeholder-camera.png" alt="Item Image">
                                 </div>
                                 <div class="specs">
                                     <span>Specifications</span>
@@ -523,7 +523,7 @@
                             </a>
                             <a href="#" class="result-item">
                                 <div class="item-img">
-                                    <img src="../storage/uploads/products/placeholder-camera.png" alt="Item Image">
+                                    <img src="../../storage/uploads/products/placeholder-camera.png" alt="Item Image">
                                 </div>
                                 <div class="specs">
                                     <span>Specifications</span>
@@ -548,7 +548,7 @@
                             </a>
                             <a href="#" class="result-item">
                                 <div class="item-img">
-                                    <img src="../storage/uploads/products/placeholder-camera.png" alt="Item Image">
+                                    <img src="../../storage/uploads/products/placeholder-camera.png" alt="Item Image">
                                 </div>
                                 <div class="specs">
                                     <span>Specifications</span>
@@ -573,7 +573,7 @@
                             </a>
                             <a href="#" class="result-item">
                                 <div class="item-img">
-                                    <img src="../storage/uploads/products/placeholder-camera.png" alt="Item Image">
+                                    <img src="../../storage/uploads/products/placeholder-camera.png" alt="Item Image">
                                 </div>
                                 <div class="specs">
                                     <span>Specifications</span>
