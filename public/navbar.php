@@ -477,6 +477,133 @@
                         <img src="./assets/images/logo.png" alt="ZYPP Camera House Logo">
                     </a>
                 </div>
+                <div class="search-bar-container">
+                    <form action="searchbar.php" method="GET" class="search-box">
+                        <input type="text" placeholder="Search...">
+                        <button type="reset" class="resetbtn"><i class="fa-solid fa-xmark reset"></i></button>
+                        <i class="fa-solid fa-magnifying-glass search"></i>
+                    </form>
+                    <div class="search-bar-content">
+
+                        <!-- Loading Search result --->
+                        <div id="loading-screen">
+                            <video autoplay muted loop playsinline id="loading-video">
+                                <source src="./assets/images/Search-box-loading.webm" type="video/webm">
+
+                            </video>
+                        </div>
+                        <!--Loading Search result End --->
+
+                        <!--Search Result found ---->
+                        <div class="search-result">
+                            <a href="#" class="result-item">
+                                <div class="item-img">
+                                    <img src="../storage/uploads/products/placeholder-camera.png" alt="Item Image">
+                                </div>
+                                <div class="specs">
+                                    <span>Specifications</span>
+                                    <ul>
+                                        <li>Specs 1</li>
+                                        <li>Specs 2</li>
+                                        <li>Specs 3</li>
+                                        <li>Specs 4</li>
+                                        <li>Specs 5</li>
+                                    </ul>
+                                </div>
+                                <div class="item-name">
+                                    <span>Canon EOS R6</span>
+                                </div>
+                                <div class="price">
+                                    <span class="discounted-price">560,000 MMK</span>
+                                    <span class="original-price">800,000 MMK</span>
+                                    <div class="discount">
+                                        <span>30% OFF</span>
+                                    </div>
+                                </div>
+                            </a>
+                            <a href="#" class="result-item">
+                                <div class="item-img">
+                                    <img src="../storage/uploads/products/placeholder-camera.png" alt="Item Image">
+                                </div>
+                                <div class="specs">
+                                    <span>Specifications</span>
+                                    <ul>
+                                        <li>Specs 1</li>
+                                        <li>Specs 2</li>
+                                        <li>Specs 3</li>
+                                        <li>Specs 4</li>
+                                        <li>Specs 5</li>
+                                    </ul>
+                                </div>
+                                <div class="item-name">
+                                    <span>Canon EOS R6</span>
+                                </div>
+                                <div class="price">
+                                    <span class="discounted-price">560,000 MMK</span>
+                                    <span class="original-price">800,000 MMK</span>
+                                    <div class="discount">
+                                        <span>30% OFF</span>
+                                    </div>
+                                </div>
+                            </a>
+                            <a href="#" class="result-item">
+                                <div class="item-img">
+                                    <img src="../storage/uploads/products/placeholder-camera.png" alt="Item Image">
+                                </div>
+                                <div class="specs">
+                                    <span>Specifications</span>
+                                    <ul>
+                                        <li>Specs 1</li>
+                                        <li>Specs 2</li>
+                                        <li>Specs 3</li>
+                                        <li>Specs 4</li>
+                                        <li>Specs 5</li>
+                                    </ul>
+                                </div>
+                                <div class="item-name">
+                                    <span>Canon EOS R6</span>
+                                </div>
+                                <div class="price">
+                                    <span class="discounted-price">560,000 MMK</span>
+                                    <span class="original-price">800,000 MMK</span>
+                                    <div class="discount">
+                                        <span>30% OFF</span>
+                                    </div>
+                                </div>
+                            </a>
+                            <a href="#" class="result-item">
+                                <div class="item-img">
+                                    <img src="../storage/uploads/products/placeholder-camera.png" alt="Item Image">
+                                </div>
+                                <div class="specs">
+                                    <span>Specifications</span>
+                                    <ul>
+                                        <li>Specs 1</li>
+                                        <li>Specs 2</li>
+                                        <li>Specs 3</li>
+                                        <li>Specs 4</li>
+                                        <li>Specs 5</li>
+                                    </ul>
+                                </div>
+                                <div class="item-name">
+                                    <span>Canon EOS R6</span>
+                                </div>
+                                <div class="price">
+                                    <span class="discounted-price">560,000 MMK</span>
+                                    <span class="original-price">800,000 MMK</span>
+                                    <div class="discount">
+                                        <span>30% OFF</span>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <hr>
+                        <div class="view-all">
+                            <a href="#">VIEW ALL RESULTS</a>
+                        </div>
+                        <!--Search Result Found End ---->
+                    </div>
+                </div>
                 <div class="nav-links">
                     <a href="#">Home</a>
                     <a href="shop.php" class="dropdown">Shop</a>
