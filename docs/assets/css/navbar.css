@@ -589,7 +589,7 @@
 }
 
 @media (max-width: 650px) {
-    .nav-right .search-bar-container {
+    .top .navbar .nav-right .search-bar-container {
         display: none;
     }
 
@@ -610,8 +610,8 @@
         align-items: center;
     }
 
-    .menu-container .user-menu .nav-menu .search-bar-container{
-        display: flex;
+    .user-menu .nav-menu .search-bar-container {
+        display: flex !important;
     }
 
     .menu-container .user-menu .nav-menu .nav-links {

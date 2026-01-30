@@ -11,6 +11,7 @@ const registerLink = document.getElementById("register");
 const logInLink = document.getElementById("login-link");
 const registerForm = document.getElementById("register-form");
 const loginForm = document.getElementById("login");
+const navMenu = document.querySelector(".nav-menu");
 
 const menuBar = document.getElementById("menu-bar");
 const support = document.getElementById("support");
@@ -21,7 +22,7 @@ menuBar.addEventListener("click", () => {
     menuContainer.style.pointerEvents = "auto";
     userMenu.style.transform = "translateX(0)";
     userMenu.style.animation = "slideIn 1s ease 1 normal forwards";
-    userMenu.querySelector(".nav-menu").style.display = "flex";
+    navMenu.style.display = "flex";
     userMenu.classList.add("compact");
     userMenu.classList.remove("normal");
 });
@@ -41,7 +42,7 @@ blackSpace.addEventListener("click", () => {
     userMenu.style.animation = "slideOut 1s ease 1 normal forwards";
     loginForm.style.display = "none";
     registerForm.style.display = "none";
-    userMenu.querySelector(".nav-menu").style.display = "none";
+    navMenu.style.display = "none";
 });
 
 sideBarClose.addEventListener("click", () => {
