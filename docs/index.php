@@ -3,7 +3,6 @@
 <head>
     <?php include 'head.php'; ?>
     <!-- css links -->
-    <link rel="stylesheet" href="./assets/css/navbar.css">
     <link rel="stylesheet" href="./assets/css/home.css">
 </head>
 <body>
@@ -168,7 +167,7 @@
         <div class="best-sellers-box">
             <h2>Best Sellers</h2>
             <div class="best-seller-slider">
-                <a href="#" class="product-card">
+                <a href="./product-details.php" class="product-card">
                     <div class="product-img-box">
                         <img src="../storage/uploads/products/placeholder-camera.png" alt="Image Unavailable">
                     </div>
@@ -188,7 +187,7 @@
                         </div>
                     </div>
                 </a>
-                <a href="#" class="product-card">
+                <a href="./product-details.php" class="product-card">
                     <div class="product-img-box">
                         <img src="../storage/uploads/products/placeholder-camera.png" alt="Image Unavailable">
                     </div>
@@ -208,7 +207,7 @@
                         </div>
                     </div>
                 </a>
-                <a href="#" class="product-card">
+                <a href="./product-details.php" class="product-card">
                     <div class="product-img-box">
                         <img src="../storage/uploads/products/placeholder-camera.png" alt="Image Unavailable">
                     </div>
@@ -228,7 +227,7 @@
                         </div>
                     </div>
                 </a>
-                <a href="#" class="product-card">
+                <a href="./product-details.php" class="product-card">
                     <div class="product-img-box">
                         <img src="../storage/uploads/products/placeholder-camera.png" alt="Image Unavailable">
                     </div>
@@ -248,7 +247,7 @@
                         </div>
                     </div>
                 </a>
-                <a href="#" class="product-card">
+                <a href="./product-details.php" class="product-card">
                     <div class="product-img-box">
                         <img src="../storage/uploads/products/placeholder-camera.png" alt="Image Unavailable">
                     </div>
@@ -268,7 +267,7 @@
                         </div>
                     </div>
                 </a>
-                <a href="#" class="product-card">
+                <a href="./product-details.php" class="product-card">
                     <div class="product-img-box">
                         <img src="../storage/uploads/products/placeholder-camera.png" alt="Image Unavailable">
                     </div>
