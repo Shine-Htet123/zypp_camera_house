@@ -67,6 +67,21 @@ logInLink.addEventListener("click", () => {
     loginForm.style.display = "flex";
 });
 
+/*Navbar Offset on Scroll*/
+const navbar = document.querySelector('.navbar');
+const navTop = navbar.offsetTop;
+
+window.addEventListener('scroll', () => {
+    if (window.scrollY > navTop) {
+        navbar.classList.add('glass');
+        console.log("sroll done")
+    } else {
+        navbar.classList.remove('glass');
+        console.log("not scrolling")
+    }
+});
+
+
 /*Navbar Support Dropdown Toggle*/
 support.addEventListener("click", () => {
     if (supportContent.style.display === "flex") {
@@ -336,3 +351,10 @@ toggles.forEach((toggle, index) => {
 });
 
 /* End of Password Eye toggle */
+
+/* Number Format */
+
+document.querySelectorAll('.price-format').forEach(price => {
+    const number = parseInt(price.textContent.replace(/,/g, ''), 10);
+    price.textContent = number.toLocaleString('en-US');
+});

@@ -22,20 +22,46 @@
     --font-weight-medium: 500;
     --font-weight-bold: 700;
     --font-weight-bolder: 900;
+    --box-shadow-normal: 0 0px 5px rgba(0, 0, 0, 0.25);
     --box-shadow: 0 4px 5.9px rgba(0, 0, 0, 0.25);
     --box-shadow-light: 0 4px 4px rgba(0, 0, 0, 0.25);
 }
 
-html,
-body {
+* {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+    scroll-behavior: smooth;
     font-family: var(--font-family);
+    text-decoration: none;
+    list-style: none;
+    transition: all 0.3s ease;
+}
+
+
+body {
     background-color: var(--bg-main);
     color: var(--text-secondary);
+}
+
+html, body {
+    overflow-x: visible;
 }
 
 a {
     text-decoration: none;
     color: var(--text-secondary);
 }
+
+/*scroll bar start */
+html::-webkit-scrollbar{
+    width: 10px;
+    background-color: var(--bg-section);
+}
+
+html::-webkit-scrollbar-thumb{
+    background-color: var(--brand-primary);
+    border-radius: 10px;
+    cursor: pointer;
+}
+/*scroll bar end */

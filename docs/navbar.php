@@ -277,9 +277,9 @@
                                 <div class="item-name">
                                     <span>Canon EOS R6</span>
                                 </div>
-                                <div class="price">
-                                    <span class="discounted-price">560,000 MMK</span>
-                                    <span class="original-price">800,000 MMK</span>
+                                <div class="price-container">
+                                    <span class="discounted-price"><span class="price-format">560000</span> MMK</span>
+                                    <span class="original-price"><span class="price-format">800000</span> MMK</span>
                                     <div class="discount">
                                         <span>30% OFF</span>
                                     </div>
@@ -302,9 +302,9 @@
                                 <div class="item-name">
                                     <span>Canon EOS R6</span>
                                 </div>
-                                <div class="price">
-                                    <span class="discounted-price">560,000 MMK</span>
-                                    <span class="original-price">800,000 MMK</span>
+                                <div class="price-container">
+                                    <span class="discounted-price"><span class="price-format">560000</span> MMK</span>
+                                    <span class="original-price"><span class="price-format">800000</span> MMK</span>
                                     <div class="discount">
                                         <span>30% OFF</span>
                                     </div>
@@ -327,9 +327,9 @@
                                 <div class="item-name">
                                     <span>Canon EOS R6</span>
                                 </div>
-                                <div class="price">
-                                    <span class="discounted-price">560,000 MMK</span>
-                                    <span class="original-price">800,000 MMK</span>
+                                <div class="price-container">
+                                    <span class="discounted-price"><span class="price-format">560000</span> MMK</span>
+                                    <span class="original-price"><span class="price-format">800000</span> MMK</span>
                                     <div class="discount">
                                         <span>30% OFF</span>
                                     </div>
@@ -352,9 +352,9 @@
                                 <div class="item-name">
                                     <span>Canon EOS R6</span>
                                 </div>
-                                <div class="price">
-                                    <span class="discounted-price">560,000 MMK</span>
-                                    <span class="original-price">800,000 MMK</span>
+                                <div class="price-container">
+                                    <span class="discounted-price"><span class="price-format">560000</span> MMK</span>
+                                    <span class="original-price"><span class="price-format">800000</span> MMK</span>
                                     <div class="discount">
                                         <span>30% OFF</span>
                                     </div>
@@ -513,9 +513,9 @@
                                 <div class="item-name">
                                     <span>Canon EOS R6</span>
                                 </div>
-                                <div class="price">
-                                    <span class="discounted-price">560,000 MMK</span>
-                                    <span class="original-price">800,000 MMK</span>
+                                <div class="price-container">
+                                    <span class="discounted-price">560000 MMK</span>
+                                    <span class="original-price">800000 MMK</span>
                                     <div class="discount">
                                         <span>30% OFF</span>
                                     </div>
