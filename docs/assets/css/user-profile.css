@@ -74,6 +74,7 @@
     flex-direction: column;
     gap: 16px;
     width: 100%;
+    scroll-margin-top: 140px;
 }
 
 .section-header {
@@ -85,6 +86,19 @@
     display: flex;
     align-items: flex-start;
     gap: 10px;
+}
+
+.section-header.flash {
+    animation: headerFlash 1s ease;
+}
+
+@keyframes headerFlash {
+    0% {
+        background-color: #ffe9c7;
+    }
+    100% {
+        background-color: #D9D9D9;
+    }
 }
 
 .edit-btn {
@@ -232,6 +246,13 @@
     font-size: 0.9rem;
 }
 
+.table-row:hover{
+    background-color: var(--bg-main);
+}
+
+.table-head:hover {
+    background-color: var(--brand-primary);
+}
 
 .table-head {
     background-color: var(--brand-primary);
@@ -255,9 +276,6 @@
     color: var(--color-warning);
 }
 
-.status.paid {
-    color: var(--color-success);
-}
 
 .track-card {
     display: flex;
