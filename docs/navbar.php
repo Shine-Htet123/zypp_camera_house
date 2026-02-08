@@ -8,7 +8,7 @@
                     </a>
                 </div>
                 <div class="nav-links">
-                    <a href="home.php">Home</a>
+                    <a href="index.php">Home</a>
                     <div class="category-container">
                         <a href="shop.php" class="dropdown">Shop</a>
                         <i class="fa-solid fa-chevron-down"></i>
