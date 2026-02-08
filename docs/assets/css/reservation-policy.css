@@ -1,0 +1,41 @@
+.reservation-policy-container {
+    margin-top: 150px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 25px;
+}
+
+.reservation-policy-container .policy-box {
+    width: 80%;
+    padding: 10px 30px;
+}
+
+.policy-box .policy-list {
+    counter-reset: policy;
+    padding-left: 0;
+    margin: 0;
+}
+
+.policy-box .policy-list li {
+    font-size: 1.2rem;
+    counter-increment: policy;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin: 20px 0;
+    line-height: 1.5;
+}
+
+.policy-box .policy-list li::marker {
+    font-weight: bold;
+}
+
+.policy-box .policy-list li::before {
+    content: counter(policy) ".";
+    font-weight: bold;
+    min-width: 1.5rem;
+    display: inline-block;
+}

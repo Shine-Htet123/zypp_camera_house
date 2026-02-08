@@ -228,7 +228,7 @@
                                 <a href="#">Warranty & FAQs</a>
                             </div>
                             <div class="dropdown-link">
-                                <a href="#">Reservation Policy</a>
+                                <a href="./reservation-policy.php">Reservation Policy</a>
                             </div>
                             <div class="dropdown-link">
                                 <a href="#">Delivery Policy</a>
