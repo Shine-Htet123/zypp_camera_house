@@ -4,7 +4,7 @@
             <div class="nav-left">
                 <div class="logo">
                     <a href="#">
-                        <img src="./assets/images/logo.png" alt="ZYPP Camera House Logo">
+                        <img src="../storage/uploads/contents/logo.png" alt="ZYPP Camera House Logo">
                     </a>
                 </div>
                 <div class="nav-links">
@@ -370,7 +370,7 @@
                 </div>
                 <div class="user-shortcuts">
                     <div class="user-profile" id="user-icon">
-                        <i class="fa-regular fa-user"></i>
+                        <a href="./user-profile.php"><i class="fa-regular fa-user"></i></a>
                     </div>
                     <div class="cart">
                         <a href="cart.php" class="cart-icon">

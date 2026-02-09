@@ -5,4 +5,5 @@
     <link rel="icon" type="image/png" sizes="32x32" href="assets/images/browser-icon.png">
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="./assets/css/navbar.css">
+    <script src="./assets/js/scroll-reveal.js" defer></script>
     <title>ZYPP Camera House</title>
