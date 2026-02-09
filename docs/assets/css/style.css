@@ -2,12 +2,12 @@
 
 :root {
     --font-family: "Inter", sans-serif;
-    --brand-primary: #7a563d;
+    --brand-primary: #5D4E47;
     --brand-primary-dark: #3b2615;
-    --brand-primary-light: #b07a4a;
+    --brand-primary-light: #B58463;
     --brand-accent: #d9b58c;
     --brand-accent-hover: #b07a4a;
-    --bg-main: #f1f1f1;
+    --bg-main: #F7F7F7;
     --bg-section: #c7c8c6;
     --bg-card: #ffffff;
     --bg-header: #6e6e70;
