@@ -1,53 +1,18 @@
 const categoryButtons = document.querySelectorAll(".category-card");
-const policyList = document.querySelector("#policy-list");
-const faqList = document.querySelector("#faq-list");
+const policyGroups = document.querySelectorAll(".policy-group");
+const faqGroups = document.querySelectorAll(".faq-group");
 const categoryList = document.querySelector(".category-list");
 const arrowButtons = document.querySelectorAll(".category-selector .arrow-btn");
-
-const dataEl = document.querySelector("#warranty-data");
-let data = {};
-
-if (dataEl) {
-    try {
-        data = JSON.parse(dataEl.textContent);
-    } catch (error) {
-        data = {};
-    }
-}
-
-const renderPolicy = (items) => {
-    if (!policyList) return;
-    policyList.innerHTML = items.map((item) => `<li>${item}</li>`).join("");
-};
-
-const renderFaqs = (items) => {
-    if (!faqList) return;
-    faqList.innerHTML = items
-        .map(
-            (item, index) => `
-            <div class="faq-item ${index === 0 ? "open" : ""}">
-                <button type="button" class="faq-question">
-                    <span>${item.q}</span>
-                    <i class="fa-solid fa-chevron-down"></i>
-                </button>
-                <div class="faq-answer">
-                    <p>${item.a}</p>
-                </div>
-            </div>
-        `
-        )
-        .join("");
-};
-
 const setActiveCategory = (key) => {
     categoryButtons.forEach((btn) => {
         btn.classList.toggle("active", btn.dataset.category === key);
     });
-    const categoryData = data[key];
-    if (categoryData) {
-        renderPolicy(categoryData.policy);
-        renderFaqs(categoryData.faqs);
-    }
+    policyGroups.forEach((group) => {
+        group.classList.toggle("active", group.dataset.category === key);
+    });
+    faqGroups.forEach((group) => {
+        group.classList.toggle("active", group.dataset.category === key);
+    });
 };
 
 categoryButtons.forEach((btn) => {
@@ -56,7 +21,7 @@ categoryButtons.forEach((btn) => {
     });
 });
 
-faqList?.addEventListener("click", (event) => {
+document.addEventListener("click", (event) => {
     const question = event.target.closest(".faq-question");
     if (!question) return;
     const item = question.closest(".faq-item");
@@ -64,7 +29,10 @@ faqList?.addEventListener("click", (event) => {
     item.classList.toggle("open");
 });
 
-setActiveCategory("cameras");
+const defaultCategory = document.querySelector(".category-card.active")?.dataset.category;
+if (defaultCategory) {
+    setActiveCategory(defaultCategory);
+}
 
 const scrollCategoryList = (direction) => {
     if (!categoryList) return;

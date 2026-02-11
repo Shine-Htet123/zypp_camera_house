@@ -96,6 +96,14 @@
     margin-bottom: 15px;
 }
 
+.policy-group {
+    display: none;
+}
+
+.policy-group.active {
+    display: block;
+}
+
 .policy-list {
     list-style: none;
     counter-reset: policy;
@@ -135,6 +143,14 @@
     display: flex;
     flex-direction: column;
     gap: 15px;
+}
+
+.faq-group {
+    display: none;
+}
+
+.faq-group.active {
+    display: flex;
 }
 
 .faq-item {

@@ -114,7 +114,7 @@
                 <p>Experience our products through influencer reviews & unboxings.</p>
             </div>
             <div class="video-link-btn">
-                <button>Discover More</button>
+                <a href="./unboxing-influencers.php">Discover More</a>
             </div>
         </div>
     </section>
