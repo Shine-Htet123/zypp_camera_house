@@ -253,7 +253,6 @@
                         <div id="loading-screen">
                             <video autoplay muted loop playsinline id="loading-video">
                                 <source src="./assets/images/Search-box-loading.webm" type="video/webm">
-
                             </video>
                         </div>
                         <!--Loading Search result End --->
@@ -370,7 +369,8 @@
                 </div>
                 <div class="user-shortcuts">
                     <div class="user-profile" id="user-icon">
-                        <a href="./user-profile.php"><i class="fa-regular fa-user"></i></a>
+                        <!-- <a href="./user-profile.php"><i class="fa-regular fa-user"></i></a> -->
+                        <a><i class="fa-regular fa-user"></i></a>
                     </div>
                     <div class="cart">
                         <a href="cart.php" class="cart-icon">
@@ -398,7 +398,7 @@
             </div>
             <div class="login" id="login">
                 <h2>Log in to your account</h2>
-                <form action="" method="GET">
+                <form action="" method="GET" id="login-form" novalidate>
                     <div class="input">
                         <span>Email:</span>
                         <input type="email" name="email">
@@ -411,6 +411,7 @@
                             <i class="fa-solid fa-eye-slash"></i>
                         </div>
                     </div>
+                    <p class="form-warning" id="login-warning" aria-live="polite"></p>
                     <span id="forgetpwd">Forgot Password</span>
                     <button type="submit" class="login-btn">Login</button>
                     <span class="register-link">Don't have an account? <a href="#" id="register">Register</a></span>
@@ -432,7 +433,7 @@
             </div>
             <div class="register" id="register-form">
                 <h2>Create an Account</h2>
-                <form action="" method="GET">
+                <form action="" method="GET" id="register-form" novalidate>
                     <div class="input">
                         <span>First Name:</span>
                         <input type="text" name="firstname">
@@ -453,6 +454,7 @@
                             <i class="fa-solid fa-eye-slash"></i>
                         </div>
                     </div>
+                    <p class="form-warning" id="register-warning" aria-live="polite"></p>
                     <button type="submit" class="register-btn">Register</button>
                     <span class="login-link">Already have an account? <a id="login-link">Login</a></span>
                     <div class="quick-login">

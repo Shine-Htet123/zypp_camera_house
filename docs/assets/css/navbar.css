@@ -808,6 +808,21 @@
     font-size: 1rem;
 }
 
+.user-menu form .input.is-invalid input {
+    border-color: var(--color-danger);
+}
+
+.user-menu form .form-warning {
+    display: none;
+    color: var(--color-danger);
+    font-size: 0.85rem;
+    margin-top: 4px;
+}
+
+.user-menu form .form-warning.show {
+    display: block;
+}
+
 .user-menu form .input .eyes {
     position: absolute;
     right: 10px;
