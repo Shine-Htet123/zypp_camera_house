@@ -253,7 +253,6 @@
     </main>
 
     <script src="./assets/js/product-details.js"></script>
-    <script src="./assets/js/navbar.js"></script>
 </body>
 
 </html>

@@ -1,0 +1,210 @@
+.warranty-page {
+    width: 100%;
+    padding: 140px 0 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.warranty-hero {
+    text-align: center;
+}
+
+.warranty-hero h2 {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+}
+
+.category-selector {
+    width: 85%;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 40px 1fr 40px;
+    align-items: center;
+    gap: 20px;
+}
+
+.category-list {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 4px;
+    scrollbar-width: none;
+}
+
+.category-list::-webkit-scrollbar {
+    display: none;
+}
+
+.category-card {
+    border: none;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: var(--font-weight-bold);
+    flex: 0 0 calc((100% - 60px) / 4);
+    scroll-snap-align: start;
+}
+
+.category-card .category-image {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: border-color 0.2s ease;
+}
+
+.category-card .category-image img {
+    width: 90%;
+    height: 90%;
+    object-fit: contain;
+}
+
+.category-card.active .category-image {
+    border-color: var(--brand-primary);
+}
+
+.arrow-btn {
+    border: none;
+    background: transparent;
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+}
+
+.warranty-policy {
+    width: 85%;
+    margin: 0 auto;
+    background-color: var(--bg-card);
+    border-radius: 12px;
+    padding: 25px 30px;
+    box-shadow: var(--box-shadow-normal);
+}
+
+.warranty-policy h3 {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.policy-list {
+    list-style: none;
+    counter-reset: policy;
+    padding: 0;
+    margin: 0;
+}
+
+.policy-list li {
+    counter-increment: policy;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin: 16px 0;
+    line-height: 1.5;
+}
+
+.policy-list li::before {
+    content: counter(policy) ".";
+    font-weight: bold;
+    min-width: 1.5rem;
+    display: inline-block;
+}
+
+.faq-section {
+    width: 85%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.faq-section h3 {
+    text-align: center;
+}
+
+.faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.faq-item {
+    background-color: var(--bg-card);
+    border-radius: 10px;
+    box-shadow: var(--box-shadow-normal);
+    overflow: hidden;
+}
+
+.faq-question {
+    width: 100%;
+    padding: 18px 20px;
+    border: none;
+    background: transparent;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+}
+
+.faq-answer {
+    padding: 0 20px;
+    color: var(--text-secondary);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.faq-item.open .faq-answer {
+    padding: 0 20px 18px;
+    max-height: 160px;
+}
+
+.faq-item.open .faq-question i {
+    transform: rotate(180deg);
+}
+
+@media (max-width: 900px) {
+    .category-selector,
+    .warranty-policy,
+    .faq-section {
+        width: 92%;
+    }
+
+    .category-card {
+        flex: 0 0 calc((100% - 20px) / 2);
+    }
+}
+
+@media (max-width: 600px) {
+    .warranty-page {
+        padding-top: 120px;
+    }
+
+    .warranty-hero h2 {
+        font-size: 1.4rem;
+    }
+
+    .category-selector {
+        grid-template-columns: 30px 1fr 30px;
+    }
+
+    .category-card .category-image {
+        width: 100px;
+        height: 100px;
+    }
+
+    .category-card {
+        flex: 0 0 100%;
+    }
+    
+}

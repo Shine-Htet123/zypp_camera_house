@@ -160,7 +160,6 @@
     </main>
 
     <!--js links -->
-    <script src="./assets/js/navbar.js"></script>
     <script src="./assets/js/delivery.js"></script>
 </body>
 </html>

@@ -6,4 +6,5 @@
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="./assets/css/navbar.css">
     <script src="./assets/js/scroll-reveal.js" defer></script>
+    <script src="./assets/js/navbar.js" defer></script>
     <title>ZYPP Camera House</title>

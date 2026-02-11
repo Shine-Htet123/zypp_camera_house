@@ -225,7 +225,7 @@
                         <i class="fa-solid fa-chevron-down"></i>
                         <div class="dropdown-content" style="padding-left: 0;">
                             <div class="dropdown-link">
-                                <a href="#">Warranty & FAQs</a>
+                                <a href="./warranty-FAQ.php">Warranty & FAQs</a>
                             </div>
                             <div class="dropdown-link">
                                 <a href="./reservation-policy.php">Reservation Policy</a>

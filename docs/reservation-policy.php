@@ -24,8 +24,6 @@
             </ol>
         </div>
     </main>
-
-    <script src="./assets/js/navbar.js"></script>
     <script src="./assets/js/reservation-policy.js"></script>
 </body>
 </html>
