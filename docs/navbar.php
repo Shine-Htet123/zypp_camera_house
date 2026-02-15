@@ -476,7 +476,7 @@
             <div class="nav-menu">
                 <div class="logo">
                     <a href="#">
-                        <img src="./assets/images/logo.png" alt="ZYPP Camera House Logo">
+                        <img src="../storage/uploads/contents/logo.png" alt="ZYPP Camera House Logo">
                     </a>
                 </div>
                 <div class="search-bar-container">

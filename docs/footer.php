@@ -1,4 +1,7 @@
 <footer class="footer">
+    <div class="footer-logo" aria-hidden="true">
+        <img src="../storage/uploads/contents/logo.png" alt="">
+    </div>
     <div class="footer-container">
 
         <div class="footer-col">
