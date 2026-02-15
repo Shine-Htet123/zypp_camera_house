@@ -1,11 +1,13 @@
 /* Navbar Styles start*/
 
 .top {
-    width: 100vw;
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
     position: sticky;
+    top: 0;
+    z-index: 9998;
 }
 
 .navbar {
@@ -15,12 +17,23 @@
     grid-template-columns: auto auto;
     position: absolute;
     top: 15px;
-    z-index: 10;
-    height: 4.5rem;
+    height: fit-content;
     width: 87%;
-    padding: 10px 40px;
+    padding: 5px 40px;
     box-shadow: 0 3px 4px rgba(0, 0, 0, 0.25);
+    transition: all 0.3s ease;
+    overflow: visible;
 }
+
+.navbar.glass {
+    /* From https://css.glass */
+    background: rgba(255, 255, 255, 0.627);
+    border-radius: 16px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(6.5px);
+    -webkit-backdrop-filter: blur(5.6px);
+}
+
 
 .navbar .nav-left {
     display: flex;
@@ -153,6 +166,7 @@
     pointer-events: none;
     border-radius: 15px;
     box-shadow: var(--box-shadow-light);
+    z-index: 100;
 }
 
 .dropdown-container .dropdown-content.show {
@@ -293,7 +307,7 @@
     top: 135%;
     pointer-events: none;
     transition: all 0.3s ease;
-    z-index: 999;
+    z-index: 101;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -385,7 +399,7 @@
     text-wrap: wrap;
 }
 
-.search-bar-content .search-result .result-item .price {
+.search-bar-content .search-result .result-item .price-container {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -394,20 +408,20 @@
     width: 200px;
 }
 
-.result-item .price span {
+.result-item .price-container span {
     font-size: 1.1rem;
     font-weight: var(--font-weight-bold);
 }
 
-.result-item .price .discounted-price {
+.result-item .price-container .discounted-price {
     color: var(--color-danger);
 }
 
-.result-item .price .original-price {
+.result-item .price-container .original-price {
     text-decoration: line-through;
 }
 
-.result-item .price .discount {
+.result-item .price-container .discount {
     padding: 5px 20px;
     background-color: var(--color-danger);
     color: var(--text-inverse);
@@ -453,8 +467,8 @@
 
 .user-shortcuts div {
     cursor: pointer;
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -576,6 +590,18 @@
     .search-bar-content .search-result .view-all a {
         font-size: 0.8rem;
     }
+
+    .menu-container .blank-space {
+        width: 30%;
+    }
+
+    .menu-container .user-menu.normal {
+        width: 70%;
+    }
+
+    .menu-container .user-menu.compact {
+        width: 70%;
+    }
 }
 
 @media (max-width: 969px) {
@@ -678,7 +704,7 @@
     right: 0;
     width: 100vw;
     height: 100vh;
-    z-index: 20;
+    z-index: 9999;
     display: flex;
     justify-content: space-between;
     pointer-events: none;
@@ -712,7 +738,7 @@
 .menu-container .user-menu .login,
 .menu-container .user-menu .register,
 .menu-container .user-menu .nav-menu {
-    padding-bottom: 200px;
+    padding-bottom: 120px;
 }
 
 #close-menu {
@@ -778,8 +804,23 @@
     padding: 10px;
     border: 1px solid var(--text-muted);
     border-radius: 5px;
-    height: 20px;
+    min-height: 40px;
     font-size: 1rem;
+}
+
+.user-menu form .input.is-invalid input {
+    border-color: var(--color-danger);
+}
+
+.user-menu form .form-warning {
+    display: none;
+    color: var(--color-danger);
+    font-size: 0.85rem;
+    margin-top: 4px;
+}
+
+.user-menu form .form-warning.show {
+    display: block;
 }
 
 .user-menu form .input .eyes {

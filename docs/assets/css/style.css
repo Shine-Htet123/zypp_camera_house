@@ -2,12 +2,12 @@
 
 :root {
     --font-family: "Inter", sans-serif;
-    --brand-primary: #7a563d;
+    --brand-primary: #5D4E47;
     --brand-primary-dark: #3b2615;
-    --brand-primary-light: #b07a4a;
+    --brand-primary-light: #B58463;
     --brand-accent: #d9b58c;
     --brand-accent-hover: #b07a4a;
-    --bg-main: #f1f1f1;
+    --bg-main: #F7F7F7;
     --bg-section: #c7c8c6;
     --bg-card: #ffffff;
     --bg-header: #6e6e70;
@@ -22,20 +22,58 @@
     --font-weight-medium: 500;
     --font-weight-bold: 700;
     --font-weight-bolder: 900;
+    --box-shadow-normal: 0 0px 5px rgba(0, 0, 0, 0.25);
     --box-shadow: 0 4px 5.9px rgba(0, 0, 0, 0.25);
     --box-shadow-light: 0 4px 4px rgba(0, 0, 0, 0.25);
 }
 
-html,
-body {
+* {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+    scroll-behavior: smooth;
     font-family: var(--font-family);
+    text-decoration: none;
+    list-style: none;
+    transition: all 0.3s ease;
+}
+
+
+body {
     background-color: var(--bg-main);
     color: var(--text-secondary);
+}
+
+html, body {
+    overflow-x: visible;
 }
 
 a {
     text-decoration: none;
     color: var(--text-secondary);
 }
+
+/* Scroll reveal */
+.reveal-on-scroll {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.reveal-on-scroll.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/*scroll bar start */
+html::-webkit-scrollbar{
+    width: 10px;
+    background-color: var(--bg-section);
+}
+
+html::-webkit-scrollbar-thumb{
+    background-color: var(--brand-primary);
+    border-radius: 10px;
+    cursor: pointer;
+}
+/*scroll bar end */

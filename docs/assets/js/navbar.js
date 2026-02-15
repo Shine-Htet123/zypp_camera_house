@@ -67,6 +67,21 @@ logInLink.addEventListener("click", () => {
     loginForm.style.display = "flex";
 });
 
+/*Navbar Offset on Scroll*/
+const navbar = document.querySelector('.navbar');
+const navTop = navbar.offsetTop;
+
+window.addEventListener('scroll', () => {
+    if (window.scrollY > navTop) {
+        navbar.classList.add('glass');
+        console.log("sroll done")
+    } else {
+        navbar.classList.remove('glass');
+        console.log("not scrolling")
+    }
+});
+
+
 /*Navbar Support Dropdown Toggle*/
 support.addEventListener("click", () => {
     if (supportContent.style.display === "flex") {
@@ -336,3 +351,106 @@ toggles.forEach((toggle, index) => {
 });
 
 /* End of Password Eye toggle */
+
+/* Sidebar Auth Validation */
+const loginFormElement = document.getElementById("login-form");
+const registerFormElement = document.getElementById("register-form");
+const loginWarning = document.getElementById("login-warning");
+const registerWarning = document.getElementById("register-warning");
+
+const passwordRule =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+
+const setWarning = (element, message) => {
+    if (!element) return;
+    element.textContent = message;
+    element.classList.toggle("show", Boolean(message));
+};
+
+const setInvalid = (input, isInvalid) => {
+    if (!input) return;
+    const wrapper = input.closest(".input");
+    if (wrapper) {
+        wrapper.classList.toggle("is-invalid", isInvalid);
+    }
+};
+
+if (loginFormElement) {
+    loginFormElement.addEventListener("submit", (event) => {
+        const emailInput = loginFormElement.querySelector('input[type="email"]');
+        const passwordInput = loginFormElement.querySelector('input[type="password"]');
+        const validEmail = emailInput ? emailInput.checkValidity() : false;
+        const validPassword = passwordInput ? passwordInput.value.trim().length > 0 : false;
+
+        if (!validEmail || !validPassword) {
+            event.preventDefault();
+            setWarning(loginWarning, "Incorrect email or password.");
+            setInvalid(emailInput, !validEmail);
+            setInvalid(passwordInput, !validPassword);
+            return;
+        }
+
+        setWarning(loginWarning, "");
+        setInvalid(emailInput, false);
+        setInvalid(passwordInput, false);
+    });
+
+    loginFormElement.addEventListener("input", () => {
+        setWarning(loginWarning, "");
+        const emailInput = loginFormElement.querySelector('input[type="email"]');
+        const passwordInput = loginFormElement.querySelector('input[type="password"]');
+        setInvalid(emailInput, false);
+        setInvalid(passwordInput, false);
+    });
+}
+
+if (registerFormElement) {
+    registerFormElement.addEventListener("submit", (event) => {
+        const emailInput = registerFormElement.querySelector('input[type="email"]');
+        const passwordInput = registerFormElement.querySelector('input[type="password"]');
+        const validEmail = emailInput ? emailInput.checkValidity() : false;
+        const passwordValue = passwordInput ? passwordInput.value.trim() : "";
+        const validPassword = passwordRule.test(passwordValue);
+
+        if (!validEmail || !validPassword) {
+            event.preventDefault();
+            if (!validEmail && !validPassword) {
+                setWarning(
+                    registerWarning,
+                    "Enter a valid email and a password with 8+ chars, upper, lower, number, and special character."
+                );
+            } else if (!validEmail) {
+                setWarning(registerWarning, "Please enter a valid email address.");
+            } else {
+                setWarning(
+                    registerWarning,
+                    "Password must be 8+ chars with upper, lower, number, and special character."
+                );
+            }
+            setInvalid(emailInput, !validEmail);
+            setInvalid(passwordInput, !validPassword);
+            return;
+        }
+
+        setWarning(registerWarning, "");
+        setInvalid(emailInput, false);
+        setInvalid(passwordInput, false);
+    });
+
+    registerFormElement.addEventListener("input", () => {
+        setWarning(registerWarning, "");
+        const emailInput = registerFormElement.querySelector('input[type="email"]');
+        const passwordInput = registerFormElement.querySelector('input[type="password"]');
+        setInvalid(emailInput, false);
+        setInvalid(passwordInput, false);
+    });
+}
+
+/* End Sidebar Auth Validation */
+
+/* Number Format */
+
+document.querySelectorAll('.price-format').forEach(price => {
+    const number = parseInt(price.textContent.replace(/,/g, ''), 10);
+    price.textContent = number.toLocaleString('en-US');
+});

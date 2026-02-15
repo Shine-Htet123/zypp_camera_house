@@ -4,11 +4,11 @@
             <div class="nav-left">
                 <div class="logo">
                     <a href="#">
-                        <img src="./assets/images/logo.png" alt="ZYPP Camera House Logo">
+                        <img src="../storage/uploads/contents/logo.png" alt="ZYPP Camera House Logo">
                     </a>
                 </div>
                 <div class="nav-links">
-                    <a href="#">Home</a>
+                    <a href="index.php">Home</a>
                     <div class="category-container">
                         <a href="shop.php" class="dropdown">Shop</a>
                         <i class="fa-solid fa-chevron-down"></i>
@@ -225,10 +225,10 @@
                         <i class="fa-solid fa-chevron-down"></i>
                         <div class="dropdown-content" style="padding-left: 0;">
                             <div class="dropdown-link">
-                                <a href="#">Warranty & FAQs</a>
+                                <a href="./warranty-FAQ.php">Warranty & FAQs</a>
                             </div>
                             <div class="dropdown-link">
-                                <a href="#">Reservation Policy</a>
+                                <a href="./reservation-policy.php">Reservation Policy</a>
                             </div>
                             <div class="dropdown-link">
                                 <a href="#">Delivery Policy</a>
@@ -253,7 +253,6 @@
                         <div id="loading-screen">
                             <video autoplay muted loop playsinline id="loading-video">
                                 <source src="./assets/images/Search-box-loading.webm" type="video/webm">
-
                             </video>
                         </div>
                         <!--Loading Search result End --->
@@ -277,9 +276,9 @@
                                 <div class="item-name">
                                     <span>Canon EOS R6</span>
                                 </div>
-                                <div class="price">
-                                    <span class="discounted-price">560,000 MMK</span>
-                                    <span class="original-price">800,000 MMK</span>
+                                <div class="price-container">
+                                    <span class="discounted-price"><span class="price-format">560000</span> MMK</span>
+                                    <span class="original-price"><span class="price-format">800000</span> MMK</span>
                                     <div class="discount">
                                         <span>30% OFF</span>
                                     </div>
@@ -302,9 +301,9 @@
                                 <div class="item-name">
                                     <span>Canon EOS R6</span>
                                 </div>
-                                <div class="price">
-                                    <span class="discounted-price">560,000 MMK</span>
-                                    <span class="original-price">800,000 MMK</span>
+                                <div class="price-container">
+                                    <span class="discounted-price"><span class="price-format">560000</span> MMK</span>
+                                    <span class="original-price"><span class="price-format">800000</span> MMK</span>
                                     <div class="discount">
                                         <span>30% OFF</span>
                                     </div>
@@ -327,9 +326,9 @@
                                 <div class="item-name">
                                     <span>Canon EOS R6</span>
                                 </div>
-                                <div class="price">
-                                    <span class="discounted-price">560,000 MMK</span>
-                                    <span class="original-price">800,000 MMK</span>
+                                <div class="price-container">
+                                    <span class="discounted-price"><span class="price-format">560000</span> MMK</span>
+                                    <span class="original-price"><span class="price-format">800000</span> MMK</span>
                                     <div class="discount">
                                         <span>30% OFF</span>
                                     </div>
@@ -352,9 +351,9 @@
                                 <div class="item-name">
                                     <span>Canon EOS R6</span>
                                 </div>
-                                <div class="price">
-                                    <span class="discounted-price">560,000 MMK</span>
-                                    <span class="original-price">800,000 MMK</span>
+                                <div class="price-container">
+                                    <span class="discounted-price"><span class="price-format">560000</span> MMK</span>
+                                    <span class="original-price"><span class="price-format">800000</span> MMK</span>
                                     <div class="discount">
                                         <span>30% OFF</span>
                                     </div>
@@ -370,7 +369,8 @@
                 </div>
                 <div class="user-shortcuts">
                     <div class="user-profile" id="user-icon">
-                        <i class="fa-regular fa-user"></i>
+                        <!-- <a href="./user-profile.php"><i class="fa-regular fa-user"></i></a> -->
+                        <a><i class="fa-regular fa-user"></i></a>
                     </div>
                     <div class="cart">
                         <a href="cart.php" class="cart-icon">
@@ -398,7 +398,7 @@
             </div>
             <div class="login" id="login">
                 <h2>Log in to your account</h2>
-                <form action="" method="GET">
+                <form action="" method="GET" id="login-form" novalidate>
                     <div class="input">
                         <span>Email:</span>
                         <input type="email" name="email">
@@ -411,6 +411,7 @@
                             <i class="fa-solid fa-eye-slash"></i>
                         </div>
                     </div>
+                    <p class="form-warning" id="login-warning" aria-live="polite"></p>
                     <span id="forgetpwd">Forgot Password</span>
                     <button type="submit" class="login-btn">Login</button>
                     <span class="register-link">Don't have an account? <a href="#" id="register">Register</a></span>
@@ -432,7 +433,7 @@
             </div>
             <div class="register" id="register-form">
                 <h2>Create an Account</h2>
-                <form action="" method="GET">
+                <form action="" method="GET" id="register-form" novalidate>
                     <div class="input">
                         <span>First Name:</span>
                         <input type="text" name="firstname">
@@ -453,6 +454,7 @@
                             <i class="fa-solid fa-eye-slash"></i>
                         </div>
                     </div>
+                    <p class="form-warning" id="register-warning" aria-live="polite"></p>
                     <button type="submit" class="register-btn">Register</button>
                     <span class="login-link">Already have an account? <a id="login-link">Login</a></span>
                     <div class="quick-login">
@@ -513,9 +515,9 @@
                                 <div class="item-name">
                                     <span>Canon EOS R6</span>
                                 </div>
-                                <div class="price">
-                                    <span class="discounted-price">560,000 MMK</span>
-                                    <span class="original-price">800,000 MMK</span>
+                                <div class="price-container">
+                                    <span class="discounted-price">560000 MMK</span>
+                                    <span class="original-price">800000 MMK</span>
                                     <div class="discount">
                                         <span>30% OFF</span>
                                     </div>
