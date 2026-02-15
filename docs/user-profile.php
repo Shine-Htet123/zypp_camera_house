@@ -285,6 +285,8 @@
         </div>
     </main>
 
+    <?php include('./footer.php') ?>
+
     <script src="./assets/js/user-profile.js"></script>
 </body>
 </html>

@@ -129,6 +129,8 @@
         </div>
     </div>
 
+    <?php include('./footer.php') ?>
+
     <script src="./assets/js/unboxing-influencers.js"></script>
 </body>
 </html>

@@ -159,6 +159,8 @@
         </section>
     </main>
 
+    <?php include('./footer.php') ?>
+
     <!--js links -->
     <script src="./assets/js/delivery.js"></script>
 </body>

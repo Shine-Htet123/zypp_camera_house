@@ -160,6 +160,9 @@
             <?php endforeach; ?>
         </section>
     </main>
+
+    <?php include('./footer.php') ?>
+
     <script src="./assets/js/warranty-FAQ.js"></script>
 </body>
 </html>

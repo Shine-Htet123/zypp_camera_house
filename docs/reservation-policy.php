@@ -24,6 +24,9 @@
             </ol>
         </div>
     </main>
+
+    <?php include('./footer.php') ?>
+
     <script src="./assets/js/reservation-policy.js"></script>
 </body>
 </html>
