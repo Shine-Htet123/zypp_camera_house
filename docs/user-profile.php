@@ -24,78 +24,307 @@
                 <div class="profile-section" id="profile">
                     <div class="section-header">
                         <span>Profile</span>
-                        <button class="edit-btn" type="button" id="profile-edit-btn">
-                            <i class="fa-regular fa-pen-to-square"></i>
-                        </button>
                     </div>
 
                     <div class="profile-view">
-                        <div class="profile-list">
-                            <div class="profile-row">
-                                <span class="label">Full Name:</span>
-                                <span class="value">Kyaw Ko Ko</span>
-                            </div>
-                            <div class="profile-row">
-                                <span class="label">Phone:</span>
-                                <span class="value">09123456789</span>
-                            </div>
-                            <div class="profile-row">
-                                <span class="label">Email:</span>
-                                <span class="value email">kyawkokko123@gmail.com</span>
-                            </div>
-                            <div class="profile-row">
-                                <span class="label">Address:</span>
-                                <span class="value">No. 96, Pyay Road</span>
-                            </div>
-                            <div class="profile-row double">
-                                <div class="pair">
-                                    <span class="label">Township:</span>
-                                    <span class="value">Kamaryut</span>
+                        <div class="profile-cards">
+                            <div class="profile-card is-default" data-address-card>
+                                <span class="card-badge">Default</span>
+                                <div class="profile-list profile-card-view">
+                                    <div class="profile-row">
+                                        <span class="label">Full Name:</span>
+                                        <span class="value">Kyaw Ko Ko</span>
+                                    </div>
+                                    <div class="profile-row">
+                                        <span class="label">Phone:</span>
+                                        <span class="value">09123456789</span>
+                                    </div>
+                                    <div class="profile-row">
+                                        <span class="label">Email:</span>
+                                        <span class="value email">kyawkokko123@gmail.com</span>
+                                    </div>
+                                    <div class="profile-row">
+                                        <span class="label">Address:</span>
+                                        <span class="value">No. 96, Pyay Road</span>
+                                    </div>
+                                    <div class="profile-row">
+                                        <span class="label">Township:</span>
+                                        <span class="value">Kamaryut</span>
+                                    </div>
+                                    <div class="profile-row">
+                                        <span class="label">City:</span>
+                                        <span class="value">Yangon</span>
+                                    </div>
                                 </div>
-                                <div class="pair">
-                                    <span class="label">City:</span>
-                                    <span class="value">Yangon</span>
+                                <form class="profile-card-form">
+                                    <div class="form-row">
+                                        <div class="field">
+                                            <label>Full Name</label>
+                                            <input type="text" name="full_name" value="Kyaw Ko Ko">
+                                        </div>
+                                        <div class="field">
+                                            <label>Phone</label>
+                                            <input type="text" name="phone" value="09123456789">
+                                        </div>
+                                        <div class="field">
+                                            <label>Email</label>
+                                            <input type="email" name="email" value="kyawkokko123@gmail.com">
+                                        </div>
+                                        <div class="field">
+                                            <label>Address</label>
+                                            <input type="text" name="address" value="No. 96, Pyay Road">
+                                        </div>
+                                        <div class="field">
+                                            <label>Township</label>
+                                            <input type="text" name="township" value="Kamaryut">
+                                        </div>
+                                        <div class="field">
+                                            <label>City</label>
+                                            <input type="text" name="city" value="Yangon">
+                                        </div>
+                                    </div>
+                                    <div class="card-form-actions">
+                                        <button type="button" class="cancel-btn">Cancel</button>
+                                        <button type="button" class="save-btn">Save</button>
+                                    </div>
+                                </form>
+                                <div class="card-actions">
+                                    <button type="button" class="card-action-btn edit" aria-label="Edit address">
+                                        <i class="fa-regular fa-pen-to-square"></i>
+                                    </button>
+                                    <button type="button" class="card-action-btn delete" aria-label="Delete address">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
+                                    <button type="button" class="card-action-btn set-default">
+                                        <i class="fa-regular fa-star"></i>
+                                        <span>Default</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="profile-card" data-address-card>
+                                <span class="card-badge">Default</span>
+                                <div class="profile-list profile-card-view">
+                                    <div class="profile-row">
+                                        <span class="label">Full Name:</span>
+                                        <span class="value">Kyaw Ko Ko</span>
+                                    </div>
+                                    <div class="profile-row">
+                                        <span class="label">Phone:</span>
+                                        <span class="value">09123456789</span>
+                                    </div>
+                                    <div class="profile-row">
+                                        <span class="label">Email:</span>
+                                        <span class="value email">kyawkokko123@gmail.com</span>
+                                    </div>
+                                    <div class="profile-row">
+                                        <span class="label">Address:</span>
+                                        <span class="value">No. 96, Pyay Road</span>
+                                    </div>
+                                    <div class="profile-row">
+                                        <span class="label">Township:</span>
+                                        <span class="value">Kamaryut</span>
+                                    </div>
+                                    <div class="profile-row">
+                                        <span class="label">City:</span>
+                                        <span class="value">Yangon</span>
+                                    </div>
+                                </div>
+                                <form class="profile-card-form">
+                                    <div class="form-row">
+                                        <div class="field">
+                                            <label>Full Name</label>
+                                            <input type="text" name="full_name" value="Kyaw Ko Ko">
+                                        </div>
+                                        <div class="field">
+                                            <label>Phone</label>
+                                            <input type="text" name="phone" value="09123456789">
+                                        </div>
+                                        <div class="field">
+                                            <label>Email</label>
+                                            <input type="email" name="email" value="kyawkokko123@gmail.com">
+                                        </div>
+                                        <div class="field">
+                                            <label>Address</label>
+                                            <input type="text" name="address" value="No. 96, Pyay Road">
+                                        </div>
+                                        <div class="field">
+                                            <label>Township</label>
+                                            <input type="text" name="township" value="Kamaryut">
+                                        </div>
+                                        <div class="field">
+                                            <label>City</label>
+                                            <input type="text" name="city" value="Yangon">
+                                        </div>
+                                    </div>
+                                    <div class="card-form-actions">
+                                        <button type="button" class="cancel-btn">Cancel</button>
+                                        <button type="button" class="save-btn">Save</button>
+                                    </div>
+                                </form>
+                                <div class="card-actions">
+                                    <button type="button" class="card-action-btn edit" aria-label="Edit address">
+                                        <i class="fa-regular fa-pen-to-square"></i>
+                                    </button>
+                                    <button type="button" class="card-action-btn delete" aria-label="Delete address">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
+                                    <button type="button" class="card-action-btn set-default">
+                                        <i class="fa-regular fa-star"></i>
+                                        <span>Set Default</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="profile-card" data-address-card>
+                                <span class="card-badge">Default</span>
+                                <div class="profile-list profile-card-view">
+                                    <div class="profile-row">
+                                        <span class="label">Full Name:</span>
+                                        <span class="value">Kyaw Ko Ko</span>
+                                    </div>
+                                    <div class="profile-row">
+                                        <span class="label">Phone:</span>
+                                        <span class="value">09123456789</span>
+                                    </div>
+                                    <div class="profile-row">
+                                        <span class="label">Email:</span>
+                                        <span class="value email">kyawkokko123@gmail.com</span>
+                                    </div>
+                                    <div class="profile-row">
+                                        <span class="label">Address:</span>
+                                        <span class="value">No. 96, Pyay Road</span>
+                                    </div>
+                                    <div class="profile-row">
+                                        <span class="label">Township:</span>
+                                        <span class="value">Kamaryut</span>
+                                    </div>
+                                    <div class="profile-row">
+                                        <span class="label">City:</span>
+                                        <span class="value">Yangon</span>
+                                    </div>
+                                </div>
+                                <form class="profile-card-form">
+                                    <div class="form-row">
+                                        <div class="field">
+                                            <label>Full Name</label>
+                                            <input type="text" name="full_name" value="Kyaw Ko Ko">
+                                        </div>
+                                        <div class="field">
+                                            <label>Phone</label>
+                                            <input type="text" name="phone" value="09123456789">
+                                        </div>
+                                        <div class="field">
+                                            <label>Email</label>
+                                            <input type="email" name="email" value="kyawkokko123@gmail.com">
+                                        </div>
+                                        <div class="field">
+                                            <label>Address</label>
+                                            <input type="text" name="address" value="No. 96, Pyay Road">
+                                        </div>
+                                        <div class="field">
+                                            <label>Township</label>
+                                            <input type="text" name="township" value="Kamaryut">
+                                        </div>
+                                        <div class="field">
+                                            <label>City</label>
+                                            <input type="text" name="city" value="Yangon">
+                                        </div>
+                                    </div>
+                                    <div class="card-form-actions">
+                                        <button type="button" class="cancel-btn">Cancel</button>
+                                        <button type="button" class="save-btn">Save</button>
+                                    </div>
+                                </form>
+                                <div class="card-actions">
+                                    <button type="button" class="card-action-btn edit" aria-label="Edit address">
+                                        <i class="fa-regular fa-pen-to-square"></i>
+                                    </button>
+                                    <button type="button" class="card-action-btn delete" aria-label="Delete address">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
+                                    <button type="button" class="card-action-btn set-default">
+                                        <i class="fa-regular fa-star"></i>
+                                        <span>Set Default</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="profile-card" data-address-card>
+                                <span class="card-badge">Default</span>
+                                <div class="profile-list profile-card-view">
+                                    <div class="profile-row">
+                                        <span class="label">Full Name:</span>
+                                        <span class="value">Kyaw Ko Ko</span>
+                                    </div>
+                                    <div class="profile-row">
+                                        <span class="label">Phone:</span>
+                                        <span class="value">09123456789</span>
+                                    </div>
+                                    <div class="profile-row">
+                                        <span class="label">Email:</span>
+                                        <span class="value email">kyawkokko123@gmail.com</span>
+                                    </div>
+                                    <div class="profile-row">
+                                        <span class="label">Address:</span>
+                                        <span class="value">No. 96, Pyay Road</span>
+                                    </div>
+                                    <div class="profile-row">
+                                        <span class="label">Township:</span>
+                                        <span class="value">Kamaryut</span>
+                                    </div>
+                                    <div class="profile-row">
+                                        <span class="label">City:</span>
+                                        <span class="value">Yangon</span>
+                                    </div>
+                                </div>
+                                <form class="profile-card-form">
+                                    <div class="form-row">
+                                        <div class="field">
+                                            <label>Full Name</label>
+                                            <input type="text" name="full_name" value="Kyaw Ko Ko">
+                                        </div>
+                                        <div class="field">
+                                            <label>Phone</label>
+                                            <input type="text" name="phone" value="09123456789">
+                                        </div>
+                                        <div class="field">
+                                            <label>Email</label>
+                                            <input type="email" name="email" value="kyawkokko123@gmail.com">
+                                        </div>
+                                        <div class="field">
+                                            <label>Address</label>
+                                            <input type="text" name="address" value="No. 96, Pyay Road">
+                                        </div>
+                                        <div class="field">
+                                            <label>Township</label>
+                                            <input type="text" name="township" value="Kamaryut">
+                                        </div>
+                                        <div class="field">
+                                            <label>City</label>
+                                            <input type="text" name="city" value="Yangon">
+                                        </div>
+                                    </div>
+                                    <div class="card-form-actions">
+                                        <button type="button" class="cancel-btn">Cancel</button>
+                                        <button type="button" class="save-btn">Save</button>
+                                    </div>
+                                </form>
+                                <div class="card-actions">
+                                    <button type="button" class="card-action-btn edit" aria-label="Edit address">
+                                        <i class="fa-regular fa-pen-to-square"></i>
+                                    </button>
+                                    <button type="button" class="card-action-btn delete" aria-label="Delete address">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
+                                    <button type="button" class="card-action-btn set-default">
+                                        <i class="fa-regular fa-star"></i>
+                                        <span>Set Default</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <form class="profile-form" id="profile-form">
-                        <div class="form-row two-col">
-                            <div class="field">
-                                <label>Full Name</label>
-                                <input type="text" name="full_name" value="Kyaw Ko Ko">
-                            </div>
-                            <div class="field">
-                                <label>Phone</label>
-                                <input type="text" name="phone" value="09123456789">
-                            </div>
-                        </div>
-                        <div class="form-row two-col">
-                            <div class="field">
-                                <label>Email</label>
-                                <input type="email" name="email" value="kyawkokko123@gmail.com">
-                            </div>
-                            <div class="field">
-                                <label>Address</label>
-                                <input type="text" name="address" value="No. 96, Pyay Road">
-                            </div>
-                        </div>
-                        <div class="form-row two-col">
-                            <div class="field">
-                                <label>Township</label>
-                                <input type="text" name="township" value="Kamaryut">
-                            </div>
-                            <div class="field">
-                                <label>City</label>
-                                <input type="text" name="city" value="Yangon">
-                            </div>
-                        </div>
-                        <div class="form-actions">
-                            <button type="button" class="cancel-btn" id="profile-cancel-btn">Cancel</button>
-                            <button type="button" class="save-btn">Save</button>
-                        </div>
-                    </form>
                 </div>
 
                 <div class="profile-section" id="orders">
@@ -269,12 +498,12 @@
                         <div class="settings-row">
                             <span>Password:</span>
                             <span>**********</span>
-                            <button type="button" class="icon-btn">
+                            <button type="button" class="icon-btn modal-trigger" data-modal-target="change-password-modal">
                                 <i class="fa-regular fa-pen-to-square"></i>
                             </button>
                         </div>
-                        <a href="#" class="settings-link">Forgot Password</a>
-                        <a href="#" class="settings-link danger">Delete this Account</a>
+                        <a href="#" class="settings-link modal-trigger" data-modal-target="forgot-password-modal">Forgot Password</a>
+                        <a href="#" class="settings-link danger modal-trigger" data-modal-target="delete-account-modal">Delete this Account</a>
                     </div>
                 </div>
 
@@ -284,6 +513,22 @@
             </section>
         </div>
     </main>
+
+    <div class="modal-overlay" id="address-delete-modal" aria-hidden="true">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="address-delete-title">
+            <div class="modal-header">
+                <h3 id="address-delete-title">Delete Address</h3>
+                <button type="button" class="modal-close" aria-label="Close">×</button>
+            </div>
+            <p class="modal-subtitle danger-text">
+                This address will be removed permanently. Are you sure?
+            </p>
+            <div class="modal-actions">
+                <button type="button" class="btn ghost modal-cancel">Cancel</button>
+                <button type="button" class="btn danger" id="confirm-address-delete">Delete</button>
+            </div>
+        </div>
+    </div>
 
     <?php include('./footer.php') ?>
 

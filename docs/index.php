@@ -431,7 +431,7 @@
     </section>
 
     <!--footer -->
-    <?php include('./footer.php') ?>
+    <?php include './footer.php'; ?>
 
     <!--js links -->
     <script src="./assets/js/home.js"></script>

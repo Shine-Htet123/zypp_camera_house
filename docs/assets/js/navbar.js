@@ -454,3 +454,57 @@ document.querySelectorAll('.price-format').forEach(price => {
     const number = parseInt(price.textContent.replace(/,/g, ''), 10);
     price.textContent = number.toLocaleString('en-US');
 });
+
+/* Modal Controls */
+const modalTriggers = document.querySelectorAll("[data-modal-target]");
+const modalOverlays = document.querySelectorAll(".modal-overlay");
+
+const openModal = (modalId) => {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
+};
+
+const closeModal = (modal) => {
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
+};
+
+modalTriggers.forEach((trigger) => {
+    trigger.addEventListener("click", (event) => {
+        event.preventDefault();
+        const target = trigger.dataset.modalTarget;
+        if (target) openModal(target);
+    });
+});
+
+modalOverlays.forEach((overlay) => {
+    overlay.addEventListener("click", (event) => {
+        if (event.target === overlay) {
+            closeModal(overlay);
+        }
+    });
+
+    const closeBtn = overlay.querySelector(".modal-close");
+    const cancelBtn = overlay.querySelector(".modal-cancel");
+
+    if (closeBtn) {
+        closeBtn.addEventListener("click", () => closeModal(overlay));
+    }
+    if (cancelBtn) {
+        cancelBtn.addEventListener("click", () => closeModal(overlay));
+    }
+});
+
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+        const openModalEl = document.querySelector(".modal-overlay.open");
+        if (openModalEl) closeModal(openModalEl);
+    }
+});
+
+/* End Modal Controls */

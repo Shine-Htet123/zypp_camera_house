@@ -1,18 +1,103 @@
-const profileSection = document.querySelector("#profile");
-const editBtn = document.querySelector("#profile-edit-btn");
-const cancelBtn = document.querySelector("#profile-cancel-btn");
+const addressCards = document.querySelectorAll(".profile-card[data-address-card]");
+const deleteModal = document.querySelector("#address-delete-modal");
+const deleteConfirmBtn = document.querySelector("#confirm-address-delete");
+let cardPendingDelete = null;
 
-if (profileSection && editBtn) {
-    editBtn.addEventListener("click", () => {
-        profileSection.classList.toggle("editing");
+const updateDefaultButtons = () => {
+    addressCards.forEach((card) => {
+        const button = card.querySelector(".card-action-btn.set-default");
+        if (!button) return;
+        if (card.classList.contains("is-default")) {
+            button.querySelector("span").textContent = "Default";
+            button.setAttribute("disabled", "disabled");
+        } else {
+            button.querySelector("span").textContent = "Set Default";
+            button.removeAttribute("disabled");
+        }
     });
+};
+
+addressCards.forEach((card) => {
+    const editBtn = card.querySelector(".card-action-btn.edit");
+    const deleteBtn = card.querySelector(".card-action-btn.delete");
+    const defaultBtn = card.querySelector(".card-action-btn.set-default");
+    const cancelBtn = card.querySelector(".card-form-actions .cancel-btn");
+    const saveBtn = card.querySelector(".card-form-actions .save-btn");
+
+    if (editBtn) {
+        editBtn.addEventListener("click", () => {
+            card.classList.add("editing");
+        });
+    }
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener("click", () => {
+            card.classList.remove("editing");
+        });
+    }
+
+    if (saveBtn) {
+        saveBtn.addEventListener("click", () => {
+            card.classList.remove("editing");
+        });
+    }
+
+    if (defaultBtn) {
+        defaultBtn.addEventListener("click", () => {
+            addressCards.forEach((item) => item.classList.remove("is-default"));
+            card.classList.add("is-default");
+            updateDefaultButtons();
+        });
+    }
+
+    if (deleteBtn) {
+        deleteBtn.addEventListener("click", () => {
+            cardPendingDelete = card;
+            if (deleteModal) {
+                deleteModal.classList.add("open");
+                deleteModal.setAttribute("aria-hidden", "false");
+                document.body.classList.add("modal-open");
+            }
+        });
+    }
+});
+
+if (deleteModal) {
+    const closeBtn = deleteModal.querySelector(".modal-close");
+    const cancelBtn = deleteModal.querySelector(".modal-cancel");
+
+    const closeModal = () => {
+        deleteModal.classList.remove("open");
+        deleteModal.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("modal-open");
+        cardPendingDelete = null;
+    };
+
+    if (closeBtn) {
+        closeBtn.addEventListener("click", closeModal);
+    }
+    if (cancelBtn) {
+        cancelBtn.addEventListener("click", closeModal);
+    }
+
+    deleteModal.addEventListener("click", (event) => {
+        if (event.target === deleteModal) {
+            closeModal();
+        }
+    });
+
+    if (deleteConfirmBtn) {
+        deleteConfirmBtn.addEventListener("click", () => {
+            if (cardPendingDelete) {
+                cardPendingDelete.remove();
+                updateDefaultButtons();
+            }
+            closeModal();
+        });
+    }
 }
 
-if (profileSection && cancelBtn) {
-    cancelBtn.addEventListener("click", () => {
-        profileSection.classList.remove("editing");
-    });
-}
+updateDefaultButtons();
 
 const trackForm = document.querySelector("#track-form");
 const trackResult = document.querySelector("#track-result");

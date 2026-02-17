@@ -42,6 +42,7 @@
 body {
     background-color: var(--bg-main);
     color: var(--text-secondary);
+    position: relative;
 }
 
 html, body {

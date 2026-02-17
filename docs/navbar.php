@@ -1,4 +1,5 @@
-<!--- Navigation Bar Start ---->
+    <?php include 'loading.php'; ?>
+    <!--- Navigation Bar Start ---->
     <section class="top">
         <div class="navbar">
             <div class="nav-left">
@@ -412,7 +413,9 @@
                         </div>
                     </div>
                     <p class="form-warning" id="login-warning" aria-live="polite"></p>
-                    <span id="forgetpwd">Forgot Password</span>
+                    <button type="button" id="forgetpwd" class="modal-trigger" data-modal-target="forgot-password-modal">
+                        Forgot Password
+                    </button>
                     <button type="submit" class="login-btn">Login</button>
                     <span class="register-link">Don't have an account? <a href="#" id="register">Register</a></span>
                 </form>
@@ -626,3 +629,72 @@
         </div>
     </section>
     <!--Sidebar End--->
+
+    <div class="modal-overlay" id="forgot-password-modal" aria-hidden="true">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="forgot-password-title">
+            <div class="modal-header">
+                <h3 id="forgot-password-title">Forgot Password</h3>
+                <button type="button" class="modal-close" aria-label="Close">×</button>
+            </div>
+            <p class="modal-subtitle">Enter your email and we will send a reset link.</p>
+            <form class="modal-form">
+                <div class="field">
+                    <label>Email</label>
+                    <input type="email" name="reset_email" placeholder="email@example.com">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn ghost modal-cancel">Cancel</button>
+                    <button type="button" class="btn primary">Send Reset Link</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="change-password-modal" aria-hidden="true">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="change-password-title">
+            <div class="modal-header">
+                <h3 id="change-password-title">Change Password</h3>
+                <button type="button" class="modal-close" aria-label="Close">×</button>
+            </div>
+            <form class="modal-form">
+                <div class="field">
+                    <label>Current Password</label>
+                    <input type="password" name="current_password" placeholder="••••••••">
+                </div>
+                <div class="field">
+                    <label>New Password</label>
+                    <input type="password" name="new_password" placeholder="••••••••">
+                </div>
+                <div class="field">
+                    <label>Confirm New Password</label>
+                    <input type="password" name="confirm_password" placeholder="••••••••">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn ghost modal-cancel">Cancel</button>
+                    <button type="button" class="btn primary">Update Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="delete-account-modal" aria-hidden="true">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
+            <div class="modal-header">
+                <h3 id="delete-account-title">Delete Account</h3>
+                <button type="button" class="modal-close" aria-label="Close">×</button>
+            </div>
+            <p class="modal-subtitle danger-text">
+                This action is permanent and cannot be undone.
+            </p>
+            <form class="modal-form">
+                <div class="field">
+                    <label>Type DELETE to confirm</label>
+                    <input type="text" name="delete_confirm" placeholder="DELETE">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn ghost modal-cancel">Cancel</button>
+                    <button type="button" class="btn danger">Delete Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
