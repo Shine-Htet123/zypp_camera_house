@@ -405,25 +405,25 @@
         <div class="trust-badges-box">
             <div class="badge">
                 <div class="badge-icon">
-                    <img src="./assets/images/secure-payment-badge.png" alt="Icon Unavailable">
+                    <img src="./assets/images/secure-payment.png" alt="Icon Unavailable">
                 </div>
                 <h4>Secure Payment</h4>
             </div>
             <div class="badge">
                 <div class="badge-icon">
-                    <img src="./assets/images/fast-delivery-badge.png" alt="Icon Unavailable">
+                    <img src="./assets/images/fast-delivery.png" alt="Icon Unavailable">
                 </div>
                 <h4>Fast Delivery</h4>
             </div>
             <div class="badge">
                 <div class="badge-icon">
-                    <img src="./assets/images/warranty-guaranteed-badge.png" alt="Icon Unavailable">
+                    <img src="./assets/images/warranty-guaranteed.png" alt="Icon Unavailable">
                 </div>
                 <h4>Warranty Guaranteed</h4>
             </div>
             <div class="badge">
                 <div class="badge-icon">
-                    <img src="./assets/images/excellent-support-badge.png" alt="Icon Unavailable">
+                    <img src="./assets/images/excellent-support.png" alt="Icon Unavailable">
                 </div>
                 <h4>Excellent Support</h4>
             </div>
