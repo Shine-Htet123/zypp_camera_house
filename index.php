@@ -1,2 +1,3 @@
 <script>
-    window.location.href = "./docs/index.php";
+    window.location.href = "../docs/index.html";
+</script>
