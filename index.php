@@ -1,3 +1,3 @@
 <script>
-    window.location.href = "../docs/index.html";
+    window.location.href = "./docs/index.html";
 </script>
