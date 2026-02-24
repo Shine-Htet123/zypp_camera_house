@@ -340,42 +340,42 @@
                                     <span>Total</span>
                                 </div>
                                 <div class="orders-body">
-                                    <a class="table-row" href="./check-order.php">
+                                    <a class="table-row" href="/check-order">
                                         <span>#20260126001</span>
                                         <span>14 December 2025</span>
                                         <span class="status delivered">Delivered</span>
                                         <span>Paid</span>
                                         <span>3,000,000 MMK</span>
                                     </a>
-                                    <a class="table-row" href="./check-order.php">
+                                    <a class="table-row" href="/check-order">
                                         <span>#20260126002</span>
                                         <span>14 December 2025</span>
                                         <span class="status cancelled">Cancelled</span>
                                         <span>Paid</span>
                                         <span>3,000,000 MMK</span>
                                     </a>
-                                    <a class="table-row" href="./check-order.php">
+                                    <a class="table-row" href="/check-order">
                                         <span>#20260126003</span>
                                         <span>14 December 2025</span>
                                         <span class="status pending">Pending</span>
                                         <span>Paid</span>
                                         <span>3,000,000 MMK</span>
                                     </a>
-                                    <a class="table-row" href="./check-order.php">
+                                    <a class="table-row" href="/check-order">
                                         <span>#20260126004</span>
                                         <span>14 December 2025</span>
                                         <span class="status delivered">Delivered</span>
                                         <span>Paid</span>
                                         <span>3,000,000 MMK</span>
                                     </a>
-                                    <a class="table-row" href="./check-order.php">
+                                    <a class="table-row" href="/check-order">
                                         <span>#20260126005</span>
                                         <span>14 December 2025</span>
                                         <span class="status pending">Pending</span>
                                         <span>Paid</span>
                                         <span>3,000,000 MMK</span>
                                     </a>
-                                    <a class="table-row" href="./check-order.php">
+                                    <a class="table-row" href="/check-order">
                                         <span>#20260126006</span>
                                         <span>14 December 2025</span>
                                         <span class="status cancelled">Cancelled</span>

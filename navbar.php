@@ -9,227 +9,227 @@
                     </a>
                 </div>
                 <div class="nav-links">
-                    <a href="index.php">Home</a>
+                    <a href="/">Home</a>
                     <div class="category-container">
-                        <a href="shop.php" class="dropdown">Shop</a>
+                        <a href="/shop" class="dropdown">Shop</a>
                         <i class="fa-solid fa-chevron-down"></i>
                         <div class="category-dropdown">
                             <div class="dropdown-container">
-                                <a href="shop.php" class="dropdown">Brands</a>
+                                <a href="/shop" class="dropdown">Brands</a>
                                 <div class="dropdown-content">
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Canon</a>
+                                        <a href="/shop">Canon</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Sony</a>
+                                        <a href="/shop">Sony</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Nikon</a>
+                                        <a href="/shop">Nikon</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Fujifilm</a>
+                                        <a href="/shop">Fujifilm</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Panasonic</a>
+                                        <a href="/shop">Panasonic</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">DJI</a>
+                                        <a href="/shop">DJI</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">GoPro</a>
+                                        <a href="/shop">GoPro</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Sigma</a>
+                                        <a href="/shop">Sigma</a>
                                     </div>
                                 </div>
                             </div>
                             <div class="dropdown-container">
-                                <a href="shop.php" class="dropdown">Camera</a>
+                                <a href="/shop" class="dropdown">Camera</a>
                                 <div class="dropdown-content">
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Canon</a>
+                                        <a href="/shop">Canon</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Sony</a>
+                                        <a href="/shop">Sony</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Nikon</a>
+                                        <a href="/shop">Nikon</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Fujifilm</a>
+                                        <a href="/shop">Fujifilm</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Panasonic</a>
+                                        <a href="/shop">Panasonic</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">DJI</a>
+                                        <a href="/shop">DJI</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">GoPro</a>
+                                        <a href="/shop">GoPro</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Sigma</a>
+                                        <a href="/shop">Sigma</a>
                                     </div>
                                 </div>
                             </div>
                             <div class="dropdown-container">
-                                <a href="shop.php" class="dropdown">Lenses</a>
+                                <a href="/shop" class="dropdown">Lenses</a>
                                 <div class="dropdown-content">
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Canon</a>
+                                        <a href="/shop">Canon</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Sony</a>
+                                        <a href="/shop">Sony</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Nikon</a>
+                                        <a href="/shop">Nikon</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Fujifilm</a>
+                                        <a href="/shop">Fujifilm</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Panasonic</a>
+                                        <a href="/shop">Panasonic</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">DJI</a>
+                                        <a href="/shop">DJI</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">GoPro</a>
+                                        <a href="/shop">GoPro</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Sigma</a>
+                                        <a href="/shop">Sigma</a>
                                     </div>
                                 </div>
                             </div>
                             <div class="dropdown-container">
-                                <a href="shop.php" class="dropdown">Accessories</a>
+                                <a href="/shop" class="dropdown">Accessories</a>
                                 <div class="dropdown-content">
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Canon</a>
+                                        <a href="/shop">Canon</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Sony</a>
+                                        <a href="/shop">Sony</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Nikon</a>
+                                        <a href="/shop">Nikon</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Fujifilm</a>
+                                        <a href="/shop">Fujifilm</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Panasonic</a>
+                                        <a href="/shop">Panasonic</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">DJI</a>
+                                        <a href="/shop">DJI</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">GoPro</a>
+                                        <a href="/shop">GoPro</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Sigma</a>
+                                        <a href="/shop">Sigma</a>
                                     </div>
                                 </div>
                             </div>
                             <div class="dropdown-container">
-                                <a href="shop.php" class="dropdown">Audio & Video</a>
+                                <a href="/shop" class="dropdown">Audio & Video</a>
                                 <div class="dropdown-content">
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Canon</a>
+                                        <a href="/shop">Canon</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Sony</a>
+                                        <a href="/shop">Sony</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Nikon</a>
+                                        <a href="/shop">Nikon</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Fujifilm</a>
+                                        <a href="/shop">Fujifilm</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Panasonic</a>
+                                        <a href="/shop">Panasonic</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">DJI</a>
+                                        <a href="/shop">DJI</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">GoPro</a>
+                                        <a href="/shop">GoPro</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Sigma</a>
+                                        <a href="/shop">Sigma</a>
                                     </div>
                                 </div>
                             </div>
                             <div class="dropdown-container">
-                                <a href="shop.php" class="dropdown">Lighting</a>
+                                <a href="/shop" class="dropdown">Lighting</a>
                                 <div class="dropdown-content">
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Canon</a>
+                                        <a href="/shop">Canon</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Sony</a>
+                                        <a href="/shop">Sony</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Nikon</a>
+                                        <a href="/shop">Nikon</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Fujifilm</a>
+                                        <a href="/shop">Fujifilm</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Panasonic</a>
+                                        <a href="/shop">Panasonic</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">DJI</a>
+                                        <a href="/shop">DJI</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">GoPro</a>
+                                        <a href="/shop">GoPro</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Sigma</a>
+                                        <a href="/shop">Sigma</a>
                                     </div>
                                 </div>
                             </div>
                             <div class="dropdown-container">
-                                <a href="shop.php" class="dropdown">Promotions</a>
+                                <a href="/shop" class="dropdown">Promotions</a>
                                 <div class="dropdown-content">
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Canon</a>
+                                        <a href="/shop">Canon</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Sony</a>
+                                        <a href="/shop">Sony</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Nikon</a>
+                                        <a href="/shop">Nikon</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Fujifilm</a>
+                                        <a href="/shop">Fujifilm</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Panasonic</a>
+                                        <a href="/shop">Panasonic</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">DJI</a>
+                                        <a href="/shop">DJI</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">GoPro</a>
+                                        <a href="/shop">GoPro</a>
                                     </div>
                                     <div class="dropdown-link">
-                                        <a href="shop.php">Sigma</a>
+                                        <a href="/shop">Sigma</a>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <a href="wholesale.php">Wholesale</a>
-                    <a href="about.php">About</a>
+                    <a href="/wholesale">Wholesale</a>
+                    <a href="/about">About</a>
                     <div class="dropdown-container">
                         <a class="dropdown">Support</a>
                         <i class="fa-solid fa-chevron-down"></i>
                         <div class="dropdown-content" style="padding-left: 0;">
                             <div class="dropdown-link">
-                                <a href="./warranty-FAQ.php">Warranty & FAQs</a>
+                                <a href="/warranty-FAQ">Warranty & FAQs</a>
                             </div>
                             <div class="dropdown-link">
-                                <a href="./reservation-policy.php">Reservation Policy</a>
+                                <a href="/reservation-policy">Reservation Policy</a>
                             </div>
                             <div class="dropdown-link">
                                 <a href="#">Delivery Policy</a>
@@ -370,11 +370,11 @@
                 </div>
                 <div class="user-shortcuts">
                     <div class="user-profile" id="user-icon">
-                        <!-- <a href="./user-profile.php"><i class="fa-regular fa-user"></i></a> -->
+                        <!-- <a href="/user-profile"><i class="fa-regular fa-user"></i></a> -->
                         <a><i class="fa-regular fa-user"></i></a>
                     </div>
                     <div class="cart">
-                        <a href="cart.php" class="cart-icon">
+                        <a href="/cart" class="cart-icon">
                             <i class="fa-solid fa-cart-shopping"></i>
                             <div class="cart-count">
                                 <span>0</span>
@@ -611,9 +611,9 @@
                 </div>
                 <div class="nav-links">
                     <a href="#">Home</a>
-                    <a href="shop.php" class="dropdown">Shop</a>
-                    <a href="wholesale.php">Wholesale</a>
-                    <a href="about.php">About</a>
+                    <a href="/shop" class="dropdown">Shop</a>
+                    <a href="/wholesale">Wholesale</a>
+                    <a href="/about">About</a>
                     <div class="category-container" id="support">
                         <a class="support">Support</a>
                         <i class="fa-solid fa-chevron-down" id="support-chevron"></i>

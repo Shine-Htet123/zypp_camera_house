@@ -67,7 +67,7 @@
             </div>
 
             <div class="order-actions">
-                <a href="user-profile.php#track-order">Go Back to Profile</a>
+                <a href="/user-profile#track-order">Go Back to Profile</a>
                 <button type="button" class="download-btn">Download E-receipt</button>
             </div>
         </section>

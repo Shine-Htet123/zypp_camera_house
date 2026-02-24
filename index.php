@@ -114,7 +114,7 @@
                 <p>Experience our products through influencer reviews & unboxings.</p>
             </div>
             <div class="video-link-btn">
-                <a href="./unboxing-influencers.php">Discover More</a>
+                <a href="/unboxing-influencers">Discover More</a>
             </div>
         </div>
     </section>
@@ -167,7 +167,7 @@
         <div class="best-sellers-box">
             <h2>Best Sellers</h2>
             <div class="best-seller-slider">
-                <a href="./product-details.php" class="product-card">
+                <a href="/product-details" class="product-card">
                     <div class="product-img-box">
                         <img src="../storage/uploads/products/placeholder-camera.png" alt="Image Unavailable">
                     </div>
@@ -187,7 +187,7 @@
                         </div>
                     </div>
                 </a>
-                <a href="./product-details.php" class="product-card">
+                <a href="/product-details" class="product-card">
                     <div class="product-img-box">
                         <img src="../storage/uploads/products/placeholder-camera.png" alt="Image Unavailable">
                     </div>
@@ -207,7 +207,7 @@
                         </div>
                     </div>
                 </a>
-                <a href="./product-details.php" class="product-card">
+                <a href="/product-details" class="product-card">
                     <div class="product-img-box">
                         <img src="../storage/uploads/products/placeholder-camera.png" alt="Image Unavailable">
                     </div>
@@ -227,7 +227,7 @@
                         </div>
                     </div>
                 </a>
-                <a href="./product-details.php" class="product-card">
+                <a href="/product-details" class="product-card">
                     <div class="product-img-box">
                         <img src="../storage/uploads/products/placeholder-camera.png" alt="Image Unavailable">
                     </div>
@@ -247,7 +247,7 @@
                         </div>
                     </div>
                 </a>
-                <a href="./product-details.php" class="product-card">
+                <a href="/product-details" class="product-card">
                     <div class="product-img-box">
                         <img src="../storage/uploads/products/placeholder-camera.png" alt="Image Unavailable">
                     </div>
@@ -267,7 +267,7 @@
                         </div>
                     </div>
                 </a>
-                <a href="./product-details.php" class="product-card">
+                <a href="/product-details" class="product-card">
                     <div class="product-img-box">
                         <img src="../storage/uploads/products/placeholder-camera.png" alt="Image Unavailable">
                     </div>
