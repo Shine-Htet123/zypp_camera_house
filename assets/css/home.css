@@ -149,30 +149,80 @@
 }
 
 .trusted-brands .trusted-brands-title {
-    width: 100%;
+    width: 80%;
 }
 
 .trusted-brands-title .title{
     font-size: 1.7rem;
-    text-align: center;
+}
+
+.carousel-header {
+    width: 80%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.carousel-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.carousel-btn {
+    border: none;
+    background: var(--bg-card);
+    box-shadow: var(--box-shadow-normal);
+    color: var(--text-primary);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.carousel-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--box-shadow);
+}
+
+.carousel-track{
+    width: 80%;
+    display: grid;
+    grid-auto-flow: column;
+    --carousel-gap: 24px;
+    gap: var(--carousel-gap);
+    --carousel-items: 4;
+    grid-auto-columns: calc((100% - (var(--carousel-gap) * (var(--carousel-items) - 1))) / var(--carousel-items));
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding: 6px 4px;
+    scrollbar-width: none;
+}
+
+.carousel-track::-webkit-scrollbar {
+    display: none;
 }
 
 .trusted-brands .brand-logos{
-    width: auto;
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 5rem;
+    width: 80%;
 }
 
 .trusted-brands .brand-logos .logo{
-    width: 180px;
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
+    margin: 0 auto;
 }
 
 .trusted-brands .brand-logos .logo img{
-    width: 100%;
+    width: auto;
+    max-width: 140px;
     height: auto;
     object-fit: contain;
 }
@@ -316,9 +366,6 @@
 }
 
 .featured-categories-container .featured-categories-box {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
     width: 80%;
 }
 
@@ -786,9 +833,9 @@
         font-size: 1.2rem;
     }
 
-    .trusted-brands .brand-logos {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 3rem;
+    .carousel-track {
+        width: 90%;
+        --carousel-items: 3;
     }
 
     .video-link-container .video-link-box {
@@ -799,7 +846,6 @@
 
     .featured-categories-container .featured-categories-box {
         width: 90%;
-        grid-template-columns: repeat(2, 1fr);
     }
 
     .best-sellers-container .best-sellers-box .best-seller-slider {
@@ -838,6 +884,10 @@
     .hero-section .hero-container .hero-wrapper .hero-elements .hero-btn {
         justify-content: flex-start;
         flex-wrap: wrap;
+    }
+
+    .carousel-track {
+        --carousel-items: 2;
     }
 
     .video-link-container .video-link-box {
@@ -887,17 +937,8 @@
         object-fit: cover;
     }
 
-    .trusted-brands .brand-logos {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 2rem;
-    }
-
-    .trusted-brands .brand-logos .logo {
-        width: 140px;
-    }
-
-    .featured-categories-container .featured-categories-box {
-        grid-template-columns: 1fr;
+    .carousel-track {
+        --carousel-items: 1;
     }
 
     .best-sellers-container .chevrons {

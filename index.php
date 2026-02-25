@@ -81,10 +81,18 @@
 
     <!--trusted brands section -->
     <section class="trusted-brands">
-        <div class="trusted-brands-title">
+        <div class="trusted-brands-title carousel-header">
             <h3 class="title">Trusted Brands</h3>
+            <div class="carousel-controls">
+                <button type="button" class="carousel-btn" data-carousel="brands" data-direction="prev" aria-label="Previous brand">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button type="button" class="carousel-btn" data-carousel="brands" data-direction="next" aria-label="Next brand">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
         </div>
-        <div class="brand-logos">
+        <div class="brand-logos carousel-track" data-carousel-track="brands">
             <div class="logo">
                 <img src="../storage/uploads/brands/canon-logo.png" alt="">
             </div>
@@ -121,8 +129,18 @@
 
     <!--Featured Categories -->
     <section class="featured-categories-container">
-        <h2>Featured Categories</h2>
-        <div class="featured-categories-box">
+        <div class="carousel-header">
+            <h2>Featured Categories</h2>
+            <div class="carousel-controls">
+                <button type="button" class="carousel-btn" data-carousel="categories" data-direction="prev" aria-label="Previous category">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button type="button" class="carousel-btn" data-carousel="categories" data-direction="next" aria-label="Next category">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        <div class="featured-categories-box carousel-track" data-carousel-track="categories">
             <a href="#" class="featured-category">
                 <div class="category-img">
                     <img src="../storage/uploads/categories/camera.png">

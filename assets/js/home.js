@@ -86,6 +86,41 @@ if (bestSellerSlider && bestSellerChevrons.length >= 2) {
     updateBestSellerChevrons();
 }
 
+// Trusted brands + featured categories carousels
+const carouselTracks = document.querySelectorAll("[data-carousel-track]");
+
+const getCarouselStep = (track) => {
+    const firstItem = track.children[0];
+    if (!firstItem) return 0;
+    const itemRect = firstItem.getBoundingClientRect();
+    const styles = window.getComputedStyle(track);
+    const gap = parseFloat(styles.columnGap || styles.gap || "0");
+    return Math.ceil(itemRect.width + gap);
+};
+
+const scrollCarousel = (track, direction) => {
+    const step = getCarouselStep(track);
+    if (!step) return;
+    track.scrollTo({
+        left: track.scrollLeft + direction * step,
+        behavior: "smooth"
+    });
+};
+
+carouselTracks.forEach((track) => {
+    const name = track.dataset.carouselTrack;
+    const prevBtn = document.querySelector(`.carousel-btn[data-carousel="${name}"][data-direction="prev"]`);
+    const nextBtn = document.querySelector(`.carousel-btn[data-carousel="${name}"][data-direction="next"]`);
+
+    if (prevBtn) {
+        prevBtn.addEventListener("click", () => scrollCarousel(track, -1));
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener("click", () => scrollCarousel(track, 1));
+    }
+});
+
 // Review form toggle
 const leaveReviewBtn = document.querySelector("#leave-review-btn");
 const reviewForm = document.querySelector("#review-form");
