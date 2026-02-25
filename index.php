@@ -125,7 +125,7 @@
         <div class="featured-categories-box">
             <a href="#" class="featured-category">
                 <div class="category-img">
-                    <img src="../storage/uploads/categories/cameras-category.png">
+                    <img src="../storage/uploads/categories/camera.png">
                 </div>
                 <div class="category-text">
                     <h3>Cameras</h3>
@@ -133,26 +133,34 @@
             </a>
             <a href="#" class="featured-category">
                 <div class="category-img">
-                    <img src="../storage/uploads/categories/lenses-category.png">
+                    <img src="../storage/uploads/categories/lens.png">
                 </div>
                 <div class="category-text">
-                    <h3>Lenses</h3>
+                    <h3>Lens</h3>
                 </div>
             </a>
             <a href="#" class="featured-category">
                 <div class="category-img">
-                    <img src="../storage/uploads/categories/tripods-category.png">
+                    <img src="../storage/uploads/categories/action_camera.png">
                 </div>
                 <div class="category-text">
-                    <h3>Tripods</h3>
+                    <h3>Action Camera</h3>
                 </div>
             </a>
             <a href="#" class="featured-category">
                 <div class="category-img">
-                    <img src="../storage/uploads/categories/lightings-category.png">
+                    <img src="../storage/uploads/categories/gimbal.png">
                 </div>
                 <div class="category-text">
-                    <h3>Lightings</h3>
+                    <h3>Gimbal</h3>
+                </div>
+            </a>
+            <a href="#" class="featured-category">
+                <div class="category-img">
+                    <img src="../storage/uploads/categories/microphone.png">
+                </div>
+                <div class="category-text">
+                    <h3>Microphone</h3>
                 </div>
             </a>
         </div>

@@ -236,7 +236,9 @@
 
 .video-link-container .video-link-btn a{
     width: 60%;
-    height: 45%;
+    height: auto;
+    min-height: 40px;
+    padding: 10px 12px;
     background-color: var(--brand-primary-dark);
     border: none;
     color: var(--text-inverse);
