@@ -15,7 +15,7 @@
 
 .dashboard-grid {
     display: grid;
-    grid-template-columns: minmax(220px, 0.9fr) minmax(320px, 1.5fr) minmax(260px, 1fr);
+    grid-template-columns: minmax(520px, 1.05fr) minmax(360px, 1.6fr) minmax(260px, 1fr);
     grid-template-areas:
         "kpi sales stock"
         "trend best stock"
@@ -34,8 +34,62 @@
 .kpi-stack {
     grid-area: kpi;
     display: grid;
-    grid-template-columns: repeat(2, minmax(240px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
+    align-items: start;
+}
+
+.kpi-filter {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+}
+
+.kpi-filter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 20px;
+    border-radius: 999px;
+    border: 1px solid #e6e6e6;
+    background: #fff;
+    box-shadow: var(--box-shadow-normal);
+    position: relative;
+    cursor: pointer;
+    min-width: 210px;
+    justify-content: space-between;
+    position: relative;
+}
+
+.kpi-filter-pill i {
+    font-size: 1rem;
+    color: #1d1d1d;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.kpi-filter-text {
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: #5c4a3f;
+    pointer-events: none;
+    z-index: 1;
+    white-space: nowrap;
+}
+
+.kpi-filter-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.kpi-filter-input::-webkit-calendar-picker-indicator {
+    opacity: 0;
 }
 
 .kpi-card {
@@ -45,7 +99,8 @@
     text-align: center;
     gap: 6px;
     min-height: 190px;
-    min-width: 240px;
+    min-width: 0;
+    width: 100%;
 }
 
 .kpi-top {
@@ -54,58 +109,18 @@
     justify-content: center;
 }
 
-.kpi-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    padding: 6px 18px;
-    border-radius: 999px;
-    border: 1px solid #e6e6e6;
-    font-size: 1rem;
+.kpi-title {
+    font-size: 0.95rem;
+    font-weight: 600;
     color: var(--text-secondary);
-    background: #fff;
-    min-width: 140px;
-    justify-content: space-between;
-    box-shadow: inset 0 0 0 1px #f0f0f0;
-    position: relative;
 }
 
-.kpi-top {
-    position: relative;
+.kpi-input-year {
+    width: 70px;
 }
 
-.kpi-input {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-}
-
-.kpi-input::-webkit-inner-spin-button,
-.kpi-input::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-.kpi-text {
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    color: #5c4a3f;
-    z-index: 1;
-    pointer-events: none;
-}
-
-.kpi-pill i {
-    font-size: 1rem;
-    color: #1d1d1d;
-    z-index: 1;
-    pointer-events: none;
-}
-
-.kpi-input::-webkit-calendar-picker-indicator {
-    opacity: 0;
+.kpi-input-month {
+    width: 120px;
 }
 
 .kpi-icon {
@@ -202,17 +217,17 @@
     background: #ffffff;
     border: 1px solid #ececec;
     border-radius: 10px;
-    padding: 12px;
+    padding: 10px 12px 8px;
     min-height: 240px;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: stretch;
+    justify-content: stretch;
 }
 
-.chart-visual svg {
+.chart-canvas {
     width: 100%;
-    height: auto;
-    max-height: 220px;
+    height: 100%;
+    min-height: 220px;
 }
 
 .stock-table,

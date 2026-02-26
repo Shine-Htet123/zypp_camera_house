@@ -203,10 +203,8 @@
 }
 
 .admin-content {
-    background: #ffffff;
     margin: 18px;
     border-radius: 12px;
-    box-shadow: var(--box-shadow-normal);
     min-height: calc(100vh - 116px);
 }
 

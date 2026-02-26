@@ -67,50 +67,35 @@ $recentOrders = [
 
         <section class="dashboard-grid">
             <div class="kpi-stack">
+                <?php
+                    $monthInputId = 'sales_month';
+                    $monthValue = '2026-12';
+                    $monthDate = DateTime::createFromFormat('Y-m', $monthValue);
+                    $monthLabel = $monthDate ? strtoupper($monthDate->format('M Y')) : 'DEC 2026';
+                ?>
+                <div class="kpi-filter">
+                    <label class="kpi-filter-pill" for="<?php echo htmlspecialchars($monthInputId); ?>">
+                        <span class="kpi-filter-text"><?php echo htmlspecialchars($monthLabel); ?></span>
+                        <i class="fa-regular fa-calendar"></i>
+                        <input
+                            class="kpi-filter-input"
+                            type="month"
+                            id="<?php echo htmlspecialchars($monthInputId); ?>"
+                            name="<?php echo htmlspecialchars($monthInputId); ?>"
+                            value="<?php echo htmlspecialchars($monthValue); ?>"
+                            aria-label="Sales period"
+                        >
+                    </label>
+                </div>
+
                 <?php foreach ($kpis as $kpi): ?>
-                    <?php
-                        $displayValue = $kpi['period_value'];
-                        if ($kpi['period_type'] === 'month') {
-                            $monthDate = DateTime::createFromFormat('Y-m', $kpi['period_value']);
-                            $displayValue = $monthDate ? strtoupper($monthDate->format('M')) : 'DEC';
-                        }
-                        $inputId = $kpi['period_name'];
-                    ?>
                     <article class="admin-card kpi-card">
-                        <div class="kpi-top">
-                            <label class="kpi-pill" data-type="<?php echo htmlspecialchars($kpi['period_type']); ?>" for="<?php echo htmlspecialchars($inputId); ?>">
-                                <span class="kpi-text"><?php echo htmlspecialchars($displayValue); ?></span>
-                                <i class="fa-regular fa-calendar"></i>
-                            </label>
-                            <?php if ($kpi['period_type'] === 'month'): ?>
-                                <input
-                                    class="kpi-input"
-                                    type="month"
-                                    id="<?php echo htmlspecialchars($inputId); ?>"
-                                    name="<?php echo htmlspecialchars($kpi['period_name']); ?>"
-                                    value="<?php echo htmlspecialchars($kpi['period_value']); ?>"
-                                    aria-label="Monthly sales period"
-                                >
-                            <?php else: ?>
-                                <input
-                                    class="kpi-input"
-                                    type="year"
-                                    id="<?php echo htmlspecialchars($inputId); ?>"
-                                    name="<?php echo htmlspecialchars($kpi['period_name']); ?>"
-                                    value="<?php echo htmlspecialchars($kpi['period_value']); ?>"
-                                    min="2000"
-                                    max="2100"
-                                    step="1"
-                                    aria-label="Yearly sales period"
-                                >
-                            <?php endif; ?>
-                        </div>
+                        <div class="kpi-title"><?php echo htmlspecialchars($kpi['label']); ?></div>
                         <div class="kpi-icon">
                             <i class="fa-solid <?php echo htmlspecialchars($kpi['icon']); ?>"></i>
                         </div>
                         <div class="kpi-meta"><?php echo htmlspecialchars($kpi['unit']); ?></div>
                         <div class="kpi-value"><?php echo htmlspecialchars($kpi['value']); ?></div>
-                        <div class="kpi-label"><?php echo htmlspecialchars($kpi['label']); ?></div>
                     </article>
                 <?php endforeach; ?>
             </div>
@@ -127,26 +112,7 @@ $recentOrders = [
                     </div>
                 </div>
                 <div class="chart-visual">
-                    <svg viewBox="0 0 520 220" role="img" aria-label="Sales chart" data-series="sales">
-                        <defs>
-                            <linearGradient id="salesFill" x1="0" x2="0" y1="0" y2="1">
-                                <stop offset="0%" stop-color="#5da9ff" stop-opacity="0.5" />
-                                <stop offset="100%" stop-color="#5da9ff" stop-opacity="0.05" />
-                            </linearGradient>
-                        </defs>
-                        <polyline
-                            points="20,160 60,120 90,140 130,100 170,130 210,90 250,120 290,80 330,95 360,70 400,90 440,60 500,50"
-                            fill="none"
-                            stroke="#3f8ff5"
-                            stroke-width="4"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        />
-                        <polygon
-                            points="20,160 60,120 90,140 130,100 170,130 210,90 250,120 290,80 330,95 360,70 400,90 440,60 500,50 500,200 20,200"
-                            fill="url(#salesFill)"
-                        />
-                    </svg>
+                    <div id="salesChart" class="chart-canvas" aria-label="Sales chart"></div>
                 </div>
             </article>
 
@@ -180,23 +146,7 @@ $recentOrders = [
                     <h2>Trending Brands</h2>
                 </div>
                 <div class="chart-visual bars">
-                    <svg viewBox="0 0 520 220" role="img" aria-label="Trending brands chart" data-series="trending">
-                        <rect x="40" y="120" width="40" height="70" rx="6" fill="#5cc59a" />
-                        <rect x="100" y="80" width="40" height="110" rx="6" fill="#5cc59a" />
-                        <rect x="160" y="60" width="40" height="130" rx="6" fill="#5cc59a" />
-                        <rect x="220" y="40" width="40" height="150" rx="6" fill="#5cc59a" />
-                        <rect x="280" y="70" width="40" height="120" rx="6" fill="#5cc59a" />
-                        <rect x="340" y="55" width="40" height="135" rx="6" fill="#5cc59a" />
-                        <rect x="400" y="90" width="40" height="100" rx="6" fill="#5cc59a" />
-                        <polyline
-                            points="60,110 120,70 180,85 240,55 300,70 360,45 420,85"
-                            fill="none"
-                            stroke="#7b5ad9"
-                            stroke-width="3"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        />
-                    </svg>
+                    <div id="trendingChart" class="chart-canvas" aria-label="Trending brands chart"></div>
                 </div>
             </article>
 
@@ -205,13 +155,7 @@ $recentOrders = [
                     <h2>Best Sellers</h2>
                 </div>
                 <div class="chart-visual horizontal-bars">
-                    <svg viewBox="0 0 520 220" role="img" aria-label="Best sellers chart" data-series="best-sellers">
-                        <rect x="80" y="40" width="300" height="18" rx="6" fill="#4b93ff" />
-                        <rect x="80" y="70" width="260" height="18" rx="6" fill="#4b93ff" />
-                        <rect x="80" y="100" width="220" height="18" rx="6" fill="#4b93ff" />
-                        <rect x="80" y="130" width="180" height="18" rx="6" fill="#4b93ff" />
-                        <rect x="80" y="160" width="140" height="18" rx="6" fill="#4b93ff" />
-                    </svg>
+                    <div id="bestSellersChart" class="chart-canvas" aria-label="Best sellers chart"></div>
                 </div>
             </article>
 
@@ -249,6 +193,7 @@ $recentOrders = [
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script src="/admin/assets/js/index.js"></script>
 <script src="/admin/assets/js/admin.js"></script>
 </body>
