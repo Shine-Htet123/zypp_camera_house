@@ -16,6 +16,7 @@ toggles.forEach((toggle) => {
 const adminBody = document.querySelector(".admin-body");
 const adminToggle = document.querySelector(".admin-toggle");
 const adminOverlay = document.querySelector(".admin-overlay");
+const navLinks = document.querySelectorAll(".sidebar-nav .nav-link");
 
 if (adminBody && adminToggle) {
     const closeSidebar = () => {
@@ -35,6 +36,18 @@ if (adminBody && adminToggle) {
     window.addEventListener("resize", () => {
         if (window.innerWidth > 768) {
             closeSidebar();
+        }
+    });
+}
+
+if (navLinks.length > 0) {
+    const currentPath = window.location.pathname;
+    navLinks.forEach((link) => {
+        link.classList.remove("active");
+        const href = link.getAttribute("href");
+        if (!href || href === "#") return;
+        if (currentPath.endsWith(href)) {
+            link.classList.add("active");
         }
     });
 }

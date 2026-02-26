@@ -29,8 +29,8 @@
             <div class="sidebar-main">
                 <div class="sidebar-title">Main Menu</div>
                 <nav class="sidebar-nav">
-                    <a href="#" class="nav-link active">Dashboard</a>
-                    <a href="#" class="nav-link">My Account</a>
+                    <a href="/admin/index.php" class="nav-link active">Dashboard</a>
+                    <a href="/admin/my-account.php" class="nav-link">My Account</a>
                     <a href="#" class="nav-link">Products</a>
                     <a href="#" class="nav-link">Category &amp; Brand</a>
                     <a href="#" class="nav-link">Unique Selling Points</a>
