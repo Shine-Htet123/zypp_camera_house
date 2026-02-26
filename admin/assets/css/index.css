@@ -1,0 +1,355 @@
+/* Page-specific styles for admin/index.php */
+
+.admin-dashboard {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.dashboard-header h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--brand-primary);
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: minmax(220px, 0.9fr) minmax(320px, 1.5fr) minmax(260px, 1fr);
+    grid-template-areas:
+        "kpi sales stock"
+        "trend best stock"
+        "orders orders stock";
+    gap: 20px;
+    align-items: start;
+}
+
+.admin-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    box-shadow: var(--box-shadow-normal);
+    padding: 16px;
+}
+
+.kpi-stack {
+    grid-area: kpi;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.kpi-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+    min-height: 190px;
+    min-width: 240px;
+}
+
+.kpi-top {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.kpi-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 18px;
+    border-radius: 999px;
+    border: 1px solid #e6e6e6;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    background: #fff;
+    min-width: 140px;
+    justify-content: space-between;
+    box-shadow: inset 0 0 0 1px #f0f0f0;
+    position: relative;
+}
+
+.kpi-top {
+    position: relative;
+}
+
+.kpi-input {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.kpi-input::-webkit-inner-spin-button,
+.kpi-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.kpi-text {
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: #5c4a3f;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.kpi-pill i {
+    font-size: 1rem;
+    color: #1d1d1d;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.kpi-input::-webkit-calendar-picker-indicator {
+    opacity: 0;
+}
+
+.kpi-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    border: 2px solid #e9d7c4;
+    display: grid;
+    place-items: center;
+    color: var(--brand-primary);
+    font-size: 1.4rem;
+}
+
+.kpi-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+}
+
+.kpi-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.kpi-label {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.sales-card {
+    grid-area: sales;
+}
+
+.stock-card {
+    grid-area: stock;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.trend-card {
+    grid-area: trend;
+}
+
+.best-card {
+    grid-area: best;
+}
+
+.orders-card {
+    grid-area: orders;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.card-header h2 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.range-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.range-tab {
+    border: 1px solid #e2e2e2;
+    background: #fff;
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.range-tab.active {
+    background: var(--brand-primary);
+    color: #fff;
+    border-color: var(--brand-primary);
+}
+
+.chart-visual {
+    margin-top: 12px;
+    background: #ffffff;
+    border: 1px solid #ececec;
+    border-radius: 10px;
+    padding: 12px;
+    min-height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-visual svg {
+    width: 100%;
+    height: auto;
+    max-height: 220px;
+}
+
+.stock-table,
+.orders-table {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.stock-row,
+.orders-row {
+    display: grid;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 4px;
+    border-bottom: 1px solid #e6e6e6;
+    font-size: 0.9rem;
+}
+
+.stock-row {
+    grid-template-columns: 2fr 1fr 1fr;
+}
+
+.orders-row {
+    grid-template-columns: 1fr 1fr 1.2fr 1fr 1.6fr;
+}
+
+.stock-head,
+.orders-head {
+    font-weight: 700;
+    color: var(--text-muted);
+    border-bottom: 1px solid #d9d9d9;
+}
+
+.stock-body,
+.orders-body {
+    display: grid;
+    gap: 6px;
+    max-height: 420px;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.orders-body {
+    max-height: 230px;
+}
+
+.stock-row span:nth-child(2),
+.stock-row span:nth-child(3),
+.orders-row span:nth-child(2),
+.orders-row span:nth-child(4),
+.orders-row span:nth-child(5) {
+    text-align: right;
+}
+
+.orders-row span:nth-child(3) {
+    text-align: left;
+}
+
+.status {
+    font-weight: 600;
+}
+
+.status.in-stock {
+    color: var(--color-success);
+}
+
+.status.out-stock {
+    color: var(--color-danger);
+}
+
+.status.pending {
+    color: var(--color-warning);
+}
+
+.time {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.card-link {
+    margin-top: auto;
+    align-self: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.card-link:hover {
+    color: var(--brand-primary);
+}
+
+@media (max-width: 1200px) {
+    .dashboard-grid {
+        grid-template-columns: minmax(240px, 1fr) minmax(300px, 1.2fr);
+        grid-template-areas:
+            "kpi sales"
+            "trend best"
+            "orders orders"
+            "stock stock";
+    }
+
+    .stock-body {
+        max-height: 320px;
+    }
+}
+
+@media (max-width: 900px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "kpi"
+            "sales"
+            "stock"
+            "trend"
+            "best"
+            "orders";
+    }
+
+    .kpi-stack {
+        grid-template-columns: 1fr;
+    }
+
+    .orders-table {
+        overflow-x: auto;
+    }
+
+    .orders-row {
+        min-width: 620px;
+    }
+}
+
+@media (max-width: 600px) {
+    .admin-dashboard {
+        padding: 18px;
+    }
+
+    .chart-visual {
+        min-height: 180px;
+    }
+}
