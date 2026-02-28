@@ -49,6 +49,8 @@
     display: grid;
     align-items: center;
     column-gap: 12px;
+    text-align: center;
+    justify-items: center;
 }
 
 .data-head {
@@ -59,10 +61,15 @@
     border-bottom: 1px solid #e6e6e6;
 }
 
+.data-head span,
+.data-row span {
+    justify-self: center;
+}
+
 .data-body {
     max-height: 250px;
     overflow-y: auto;
-    padding-right: 6px;
+    scrollbar-gutter: stable;
 }
 
 .data-row {
@@ -71,7 +78,7 @@
 }
 
 .cols-category {
-    grid-template-columns: 60px 1.2fr 120px 110px 110px;
+    grid-template-columns: 60px 1fr 90px 90px 90px;
 }
 
 .cols-subcategory {
@@ -79,12 +86,12 @@
 }
 
 .cols-brand {
-    grid-template-columns: 60px 1.2fr 120px 110px 110px;
+    grid-template-columns: 60px 1fr 90px 90px 90px;
 }
 
 .image-placeholder {
-    width: 56px;
-    height: 56px;
+    width: 70px;
+    height: 70px;
     background: #d7d7d7;
     border-radius: 6px;
     display: grid;
@@ -148,4 +155,180 @@
     .cols-subcategory {
         grid-template-columns: 40px 1fr 90px 90px 90px;
     }
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    padding: 24px;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.modal-overlay.open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.modal-card {
+    background: #fff;
+    border-radius: 12px;
+    width: min(620px, 90vw);
+    padding: 28px 32px 24px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transform: translateY(18px) scale(0.98);
+    opacity: 0;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.modal-overlay.open .modal-card {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+.modal-card h2 {
+    margin: 0;
+    text-align: center;
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+}
+
+.modal-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+}
+
+.modal-field {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 12px;
+    width: 100%;
+    max-width: 420px;
+    align-items: center;
+    font-size: 0.95rem;
+}
+
+.modal-field span {
+    font-weight: 600;
+}
+
+.modal-field input,
+.modal-field select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #dedede;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.modal-field.select select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23666' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 28px;
+}
+
+.modal-upload {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.modal-image {
+    width: 120px;
+    height: 120px;
+    background: #d7d7d7;
+    border-radius: 6px;
+    display: grid;
+    place-items: center;
+    font-size: 2rem;
+    color: #555;
+    overflow: hidden;
+}
+
+.modal-image.has-image {
+    background: transparent;
+}
+
+.btn-upload {
+    background: #6b5646;
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.modal-footer {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 6px;
+    padding: 10px 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 24px;
+    box-shadow: var(--box-shadow-normal);
+}
+
+.modal-note {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.modal-actions.single {
+    justify-content: center;
+}
+
+.modal-actions .btn-footer {
+    border: none;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.modal-actions .btn-footer.save {
+    background: #28a745;
+    color: #fff;
+}
+
+.modal-actions .btn-footer.discard {
+    background: #d9534f;
+    color: #fff;
 }
