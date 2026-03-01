@@ -33,7 +33,7 @@
                     <a href="/admin/my-account.php" class="nav-link">My Account</a>
                     <a href="/admin/products.php" class="nav-link">Products</a>
                     <a href="/admin/category-brand.php" class="nav-link">Category &amp; Brand</a>
-                    <a href="#" class="nav-link">Unique Selling Points</a>
+                    <a href="/admin/unique-selling-points.php" class="nav-link">Unique Selling Points</a>
 
                     <button class="nav-group-toggle" data-target="discounts" aria-expanded="false">
                         <span>Discounts</span>
