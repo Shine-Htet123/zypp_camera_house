@@ -66,6 +66,11 @@
     font-size: 0.9rem;
 }
 
+.usp-row > span:first-child {
+    text-align: center;
+    justify-self: center;
+}
+
 .usp-row:last-child {
     border-bottom: none;
 }
