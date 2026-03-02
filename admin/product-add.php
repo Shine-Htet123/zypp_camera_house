@@ -61,7 +61,6 @@
                             <option>Lighting</option>
                         </select>
                     </label>
-
                     <label class="field select">
                         <span>Sub-Category:</span>
                         <select name="subcategory">

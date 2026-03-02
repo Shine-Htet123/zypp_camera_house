@@ -44,15 +44,15 @@
                         <a href="#" class="nav-link sub">Priority &amp; Stack Rules</a>
                     </div>
 
-                    <a href="#" class="nav-link">Orders</a>
+                    <a href="/admin/orders.php" class="nav-link">Orders</a>
 
                     <button class="nav-group-toggle" data-target="users" aria-expanded="false">
                         <span>Users</span>
                         <i class="fa-solid fa-chevron-down"></i>
                     </button>
                     <div class="nav-submenu" id="users">
-                        <a href="#" class="nav-link sub">Admins</a>
-                        <a href="#" class="nav-link sub">Customers</a>
+                        <a href="/admin/admins.php" class="nav-link sub">Admins</a>
+                        <a href="/admin/customers.php" class="nav-link sub">Customers</a>
                     </div>
 
                     <a href="#" class="nav-link">Content Management</a>
