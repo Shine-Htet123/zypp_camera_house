@@ -57,7 +57,7 @@
 
                     <a href="#" class="nav-link">Content Management</a>
                     <a href="#" class="nav-link">Wholesale Survey</a>
-                    <a href="#" class="nav-link">Media</a>
+                    <a href="/admin/unboxing-influencers.php" class="nav-link">Media</a>
                     <a href="#" class="nav-link">Membership Tiers</a>
                     <a href="#" class="nav-link">Bundles</a>
                     <a href="#" class="nav-link">TIDIO Dashboard</a>
