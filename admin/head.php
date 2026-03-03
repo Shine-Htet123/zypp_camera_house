@@ -5,4 +5,5 @@
     <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/browser-icon.png">
     <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="stylesheet" href="/admin/assets/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
     <title>ZYPP Admin Dashboard</title>
