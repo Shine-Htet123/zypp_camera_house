@@ -17,7 +17,7 @@
                 </div>
                 <div class="user-info">
                     <span class="name">John Doe</span>
-                    <span class="role">Super-admin</span>
+                    <span class="role super-admin-color">Super-admin</span>
                 </div>
             </div>
         </div>
@@ -40,8 +40,8 @@
                         <i class="fa-solid fa-chevron-down"></i>
                     </button>
                     <div class="nav-submenu" id="discounts">
-                        <a href="#" class="nav-link sub">Discount Management</a>
-                        <a href="#" class="nav-link sub">Priority &amp; Stack Rules</a>
+                        <a href="/admin/discounts.php" class="nav-link sub">Discount Management</a>
+                        <a href="/admin/discount-stack-rules.php" class="nav-link sub">Priority &amp; Stack Rules</a>
                     </div>
 
                     <a href="/admin/orders.php" class="nav-link">Orders</a>

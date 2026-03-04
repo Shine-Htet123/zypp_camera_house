@@ -55,6 +55,14 @@ a {
     color: var(--text-secondary);
 }
 
+.super-admin-color {
+    color: var(--color-super-admin);
+}
+
+.admin-color {
+    color: var(--color-admin);
+}
+
 /* Scroll reveal */
 .reveal-on-scroll {
     opacity: 0;

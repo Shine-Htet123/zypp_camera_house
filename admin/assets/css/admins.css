@@ -313,19 +313,20 @@
 }
 
 .admin-role.super-admin {
-    color: var(--color-super-admin);
     background: transparent;
     padding: 0;
     border-radius: 0;
     font-weight: 700;
+    color: var(--color-super-admin);
 }
 
+
 .admin-role.admin {
-    color: #bb36d8;
     background: transparent;
     padding: 0;
     border-radius: 0;
     font-weight: 700;
+    color: var(--color-admin);
 }
 
 .admin-status.online {
@@ -395,4 +396,3 @@
     color: var(--text-secondary);
 }
 
-/* edit-mode styles removed; status is read-only now */
