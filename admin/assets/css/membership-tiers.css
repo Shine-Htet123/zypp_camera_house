@@ -1,0 +1,290 @@
+.membership-page {
+    padding: 24px;
+}
+
+.membership-header h1 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 18px;
+}
+
+.membership-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 1px minmax(0, 420px);
+    gap: 24px;
+    align-items: start;
+}
+
+.membership-left {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.tier-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 18px;
+}
+
+.tier-card,
+.tier-form-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: var(--box-shadow-normal);
+    border: 1px solid #eee;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tier-card {
+    text-align: center;
+}
+
+.tier-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+}
+
+.tier-card.editing {
+    transform: none;
+    box-shadow: var(--box-shadow-normal);
+}
+
+.tier-card.editing {
+    text-align: left;
+    grid-column: 1 / -1;
+    animation: tierEditEnter 0.25s ease;
+}
+
+.tier-card.editing .tier-edit-title {
+    text-align: center;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin: 0 0 16px;
+}
+
+.tier-card.editing .tier-form label {
+    grid-template-columns: 130px minmax(0, 1fr);
+}
+
+.tier-card.editing .tier-form {
+    gap: 10px;
+}
+
+.tier-card.editing .tier-form-actions {
+    margin-top: 18px;
+}
+
+@keyframes tierEditEnter {
+    from {
+        opacity: 0.6;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tier-card.exiting {
+    animation: tierEditExit 0.2s ease forwards;
+}
+
+@keyframes tierEditExit {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0.6;
+        transform: translateY(8px);
+    }
+}
+
+.tier-icon {
+    width: 70px;
+    height: 70px;
+    background: #d9d9d9;
+    border-radius: 8px;
+    margin: 0 auto 14px;
+    display: grid;
+    place-items: center;
+    color: #555;
+}
+
+.tier-card h3 {
+    font-size: 0.95rem;
+    margin: 4px 0 6px;
+}
+
+.tier-card p {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin: 0 0 12px;
+}
+
+.tier-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.tier-actions .icon-btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.tier-actions .icon-btn.delete {
+    color: #c0392b;
+}
+
+.tier-form-card h2 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-align: center;
+    margin: 0 0 16px;
+    color: var(--text-secondary);
+}
+
+.tier-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tier-form label {
+    display: grid;
+    grid-template-columns: 130px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.tier-form label > span {
+    min-width: 0;
+}
+
+.tier-input,
+.tier-select {
+    width: 100%;
+    min-width: 0;
+}
+
+.tier-input,
+.tier-select {
+    background: #d9d9d9;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 10px;
+    font-size: 0.85rem;
+    outline: none;
+}
+
+.tier-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='8' viewBox='0 0 14 8'%3E%3Cpath fill='%236b5646' d='M7 8 0 1.5 1.5 0 7 5 12.5 0 14 1.5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+}
+
+.suffix-field {
+    display: flex;
+    align-items: center;
+    background: #d9d9d9;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.suffix-field .tier-input {
+    background: transparent;
+    flex: 1;
+}
+
+.suffix {
+    padding: 0 10px;
+    font-weight: 700;
+    color: #555;
+}
+
+.tier-form-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.btn-confirm,
+.btn-create {
+    background: #4caf50;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 22px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.btn-cancel,
+.btn-reset {
+    background: #b71212;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 22px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.membership-divider {
+    width: 1px;
+    background: #cfcfcf;
+    height: 100%;
+}
+
+.membership-right {
+    display: flex;
+    justify-content: center;
+    order: 0;
+}
+
+.membership-left {
+    order: 0;
+}
+
+@media (max-width: 1200px) {
+    .membership-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .membership-divider {
+        display: none;
+    }
+
+    .membership-right {
+        justify-content: flex-start;
+        order: -1;
+    }
+}
+
+.membership-right .tier-form-card {
+    width: 100%;
+}
+
+@media (max-width: 900px) {
+    .tier-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .tier-form label {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+}

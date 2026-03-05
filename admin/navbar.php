@@ -7,10 +7,10 @@
             <img src="/storage/uploads/contents/logo.png" alt="ZYPP Camera House">
         </div>
         <div class="admin-actions">
-            <button type="button" class="icon-btn notification-btn" aria-label="Notifications">
+            <a href="/admin/payment-proof-uploads.php" class="icon-btn notification-btn" aria-label="Notifications">
                 <i class="fa-solid fa-bell"></i>
                 <span class="badge">10</span>
-            </button>
+            </a>
             <div class="admin-user">
                 <div class="avatar">
                     <i class="fa-regular fa-user"></i>
@@ -56,9 +56,9 @@
                     </div>
 
                     <a href="#" class="nav-link">Content Management</a>
-                    <a href="#" class="nav-link">Wholesale Survey</a>
+                    <a href="/admin/wholesale-survey.php" class="nav-link">Wholesale Survey</a>
                     <a href="/admin/unboxing-influencers.php" class="nav-link">Media</a>
-                    <a href="#" class="nav-link">Membership Tiers</a>
+                    <a href="/admin/membership-tiers.php" class="nav-link">Membership Tiers</a>
                     <a href="#" class="nav-link">Bundles</a>
                     <a href="#" class="nav-link">TIDIO Dashboard</a>
                 </nav>
