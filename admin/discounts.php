@@ -47,7 +47,7 @@ $validUsers = [
 <html lang="en">
 <head>
     <?php include __DIR__ . '/head.php'; ?>
-    <link rel="stylesheet" href="/admin/assets/css/discounts.css">
+    <link rel="stylesheet" href="/admin/assets/css/discounts.css?v=20260307">
 </head>
 <body class="admin-page">
     <?php include __DIR__ . '/navbar.php'; ?>
@@ -62,15 +62,39 @@ $validUsers = [
                 </div>
                 <button type="button" class="btn-search">Search</button>
                 <button type="button" class="btn-new" data-modal-open="add-discount">+ New</button>
-                <button type="button" class="btn-filter" aria-label="Filter">
-                    <i class="fa-solid fa-filter"></i>
-                </button>
+                <div class="filter-wrapper">
+                    <button type="button" class="btn-filter" aria-label="Filter" aria-expanded="false">
+                        <i class="fa-solid fa-filter"></i>
+                    </button>
+                    <div class="filter-dropdown" aria-hidden="true">
+                        <div class="filter-group">
+                            <div class="filter-title">Status</div>
+                            <label><input type="checkbox" value="Active"> Active</label>
+                            <label><input type="checkbox" value="Inactive"> Inactive</label>
+                        </div>
+                        <div class="filter-group">
+                            <div class="filter-title">Discount Type</div>
+                            <label><input type="checkbox" value="Membership"> Membership</label>
+                            <label><input type="checkbox" value="Promotion"> Promotion</label>
+                            <label><input type="checkbox" value="Bundle"> Bundle</label>
+                        </div>
+                        <div class="filter-group">
+                            <div class="filter-title">Value Type</div>
+                            <label><input type="checkbox" value="Percentage"> Percentage</label>
+                            <label><input type="checkbox" value="Fixed"> Fixed</label>
+                        </div>
+                        <div class="filter-actions">
+                            <button type="button" class="filter-clear">Clear</button>
+                            <button type="button" class="filter-apply">Apply</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </header>
 
         <section class="discounts-table-card">
-            <div class="discounts-table-scroll">
-                <table class="discounts-table">
+            <div class="discounts-table-scroll table-scroll">
+                <table class="discounts-table admin-table">
                     <thead>
                         <tr>
                             <th>ID</th>

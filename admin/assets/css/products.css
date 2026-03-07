@@ -68,6 +68,11 @@
     cursor: pointer;
     box-shadow: var(--box-shadow-normal);
     transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, color 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1;
 }
 
 .btn-primary {
@@ -84,7 +89,9 @@
     background: var(--bg-card);
     color: var(--brand-primary);
     border: 1px solid var(--bg-card);
-    padding: 7px;
+    width: 38px;
+    height: 38px;
+    padding: 0;
 }
 
 .btn-filter i {
@@ -121,7 +128,10 @@
     border-radius: 10px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     padding: 14px;
-    min-width: 260px;
+    min-width: 240px;
+    max-width: min(92vw, 320px);
+    max-height: 360px;
+    overflow-y: auto;
     display: none;
     z-index: 30;
 }
@@ -154,6 +164,11 @@
     display: flex;
     gap: 8px;
     align-items: center;
+}
+
+.filter-group input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
 }
 
 .filter-actions {
@@ -319,5 +334,22 @@
         width: 100%;
         justify-content: flex-start;
         flex-wrap: wrap;
+    }
+
+    .filter-wrapper {
+        width: 100%;
+    }
+
+    .btn-filter {
+        width: 100%;
+        height: 40px;
+        justify-content: center;
+    }
+
+    .filter-dropdown {
+        left: 0;
+        right: auto;
+        width: 100%;
+        max-width: 100%;
     }
 }

@@ -134,70 +134,94 @@
     border-radius: 10px;
     padding: 8px 12px 12px;
     box-shadow: var(--box-shadow-normal);
-    overflow: hidden;
     width: 100%;
 }
 
 .orders-scroll {
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow: auto;
+    max-height: 360px;
     scrollbar-gutter: stable both-edges;
     -webkit-overflow-scrolling: touch;
 }
 
-.orders-head,
-.orders-row {
-    display: grid;
-    grid-template-columns: 1.1fr 1.4fr 1fr 0.8fr 0.7fr 0.9fr 1fr 0.5fr 1.1fr;
-    column-gap: 12px;
-    align-items: center;
+.orders-table-grid {
+    min-width: 900px;
 }
 
-.orders-head {
-    color: var(--text-muted);
-    font-weight: 600;
-    font-size: 0.85rem;
-    padding: 8px 6px 12px;
+.orders-table-grid thead th {
     border-bottom: 1px solid #e6e6e6;
 }
 
-.orders-body {
-    max-height: 360px;
-    overflow-y: auto;
+.orders-table-grid tbody tr {
+    font-size: 0.9rem;
 }
 
 @media (max-width: 1100px) {
-    .orders-head,
-    .orders-row {
-        min-width: 950px;
+    .orders-table-grid {
+        min-width: 900px;
     }
 }
 
 @media (max-width: 600px) {
+    .orders-page {
+        padding: 18px 16px 24px;
+    }
+
     .orders-search {
-        flex-wrap: wrap;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
     }
 
     .search-field {
         min-width: 0;
-        flex: 1 1 100%;
+        width: 100%;
+        padding: 6px 12px;
+    }
+
+    .btn-search,
+    .filter-wrapper,
+    .btn-filter {
+        width: 100%;
+    }
+
+    .btn-filter {
+        height: 38px;
+    }
+
+    .filter-dropdown {
+        position: static;
+        width: 100%;
+        margin-top: 8px;
     }
 
     .orders-table {
         width: 100%;
-        overflow-x: auto;
         -webkit-overflow-scrolling: touch;
     }
 
-    .orders-head,
-    .orders-row {
-        min-width: 820px;
+    .orders-table-grid {
+        min-width: 760px;
     }
-}
 
-.orders-head span,
-.orders-row span {
-    min-width: 0;
+    .modal-card {
+        padding: 20px 20px 24px;
+        max-height: calc(100vh - 80px);
+    }
+
+    .summary-head,
+    .summary-row {
+        grid-template-columns: 44px 1fr 96px;
+    }
+
+    .summary-head span,
+    .summary-row span {
+        font-size: 0.8rem;
+    }
+
+    .btn-download {
+        width: 100%;
+    }
 }
 
 .order-time {
@@ -205,21 +229,9 @@
 }
 
 @media (max-width: 1115px) {
-    .orders-head,
-    .orders-row {
-        column-gap: 16px;
-    }
-
     .order-time {
         padding-left: 12px;
     }
-}
-
-.orders-row {
-    padding: 10px 6px;
-    font-size: 0.9rem;
-    border-bottom: 1px solid #f0f0f0;
-    row-gap: 4px;
 }
 
 .order-link {

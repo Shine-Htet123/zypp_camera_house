@@ -56,6 +56,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const chartsReady = typeof ApexCharts !== 'undefined';
   if (!chartsReady) return;
 
+  const rootStyles = getComputedStyle(document.documentElement);
+  const primaryColor = rootStyles.getPropertyValue('--bg-primary').trim() || '#4f9dff';
+  const primaryDarkColor =
+    rootStyles.getPropertyValue('--bg-primary-dark').trim() || '#2f5fb8';
+
   const salesEl = document.querySelector('#salesChart');
   if (salesEl) {
     const salesOptions = {
@@ -71,10 +76,11 @@ document.addEventListener('DOMContentLoaded', () => {
           data: [22, 27, 24, 30, 28, 33, 31, 36, 34, 39, 37, 42],
         },
       ],
+      colors: [primaryColor],
       stroke: {
         curve: 'smooth',
         width: 3,
-        colors: ['#4f9dff'],
+        colors: [primaryDarkColor],
       },
       fill: {
         type: 'gradient',
@@ -139,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
           borderRadius: 6,
         },
       },
-      colors: ['#43c78b', '#7b5ad9'],
+      colors: [primaryColor, primaryDarkColor],
       dataLabels: { enabled: false },
       xaxis: {
         categories: ['2012', '2013', '2014', '2015', '2016', '2017', '2018'],
@@ -185,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
           barHeight: '50%',
         },
       },
-      colors: ['#4f9dff'],
+      colors: [primaryColor],
       dataLabels: { enabled: false },
       xaxis: {
         categories: ['Category 10', 'Category 9', 'Category 8', 'Category 7', 'Category 6', 'Category 5'],

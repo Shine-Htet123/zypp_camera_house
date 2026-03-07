@@ -94,46 +94,54 @@ $proofs = [
         </header>
 
         <section class="proof-table">
-            <div class="proof-scroll">
-                <div class="proof-head">
-                    <span class="head-select">
-                        <input type="checkbox" id="selectAllProofs">
-                        <label for="selectAllProofs">All</label>
-                    </span>
-                    <span>No.</span>
-                    <span>Payment<br>ID</span>
-                    <span>Order<br>ID</span>
-                    <span>Customer<br>ID</span>
-                    <span>Amount</span>
-                    <span>Status</span>
-                    <span>Method</span>
-                    <span>Proof</span>
-                </div>
-                <div class="proof-body">
-                    <?php foreach ($proofs as $proof): ?>
-                        <div
-                            class="proof-row"
-                            data-order-no="<?php echo htmlspecialchars($proof['order_id']); ?>"
-                            data-order-date="<?php echo htmlspecialchars($proof['order_date']); ?>"
-                            data-payment-status="<?php echo htmlspecialchars($proof['status']); ?>"
-                            data-order-status="Pending"
-                        >
-                            <span><input type="checkbox" class="proof-check"></span>
-                            <span><?php echo htmlspecialchars($proof['no']); ?></span>
-                            <span class="payment-id-cell"><?php echo htmlspecialchars($proof['payment_id']); ?></span>
-                            <span class="order-link order-id-link"><?php echo htmlspecialchars($proof['order_id']); ?></span>
-                            <span><?php echo htmlspecialchars($proof['customer_id']); ?></span>
-                            <span><?php echo htmlspecialchars($proof['amount']); ?></span>
-                            <span class="status <?php echo strtolower($proof['status']); ?>">
-                                <?php echo htmlspecialchars($proof['status']); ?>
-                            </span>
-                            <span><?php echo htmlspecialchars($proof['method']); ?></span>
-                            <button type="button" class="proof-thumb" data-proof-src="<?php echo htmlspecialchars($proof['proof']); ?>">
-                                <img src="<?php echo htmlspecialchars($proof['proof']); ?>" alt="Payment proof thumbnail">
-                            </button>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
+            <div class="proof-scroll table-scroll">
+                <table class="admin-table proof-table-grid">
+                    <thead>
+                        <tr class="proof-head">
+                            <th class="head-select">
+                                <input type="checkbox" id="selectAllProofs">
+                                <label for="selectAllProofs">All</label>
+                            </th>
+                            <th>No.</th>
+                            <th>Payment<br>ID</th>
+                            <th>Order<br>ID</th>
+                            <th>Customer<br>ID</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Method</th>
+                            <th>Proof</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($proofs as $proof): ?>
+                            <tr
+                                class="proof-row"
+                                data-order-no="<?php echo htmlspecialchars($proof['order_id']); ?>"
+                                data-order-date="<?php echo htmlspecialchars($proof['order_date']); ?>"
+                                data-payment-status="<?php echo htmlspecialchars($proof['status']); ?>"
+                                data-order-status="Pending"
+                            >
+                                <td><input type="checkbox" class="proof-check"></td>
+                                <td><?php echo htmlspecialchars($proof['no']); ?></td>
+                                <td class="payment-id-cell"><?php echo htmlspecialchars($proof['payment_id']); ?></td>
+                                <td class="order-link order-id-link"><?php echo htmlspecialchars($proof['order_id']); ?></td>
+                                <td><?php echo htmlspecialchars($proof['customer_id']); ?></td>
+                                <td><?php echo htmlspecialchars($proof['amount']); ?></td>
+                                <td>
+                                    <span class="status <?php echo strtolower($proof['status']); ?>">
+                                        <?php echo htmlspecialchars($proof['status']); ?>
+                                    </span>
+                                </td>
+                                <td><?php echo htmlspecialchars($proof['method']); ?></td>
+                                <td>
+                                    <button type="button" class="proof-thumb" data-proof-src="<?php echo htmlspecialchars($proof['proof']); ?>">
+                                        <img src="<?php echo htmlspecialchars($proof['proof']); ?>" alt="Payment proof thumbnail">
+                                    </button>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
             </div>
         </section>
     </main>

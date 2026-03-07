@@ -9,6 +9,9 @@
 
     <main class="admin-content admin-product-add">
         <header class="page-header">
+            <a href="/admin/products.php" class="page-back" aria-label="Back to products">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
             <h1>Add New Product</h1>
         </header>
 

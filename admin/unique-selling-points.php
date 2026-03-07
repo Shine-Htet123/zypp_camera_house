@@ -31,32 +31,38 @@ $points = [
         </header>
 
         <section class="usp-table">
-            <div class="usp-head">
-                <span>No.</span>
-                <span>Icon</span>
-                <span>Title</span>
-                <span>Description</span>
-                <span>Action</span>
-            </div>
-            <div class="usp-body">
-                <?php foreach ($points as $point): ?>
-                    <div class="usp-row" data-id="<?php echo htmlspecialchars($point['id']); ?>">
-                        <span><?php echo htmlspecialchars($point['id']); ?></span>
-                        <span class="icon-cell">
-                            <span class="icon-placeholder"></span>
-                        </span>
-                        <span class="usp-title"><?php echo htmlspecialchars($point['title']); ?></span>
-                        <span class="usp-desc"><?php echo htmlspecialchars($point['description']); ?></span>
-                        <span class="usp-actions">
-                            <button type="button" class="icon-btn edit" aria-label="Edit point">
-                                <i class="fa-regular fa-pen-to-square"></i>
-                            </button>
-                            <button type="button" class="icon-btn delete" aria-label="Delete point">
-                                <i class="fa-regular fa-trash-can"></i>
-                            </button>
-                        </span>
-                    </div>
-                <?php endforeach; ?>
+            <div class="table-scroll usp-scroll">
+                <table class="admin-table usp-table-grid">
+                    <thead>
+                        <tr class="usp-head">
+                            <th>No.</th>
+                            <th>Icon</th>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($points as $point): ?>
+                            <tr class="usp-row" data-id="<?php echo htmlspecialchars($point['id']); ?>">
+                                <td><?php echo htmlspecialchars($point['id']); ?></td>
+                                <td class="icon-cell">
+                                    <span class="icon-placeholder"></span>
+                                </td>
+                                <td class="usp-title"><?php echo htmlspecialchars($point['title']); ?></td>
+                                <td class="usp-desc"><?php echo htmlspecialchars($point['description']); ?></td>
+                                <td class="usp-actions">
+                                    <button type="button" class="icon-btn edit" aria-label="Edit point">
+                                        <i class="fa-regular fa-pen-to-square"></i>
+                                    </button>
+                                    <button type="button" class="icon-btn delete" aria-label="Delete point">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
             </div>
         </section>
 

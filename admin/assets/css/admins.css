@@ -11,6 +11,7 @@
     flex-direction: column;
     gap: 16px;
     align-items: flex-start;
+    width: 100%;
 }
 
 .admins-header h1 {
@@ -28,7 +29,7 @@
     justify-content: space-between;
     gap: 16px;
     width: 100%;
-    max-width: 780px;
+    max-width: 100%;
 }
 
 .invite-bar-main {
@@ -106,6 +107,8 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    flex-wrap: wrap;
+    width: 100%;
 }
 
 .search-field {
@@ -114,9 +117,12 @@
     gap: 10px;
     background: #fff;
     border-radius: 22px;
-    padding: 6px 14px;
+    padding: 0 12px;
     box-shadow: var(--box-shadow-normal);
     min-width: 320px;
+    height: 36px;
+    box-sizing: border-box;
+    flex: 1 1 auto;
 }
 
 .search-field input {
@@ -124,6 +130,9 @@
     outline: none;
     font-size: 0.9rem;
     width: 100%;
+    height: 100%;
+    padding: 0;
+    line-height: 1;
 }
 
 .btn-search {
@@ -230,13 +239,55 @@
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .admins-search {
-        flex-wrap: wrap;
-    }
-
     .search-field {
         min-width: 0;
         flex: 1 1 100%;
+        height: 34px;
+    }
+
+    .btn-search {
+        width: 100%;
+    }
+
+    .btn-filter {
+        width: 100%;
+        height: 38px;
+    }
+
+    .filter-wrapper {
+        width: 100%;
+    }
+
+    .filter-dropdown {
+        left: 0;
+        right: auto;
+        width: 100%;
+        top: calc(100% + 6px);
+    }
+
+    .invite-fields {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .invite-field.invite-role {
+        max-width: 100%;
+    }
+
+    .btn-invite {
+        width: 100%;
+        align-self: stretch;
+    }
+
+    .admin-card {
+        padding: 18px 14px 16px;
+        min-height: 280px;
+    }
+
+    .admin-avatar {
+        width: 88px;
+        height: 88px;
+        font-size: 1.8rem;
     }
 }
 
@@ -253,6 +304,7 @@
     transform: translateY(8px);
     transition: opacity 0.25s ease, transform 0.25s ease;
     min-height: 320px;
+    width: 100%;
 }
 
 .admin-card.visible {

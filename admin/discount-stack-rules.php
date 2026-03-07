@@ -43,7 +43,7 @@ $stackRules = [
             <section class="stack-section">
                 <h2>Discount Stack Rules</h2>
                 <div class="stack-card">
-                    <div class="stack-table">
+                    <div class="stack-table table-scroll">
                         <table>
                             <thead>
                                 <tr>

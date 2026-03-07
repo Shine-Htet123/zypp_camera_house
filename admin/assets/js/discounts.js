@@ -171,6 +171,48 @@ applyBtn?.addEventListener('click', () => {
     window.location.href = target;
 });
 
+const filterToggle = document.querySelector('.btn-filter');
+const filterDropdown = document.querySelector('.filter-dropdown');
+const filterClear = document.querySelector('.filter-clear');
+
+const closeFilter = () => {
+    if (!filterDropdown || !filterToggle) return;
+    filterDropdown.classList.remove('open');
+    filterDropdown.setAttribute('aria-hidden', 'true');
+    filterToggle.setAttribute('aria-expanded', 'false');
+};
+
+const toggleFilter = () => {
+    if (!filterDropdown || !filterToggle) return;
+    const isOpen = filterDropdown.classList.toggle('open');
+    filterDropdown.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+    filterToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+};
+
+filterToggle?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    toggleFilter();
+});
+
+filterClear?.addEventListener('click', () => {
+    if (!filterDropdown) return;
+    filterDropdown.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+        checkbox.checked = false;
+    });
+});
+
+document.addEventListener('click', (event) => {
+    if (!filterDropdown || !filterToggle) return;
+    if (filterDropdown.contains(event.target) || filterToggle.contains(event.target)) return;
+    closeFilter();
+});
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        closeFilter();
+    }
+});
+
 // default suffixes + binding
 document.querySelectorAll('.discount-modal').forEach((modal) => {
     updateValueSuffix(modal);

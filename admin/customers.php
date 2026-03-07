@@ -7,7 +7,7 @@ $customers = [
         'phone' => '09123456789',
         'township' => 'North Oakkalapa',
         'city' => 'Yangon',
-        'member_level' => 'Gold',
+        'member_level' => 'Standard Customer',
         'status' => 'Suspended',
         'joined' => '12.02.2025 12:00:00',
     ],
@@ -18,8 +18,8 @@ $customers = [
         'phone' => '09123456789',
         'township' => 'North Oakkalapa',
         'city' => 'Yangon',
-        'member_level' => 'Platinum',
-        'status' => 'Active',
+        'member_level' => 'ZYPP Active Vlogger',
+        'status' => 'Online',
         'joined' => '12.02.2025 12:00:00',
     ],
     [
@@ -29,8 +29,8 @@ $customers = [
         'phone' => '09123456789',
         'township' => 'North Oakkalapa',
         'city' => 'Yangon',
-        'member_level' => 'Diamond',
-        'status' => 'Active',
+        'member_level' => 'ZYPP Pro Vlogger',
+        'status' => 'Online',
         'joined' => '12.02.2025 12:00:00',
     ],
     [
@@ -40,7 +40,7 @@ $customers = [
         'phone' => '09123456789',
         'township' => 'North Oakkalapa',
         'city' => 'Yangon',
-        'member_level' => 'Platinum',
+        'member_level' => 'ZYPP Master Vlogger',
         'status' => 'Suspended',
         'joined' => '12.02.2025 12:00:00',
     ],
@@ -51,8 +51,8 @@ $customers = [
         'phone' => '09123456789',
         'township' => 'North Oakkalapa',
         'city' => 'Yangon',
-        'member_level' => 'Diamond',
-        'status' => 'Active',
+        'member_level' => 'ZYPP Active Vlogger',
+        'status' => 'Online',
         'joined' => '12.02.2025 12:00:00',
     ],
     [
@@ -62,8 +62,8 @@ $customers = [
         'phone' => '09123456789',
         'township' => 'North Oakkalapa',
         'city' => 'Yangon',
-        'member_level' => 'Gold',
-        'status' => 'Cancelled',
+        'member_level' => 'ZYPP Pro Vlogger',
+        'status' => 'Offline',
         'joined' => '12.02.2025 12:00:00',
     ],
 ];
@@ -119,52 +119,62 @@ $customers = [
         </header>
 
         <section class="customers-table">
-            <div class="customers-scroll">
-                <div class="customers-head">
-                    <span>ID</span>
-                    <span>Name</span>
-                    <span>Email</span>
-                    <span>Phone</span>
-                    <span>Township</span>
-                    <span>City</span>
-                    <span>Member Level</span>
-                    <span>Status</span>
-                    <span>Actions</span>
-                    <span>Joined Since</span>
-                </div>
-                <div class="customers-body">
-                    <?php foreach ($customers as $customer): ?>
-                        <div
-                            class="customers-row"
-                            data-id="<?php echo htmlspecialchars($customer['id']); ?>"
-                            data-name="<?php echo htmlspecialchars($customer['name']); ?>"
-                            data-email="<?php echo htmlspecialchars($customer['email']); ?>"
-                            data-phone="<?php echo htmlspecialchars($customer['phone']); ?>"
-                            data-township="<?php echo htmlspecialchars($customer['township']); ?>"
-                            data-city="<?php echo htmlspecialchars($customer['city']); ?>"
-                            data-member-level="<?php echo htmlspecialchars($customer['member_level']); ?>"
-                            data-status="<?php echo htmlspecialchars($customer['status']); ?>"
-                            data-joined="<?php echo htmlspecialchars($customer['joined']); ?>"
-                        >
-                            <span class="customer-link customer-id-link"><?php echo htmlspecialchars($customer['id']); ?></span>
-                            <span><?php echo htmlspecialchars($customer['name']); ?></span>
-                            <span><?php echo htmlspecialchars($customer['email']); ?></span>
-                            <span><?php echo htmlspecialchars($customer['phone']); ?></span>
-                            <span><?php echo htmlspecialchars($customer['township']); ?></span>
-                            <span><?php echo htmlspecialchars($customer['city']); ?></span>
-                            <span class="member-level <?php echo strtolower($customer['member_level']); ?>">
-                                <?php echo htmlspecialchars($customer['member_level']); ?>
-                            </span>
-                            <span class="status customer-status <?php echo strtolower($customer['status']); ?>">
-                                <?php echo htmlspecialchars($customer['status']); ?>
-                            </span>
-                            <span class="customer-actions">
-                                <i class="fa-regular fa-pen-to-square edit-status"></i>
-                            </span>
-                            <span class="customer-joined"><?php echo htmlspecialchars($customer['joined']); ?></span>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
+            <div class="customers-scroll table-scroll">
+                <table class="admin-table customers-table-grid">
+                    <thead>
+                        <tr class="customers-head">
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Township</th>
+                            <th>City</th>
+                            <th>Member Level</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                            <th>Joined Since</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($customers as $customer): ?>
+                            <tr
+                                class="customers-row"
+                                data-id="<?php echo htmlspecialchars($customer['id']); ?>"
+                                data-name="<?php echo htmlspecialchars($customer['name']); ?>"
+                                data-email="<?php echo htmlspecialchars($customer['email']); ?>"
+                                data-phone="<?php echo htmlspecialchars($customer['phone']); ?>"
+                                data-township="<?php echo htmlspecialchars($customer['township']); ?>"
+                                data-city="<?php echo htmlspecialchars($customer['city']); ?>"
+                                data-member-level="<?php echo htmlspecialchars($customer['member_level']); ?>"
+                                data-status="<?php echo htmlspecialchars($customer['status']); ?>"
+                                data-joined="<?php echo htmlspecialchars($customer['joined']); ?>"
+                            >
+                                <td class="customer-link customer-id-link"><?php echo htmlspecialchars($customer['id']); ?></td>
+                                <td><?php echo htmlspecialchars($customer['name']); ?></td>
+                                <td><?php echo htmlspecialchars($customer['email']); ?></td>
+                                <td><?php echo htmlspecialchars($customer['phone']); ?></td>
+                                <td><?php echo htmlspecialchars($customer['township']); ?></td>
+                                <td><?php echo htmlspecialchars($customer['city']); ?></td>
+                                <td>
+                                    <span class="member-level <?php echo strtolower($customer['member_level']); ?>">
+                                        <?php echo htmlspecialchars($customer['member_level']); ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="status customer-status <?php echo strtolower($customer['status']); ?>">
+                                        <?php echo htmlspecialchars($customer['status']); ?>
+                                    </span>
+                                </td>
+                                <td class="customer-actions">
+                                    <button type="button" class="icon-btn-small edit-status" aria-label="Edit status">
+                                        <i class="fa-regular fa-pen-to-square"></i>
+                                    </button>
+                                </td>
+                                <td class="customer-joined"><?php echo htmlspecialchars($customer['joined']); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
             </div>
         </section>
     </main>

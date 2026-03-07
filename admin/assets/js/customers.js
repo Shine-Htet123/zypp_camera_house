@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   const rows = document.querySelectorAll('.customers-row');
-  const customersBody = document.querySelector('.customers-body');
+  const customersBody = document.querySelector('.customers-table') || document;
   const filterButton = document.querySelector('.btn-filter');
   const filterDropdown = document.getElementById('customersFilterDropdown');
   const filterMemberSelect = document.getElementById('filterMemberLevel');
@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const clearStatusClasses = (el) => {
     if (!el) return;
-    el.classList.remove('active', 'suspended', 'cancelled');
+    el.classList.remove('online', 'suspended', 'offline');
   };
 
   const applyStatusToRow = (row, status) => {
@@ -24,9 +24,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (actionsCell) {
       actionsCell.innerHTML = '';
-      const editIcon = document.createElement('i');
-      editIcon.className = 'fa-regular fa-pen-to-square edit-status';
-      actionsCell.appendChild(editIcon);
+      const editButton = document.createElement('button');
+      editButton.type = 'button';
+      editButton.className = 'icon-btn-small edit-status';
+      editButton.setAttribute('aria-label', 'Edit status');
+      editButton.innerHTML = '<i class="fa-regular fa-pen-to-square"></i>';
+      actionsCell.appendChild(editButton);
     }
 
     row.dataset.status = status;
@@ -35,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const createStatusSelect = (current) => {
     const select = document.createElement('select');
     select.className = 'status-select';
-    ['Active', 'Suspended', 'Cancelled'].forEach((value) => {
+    ['Online', 'Suspended', 'Offline'].forEach((value) => {
       const opt = document.createElement('option');
       opt.value = value;
       opt.textContent = value;
@@ -82,16 +85,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusSelect = createStatusSelect(originalStatus);
     statusSpan.appendChild(statusSelect);
 
-    const confirmIcon = document.createElement('i');
-    confirmIcon.className = 'fa-solid fa-check status-confirm';
+    const confirmButton = document.createElement('button');
+    confirmButton.type = 'button';
+    confirmButton.className = 'icon-btn-small status-confirm';
+    confirmButton.setAttribute('aria-label', 'Confirm status');
+    confirmButton.innerHTML = '<i class="fa-solid fa-check"></i>';
 
-    const cancelIcon = document.createElement('i');
-    cancelIcon.className = 'fa-solid fa-xmark status-cancel';
+    const cancelButton = document.createElement('button');
+    cancelButton.type = 'button';
+    cancelButton.className = 'icon-btn-small status-cancel';
+    cancelButton.setAttribute('aria-label', 'Cancel');
+    cancelButton.innerHTML = '<i class="fa-solid fa-xmark"></i>';
 
-    actionsCell.appendChild(confirmIcon);
-    actionsCell.appendChild(cancelIcon);
+    actionsCell.appendChild(confirmButton);
+    actionsCell.appendChild(cancelButton);
 
-    confirmIcon.addEventListener('click', (event) => {
+    confirmButton.addEventListener('click', (event) => {
       event.stopPropagation();
 
       const newStatus = statusSelect.value;
@@ -123,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    cancelIcon.addEventListener('click', (event) => {
+    cancelButton.addEventListener('click', (event) => {
       event.stopPropagation();
       applyStatusToRow(row, originalStatus);
       row.classList.remove('editing');

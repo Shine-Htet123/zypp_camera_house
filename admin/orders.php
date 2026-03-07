@@ -175,49 +175,57 @@ $orders = [
         </header>
 
         <section class="orders-table">
-            <div class="orders-scroll">
-                <div class="orders-head">
-                    <span>Order No.</span>
-                    <span>Customer</span>
-                    <span>Name</span>
-                    <span>Total<br>(MMK)</span>
-                    <span>Payment</span>
-                    <span>Payment<br>Status</span>
-                    <span>Order<br>Status</span>
-                    <span>Action</span>
-                    <span>Order Time</span>
-                </div>
-                <div class="orders-body">
-                    <?php foreach ($orders as $order): ?>
-                        <div
-                            class="orders-row"
-                            data-order-no="<?php echo htmlspecialchars($order['order_no']); ?>"
-                            data-customer="<?php echo htmlspecialchars($order['customer']); ?>"
-                            data-name="<?php echo htmlspecialchars($order['name']); ?>"
-                            data-total="<?php echo htmlspecialchars($order['total']); ?>"
-                            data-payment="<?php echo htmlspecialchars($order['payment']); ?>"
-                            data-payment-status="<?php echo htmlspecialchars($order['payment_status']); ?>"
-                            data-order-status="<?php echo htmlspecialchars($order['order_status']); ?>"
-                            data-order-time="<?php echo htmlspecialchars($order['time']); ?>"
-                        >
-                            <span class="order-link order-id-link"><?php echo htmlspecialchars($order['order_no']); ?></span>
-                            <span><?php echo htmlspecialchars($order['customer']); ?></span>
-                            <span><?php echo htmlspecialchars($order['name']); ?></span>
-                            <span><?php echo htmlspecialchars($order['total']); ?></span>
-                            <span><?php echo htmlspecialchars($order['payment']); ?></span>
-                            <span class="status payment <?php echo strtolower($order['payment_status']); ?>">
-                                <?php echo htmlspecialchars($order['payment_status']); ?>
-                            </span>
-                            <span class="status order <?php echo strtolower($order['order_status']); ?>">
-                                <?php echo htmlspecialchars($order['order_status']); ?>
-                            </span>
-                            <span class="order-actions">
-                                <i class="fa-regular fa-pen-to-square edit-status"></i>
-                            </span>
-                            <span class="order-time"><?php echo htmlspecialchars($order['time']); ?></span>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
+            <div class="orders-scroll table-scroll">
+                <table class="admin-table orders-table-grid">
+                    <thead>
+                        <tr class="orders-head">
+                            <th>Order No.</th>
+                            <th>Customer</th>
+                            <th>Name</th>
+                            <th>Total<br>(MMK)</th>
+                            <th>Payment</th>
+                            <th>Payment<br>Status</th>
+                            <th>Order<br>Status</th>
+                            <th>Action</th>
+                            <th>Order Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($orders as $order): ?>
+                            <tr
+                                class="orders-row"
+                                data-order-no="<?php echo htmlspecialchars($order['order_no']); ?>"
+                                data-customer="<?php echo htmlspecialchars($order['customer']); ?>"
+                                data-name="<?php echo htmlspecialchars($order['name']); ?>"
+                                data-total="<?php echo htmlspecialchars($order['total']); ?>"
+                                data-payment="<?php echo htmlspecialchars($order['payment']); ?>"
+                                data-payment-status="<?php echo htmlspecialchars($order['payment_status']); ?>"
+                                data-order-status="<?php echo htmlspecialchars($order['order_status']); ?>"
+                                data-order-time="<?php echo htmlspecialchars($order['time']); ?>"
+                            >
+                                <td class="order-link order-id-link"><?php echo htmlspecialchars($order['order_no']); ?></td>
+                                <td><?php echo htmlspecialchars($order['customer']); ?></td>
+                                <td><?php echo htmlspecialchars($order['name']); ?></td>
+                                <td><?php echo htmlspecialchars($order['total']); ?></td>
+                                <td><?php echo htmlspecialchars($order['payment']); ?></td>
+                                <td>
+                                    <span class="status payment <?php echo strtolower($order['payment_status']); ?>">
+                                        <?php echo htmlspecialchars($order['payment_status']); ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="status order <?php echo strtolower($order['order_status']); ?>">
+                                        <?php echo htmlspecialchars($order['order_status']); ?>
+                                    </span>
+                                </td>
+                                <td class="order-actions">
+                                    <i class="fa-regular fa-pen-to-square edit-status"></i>
+                                </td>
+                                <td class="order-time"><?php echo htmlspecialchars($order['time']); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
             </div>
         </section>
 
