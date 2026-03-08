@@ -4,6 +4,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const chartEl = document.querySelector('#companyTypesChart');
   if (!chartEl) return;
 
+  const rootStyles = getComputedStyle(document.documentElement);
+  const primaryColor = rootStyles.getPropertyValue('--bg-primary').trim() || '#4f9dff';
+  const primaryDarkColor =
+    rootStyles.getPropertyValue('--bg-primary-dark').trim() || '#2f5fb8';
+
   const options = {
     chart: {
       height: 220,
@@ -32,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
         borderRadius: 6,
       },
     },
-    colors: ['#43c78b', '#7b5ad9'],
+    colors: [primaryColor, primaryDarkColor],
     dataLabels: { enabled: false },
     xaxis: {
       categories: ['2012', '2013', '2014', '2015', '2016', '2017', '2018'],

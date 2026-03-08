@@ -56,40 +56,17 @@
     -webkit-overflow-scrolling: touch;
 }
 
-.answers-head,
-.answers-row {
-    display: grid;
-    grid-template-columns:
-        minmax(160px, 1.2fr)
-        minmax(140px, 1fr)
-        minmax(120px, 0.9fr)
-        minmax(170px, 1.2fr)
-        minmax(120px, 0.8fr)
-        minmax(220px, 2fr);
-    column-gap: clamp(8px, 1.2vw, 12px);
-    align-items: center;
-    width: max-content;
+.answers-table-grid {
     min-width: 720px;
 }
 
-.answers-head {
-    color: var(--text-muted);
-    font-weight: 600;
-    font-size: 0.85rem;
-    padding: 10px 8px;
+.answers-table-grid thead th {
     border-bottom: 1px solid #e6e6e6;
-    text-align: center;
 }
 
-.answers-row {
-    padding: 12px 8px;
+.answers-table-grid tbody tr {
     font-size: 0.88rem;
-    border-bottom: 1px solid #f0f0f0;
     cursor: pointer;
-}
-
-.answers-row span {
-    text-align: center;
 }
 
 .answers-row .note {
@@ -97,10 +74,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-.answers-body {
-    overflow: visible;
 }
 
 .modal-overlay {

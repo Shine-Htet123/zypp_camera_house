@@ -1,4 +1,10 @@
-<div class="admin-layout">
+﻿<div class="admin-layout">
+    <?php
+    $adminAvatar = '';
+    if (isset($_SESSION) && isset($_SESSION['admin_avatar'])) {
+        $adminAvatar = $_SESSION['admin_avatar'];
+    }
+    ?>
     <header class="admin-header">
         <div class="admin-brand">
             <button type="button" class="admin-toggle" aria-label="Toggle menu" aria-expanded="false">
@@ -11,15 +17,18 @@
                 <i class="fa-solid fa-bell"></i>
                 <span class="badge">10</span>
             </a>
-            <div class="admin-user">
+            <a href="/admin/my-account.php" class="admin-user" aria-label="My account">
                 <div class="avatar">
-                    <i class="fa-regular fa-user"></i>
+                    <img src="<?php echo htmlspecialchars($adminAvatar); ?>" alt="Admin profile" <?php echo empty($adminAvatar) ? 'hidden' : ''; ?>>
+                    <div class="avatar-fallback">
+                        <i class="fa-regular fa-user"></i>
+                    </div>
                 </div>
                 <div class="user-info">
                     <span class="name">John Doe</span>
                     <span class="role super-admin-color">Super-admin</span>
                 </div>
-            </div>
+            </a>
         </div>
     </header>
 
@@ -55,14 +64,15 @@
                         <a href="/admin/customers.php" class="nav-link sub">Customers</a>
                     </div>
 
-                    <a href="#" class="nav-link">Content Management</a>
+                    <a href="/admin/content-management.php" class="nav-link">Content Management</a>
                     <a href="/admin/wholesale-survey.php" class="nav-link">Wholesale Survey</a>
                     <a href="/admin/unboxing-influencers.php" class="nav-link">Media</a>
                     <a href="/admin/membership-tiers.php" class="nav-link">Membership Tiers</a>
-                    <a href="#" class="nav-link">Bundles</a>
+                    <a href="/admin/bundles.php" class="nav-link">Bundles</a>
                     <a href="#" class="nav-link">TIDIO Dashboard</a>
                 </nav>
             </div>
 
-            <button class="logout-btn" type="button">Log Out</button>
+            <a class="logout-btn" href="/">Log Out</a>
         </aside>
+

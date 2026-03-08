@@ -51,3 +51,28 @@ if (navLinks.length > 0) {
         }
     });
 }
+
+const logoutBtn = document.querySelector(".logout-btn");
+if (logoutBtn) {
+    logoutBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        const targetUrl = logoutBtn.getAttribute("href") || "/";
+
+        if (typeof Swal !== "undefined") {
+            Swal.fire({
+                title: "Leave admin panel?",
+                text: "You will be redirected to the customer home page.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Yes, continue",
+                cancelButtonText: "Cancel",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = targetUrl;
+                }
+            });
+        } else {
+            window.location.href = targetUrl;
+        }
+    });
+}

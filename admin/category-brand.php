@@ -38,36 +38,40 @@ $brands = [
                 </button>
             </header>
 
-            <div class="data-card">
-                <div class="data-head cols-category">
-                    <span>No.</span>
-                    <span>Category</span>
-                    <span>Image</span>
-                    <span>Featured</span>
-                    <span>Action</span>
-                </div>
-                <div class="data-body">
-                    <?php foreach ($categories as $row): ?>
-                        <div class="data-row cols-category" data-type="Category" data-name="<?php echo htmlspecialchars($row['name']); ?>">
-                            <span><?php echo htmlspecialchars($row['id']); ?></span>
-                            <span><?php echo htmlspecialchars($row['name']); ?></span>
-                            <span class="image-placeholder">
-                                <i class="fa-regular fa-image"></i>
-                            </span>
-                            <span class="status <?php echo $row['featured'] ? 'yes' : 'no'; ?>">
-                                <i class="fa-solid <?php echo $row['featured'] ? 'fa-circle-check' : 'fa-circle-xmark'; ?>"></i>
-                            </span>
-                            <span class="action-buttons">
-                                <button type="button" class="icon-btn edit" aria-label="Edit category" data-edit="category">
-                                    <i class="fa-regular fa-pen-to-square"></i>
-                                </button>
-                                <button type="button" class="icon-btn delete" aria-label="Delete category">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </button>
-                            </span>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
+            <div class="data-card table-scroll">
+                <table class="admin-table data-table cols-category">
+                    <thead>
+                        <tr class="data-head cols-category">
+                            <th>No.</th>
+                            <th>Category</th>
+                            <th>Image</th>
+                            <th>Featured</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($categories as $row): ?>
+                            <tr class="data-row cols-category" data-type="Category" data-name="<?php echo htmlspecialchars($row['name']); ?>">
+                                <td><?php echo htmlspecialchars($row['id']); ?></td>
+                                <td><?php echo htmlspecialchars($row['name']); ?></td>
+                                <td class="image-placeholder">
+                                    <i class="fa-regular fa-image"></i>
+                                </td>
+                                <td class="status <?php echo $row['featured'] ? 'yes' : 'no'; ?>">
+                                    <i class="fa-solid <?php echo $row['featured'] ? 'fa-circle-check' : 'fa-circle-xmark'; ?>"></i>
+                                </td>
+                                <td class="action-buttons">
+                                    <button type="button" class="icon-btn edit" aria-label="Edit category" data-edit="category">
+                                        <i class="fa-regular fa-pen-to-square"></i>
+                                    </button>
+                                    <button type="button" class="icon-btn delete" aria-label="Delete category">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
             </div>
         </section>
 
@@ -80,34 +84,38 @@ $brands = [
                 </button>
             </header>
 
-            <div class="data-card">
-                <div class="data-head cols-subcategory">
-                    <span>No.</span>
-                    <span>Sub-Category</span>
-                    <span>Category</span>
-                    <span>Featured</span>
-                    <span>Action</span>
-                </div>
-                <div class="data-body">
-                    <?php foreach ($subCategories as $row): ?>
-                        <div class="data-row cols-subcategory" data-type="Sub-Category" data-name="<?php echo htmlspecialchars($row['name']); ?>">
-                            <span><?php echo htmlspecialchars($row['id']); ?></span>
-                            <span><?php echo htmlspecialchars($row['name']); ?></span>
-                            <span><?php echo htmlspecialchars($row['category']); ?></span>
-                            <span class="status <?php echo $row['featured'] ? 'yes' : 'no'; ?>">
-                                <i class="fa-solid <?php echo $row['featured'] ? 'fa-circle-check' : 'fa-circle-xmark'; ?>"></i>
-                            </span>
-                            <span class="action-buttons">
-                                <button type="button" class="icon-btn edit" aria-label="Edit sub-category" data-edit="subcategory">
-                                    <i class="fa-regular fa-pen-to-square"></i>
-                                </button>
-                                <button type="button" class="icon-btn delete" aria-label="Delete sub-category">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </button>
-                            </span>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
+            <div class="data-card table-scroll">
+                <table class="admin-table data-table cols-subcategory">
+                    <thead>
+                        <tr class="data-head cols-subcategory">
+                            <th>No.</th>
+                            <th>Sub-Category</th>
+                            <th>Category</th>
+                            <th>Featured</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($subCategories as $row): ?>
+                            <tr class="data-row cols-subcategory" data-type="Sub-Category" data-name="<?php echo htmlspecialchars($row['name']); ?>">
+                                <td><?php echo htmlspecialchars($row['id']); ?></td>
+                                <td><?php echo htmlspecialchars($row['name']); ?></td>
+                                <td><?php echo htmlspecialchars($row['category']); ?></td>
+                                <td class="status <?php echo $row['featured'] ? 'yes' : 'no'; ?>">
+                                    <i class="fa-solid <?php echo $row['featured'] ? 'fa-circle-check' : 'fa-circle-xmark'; ?>"></i>
+                                </td>
+                                <td class="action-buttons">
+                                    <button type="button" class="icon-btn edit" aria-label="Edit sub-category" data-edit="subcategory">
+                                        <i class="fa-regular fa-pen-to-square"></i>
+                                    </button>
+                                    <button type="button" class="icon-btn delete" aria-label="Delete sub-category">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
             </div>
         </section>
 
@@ -120,36 +128,40 @@ $brands = [
                 </button>
             </header>
 
-            <div class="data-card">
-                <div class="data-head cols-brand">
-                    <span>No.</span>
-                    <span>Brand</span>
-                    <span>Image</span>
-                    <span>Featured</span>
-                    <span>Action</span>
-                </div>
-                <div class="data-body">
-                    <?php foreach ($brands as $row): ?>
-                        <div class="data-row cols-brand" data-type="Brand" data-name="<?php echo htmlspecialchars($row['name']); ?>">
-                            <span><?php echo htmlspecialchars($row['id']); ?></span>
-                            <span><?php echo htmlspecialchars($row['name']); ?></span>
-                            <span class="image-placeholder">
-                                <i class="fa-regular fa-image"></i>
-                            </span>
-                            <span class="status <?php echo $row['featured'] ? 'yes' : 'no'; ?>">
-                                <i class="fa-solid <?php echo $row['featured'] ? 'fa-circle-check' : 'fa-circle-xmark'; ?>"></i>
-                            </span>
-                            <span class="action-buttons">
-                                <button type="button" class="icon-btn edit" aria-label="Edit brand" data-edit="brand">
-                                    <i class="fa-regular fa-pen-to-square"></i>
-                                </button>
-                                <button type="button" class="icon-btn delete" aria-label="Delete brand">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </button>
-                            </span>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
+            <div class="data-card table-scroll">
+                <table class="admin-table data-table cols-brand">
+                    <thead>
+                        <tr class="data-head cols-brand">
+                            <th>No.</th>
+                            <th>Brand</th>
+                            <th>Image</th>
+                            <th>Featured</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($brands as $row): ?>
+                            <tr class="data-row cols-brand" data-type="Brand" data-name="<?php echo htmlspecialchars($row['name']); ?>">
+                                <td><?php echo htmlspecialchars($row['id']); ?></td>
+                                <td><?php echo htmlspecialchars($row['name']); ?></td>
+                                <td class="image-placeholder">
+                                    <i class="fa-regular fa-image"></i>
+                                </td>
+                                <td class="status <?php echo $row['featured'] ? 'yes' : 'no'; ?>">
+                                    <i class="fa-solid <?php echo $row['featured'] ? 'fa-circle-check' : 'fa-circle-xmark'; ?>"></i>
+                                </td>
+                                <td class="action-buttons">
+                                    <button type="button" class="icon-btn edit" aria-label="Edit brand" data-edit="brand">
+                                        <i class="fa-regular fa-pen-to-square"></i>
+                                    </button>
+                                    <button type="button" class="icon-btn delete" aria-label="Delete brand">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
             </div>
         </section>
         <div class="modal-overlay" id="categoryModal" aria-hidden="true">

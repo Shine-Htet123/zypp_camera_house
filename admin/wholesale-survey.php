@@ -66,35 +66,39 @@ $answers = [
         <section class="wholesale-section">
             <h2>User Answers</h2>
             <div class="wholesale-card answers-card">
-                <div class="answers-scroll">
-                    <div class="answers-head">
-                        <span>Business Name</span>
-                        <span>Contact Person</span>
-                        <span>Phone No.</span>
-                        <span>Email</span>
-                        <span>Business Type</span>
-                        <span>Note</span>
-                    </div>
-                    <div class="answers-body">
-                        <?php foreach ($answers as $row): ?>
-                            <div
-                                class="answers-row"
-                                data-business="<?php echo htmlspecialchars($row['business_name']); ?>"
-                                data-contact="<?php echo htmlspecialchars($row['contact_person']); ?>"
-                                data-phone="<?php echo htmlspecialchars($row['phone']); ?>"
-                                data-email="<?php echo htmlspecialchars($row['email']); ?>"
-                                data-type="<?php echo htmlspecialchars($row['business_type']); ?>"
-                                data-note="<?php echo htmlspecialchars($row['note']); ?>"
-                            >
-                                <span><?php echo htmlspecialchars($row['business_name']); ?></span>
-                                <span><?php echo htmlspecialchars($row['contact_person']); ?></span>
-                                <span><?php echo htmlspecialchars($row['phone']); ?></span>
-                                <span><?php echo htmlspecialchars($row['email']); ?></span>
-                                <span><?php echo htmlspecialchars($row['business_type']); ?></span>
-                                <span class="note"><?php echo htmlspecialchars($row['note']); ?></span>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
+                <div class="answers-scroll table-scroll">
+                    <table class="admin-table answers-table-grid">
+                        <thead>
+                            <tr class="answers-head">
+                                <th>Business Name</th>
+                                <th>Contact Person</th>
+                                <th>Phone No.</th>
+                                <th>Email</th>
+                                <th>Business Type</th>
+                                <th>Note</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($answers as $row): ?>
+                                <tr
+                                    class="answers-row"
+                                    data-business="<?php echo htmlspecialchars($row['business_name']); ?>"
+                                    data-contact="<?php echo htmlspecialchars($row['contact_person']); ?>"
+                                    data-phone="<?php echo htmlspecialchars($row['phone']); ?>"
+                                    data-email="<?php echo htmlspecialchars($row['email']); ?>"
+                                    data-type="<?php echo htmlspecialchars($row['business_type']); ?>"
+                                    data-note="<?php echo htmlspecialchars($row['note']); ?>"
+                                >
+                                    <td><?php echo htmlspecialchars($row['business_name']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['contact_person']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['phone']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['email']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['business_type']); ?></td>
+                                    <td class="note"><?php echo htmlspecialchars($row['note']); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </section>

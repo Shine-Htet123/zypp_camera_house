@@ -116,31 +116,6 @@ $recentOrders = [
                 </div>
             </article>
 
-            <article class="admin-card stock-card">
-                <div class="card-header">
-                    <h2>Product Stocks</h2>
-                </div>
-                <div class="stock-table">
-                    <div class="stock-row stock-head">
-                        <span>Name</span>
-                        <span>Quantity</span>
-                        <span>Status</span>
-                    </div>
-                    <div class="stock-body">
-                        <?php foreach ($stockItems as $item): ?>
-                            <div class="stock-row">
-                                <span><?php echo htmlspecialchars($item['name']); ?></span>
-                                <span><?php echo htmlspecialchars($item['quantity']); ?></span>
-                                <span class="status <?php echo htmlspecialchars($item['status_class']); ?>">
-                                    <?php echo htmlspecialchars($item['status']); ?>
-                                </span>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-                <a class="card-link" href="#">All Products</a>
-            </article>
-
             <article class="admin-card chart-card trend-card">
                 <div class="card-header">
                     <h2>Trending Brands</h2>
@@ -163,29 +138,66 @@ $recentOrders = [
                 <div class="card-header">
                     <h2>Recent Orders</h2>
                 </div>
-                <div class="orders-table">
-                    <div class="orders-row orders-head">
-                        <span>Order No.</span>
-                        <span>Customer</span>
-                        <span>Name</span>
-                        <span>Status</span>
-                        <span>Order Time</span>
-                    </div>
-                    <div class="orders-body">
-                        <?php foreach ($recentOrders as $order): ?>
-                            <div class="orders-row">
-                                <span><?php echo htmlspecialchars($order['order_no']); ?></span>
-                                <span><?php echo htmlspecialchars($order['customer']); ?></span>
-                                <span><?php echo htmlspecialchars($order['name']); ?></span>
-                                <span class="status <?php echo htmlspecialchars($order['status_class']); ?>">
-                                    <?php echo htmlspecialchars($order['status']); ?>
-                                </span>
-                                <span class="time"><?php echo htmlspecialchars($order['time']); ?></span>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
+                <div class="orders-table table-scroll">
+                    <table class="admin-table recent-orders-table">
+                        <thead>
+                            <tr class="orders-head">
+                                <th>Order No.</th>
+                                <th>Customer</th>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Order Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($recentOrders as $order): ?>
+                                <tr class="orders-row">
+                                    <td><?php echo htmlspecialchars($order['order_no']); ?></td>
+                                    <td><?php echo htmlspecialchars($order['customer']); ?></td>
+                                    <td><?php echo htmlspecialchars($order['name']); ?></td>
+                                    <td>
+                                        <span class="status <?php echo htmlspecialchars($order['status_class']); ?>">
+                                            <?php echo htmlspecialchars($order['status']); ?>
+                                        </span>
+                                    </td>
+                                    <td class="time"><?php echo htmlspecialchars($order['time']); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
                 </div>
-                <a class="card-link" href="#">See All Orders</a>
+                <a class="card-link" href="/admin/orders.php">See All Orders</a>
+            </article>
+
+            <article class="admin-card stock-card">
+                <div class="card-header">
+                    <h2>Product Stocks</h2>
+                </div>
+                <div class="stock-table table-scroll">
+                    <table class="admin-table stock-table-grid">
+                        <thead>
+                            <tr class="stock-head">
+                                <th>Name</th>
+                                <th>Quantity</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($stockItems as $item): ?>
+                                <tr class="stock-row">
+                                    <td><?php echo htmlspecialchars($item['name']); ?></td>
+                                    <td><?php echo htmlspecialchars($item['quantity']); ?></td>
+                                    <td>
+                                        <span class="status <?php echo htmlspecialchars($item['status_class']); ?>">
+                                            <?php echo htmlspecialchars($item['status']); ?>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <a class="card-link" href="/admin/products.php">All Products</a>
             </article>
         </section>
     </main>
