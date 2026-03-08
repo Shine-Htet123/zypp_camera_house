@@ -232,7 +232,7 @@
                                 <a href="/reservation-policy">Reservation Policy</a>
                             </div>
                             <div class="dropdown-link">
-                                <a href="#">Delivery Policy</a>
+                                <a href="/delivery-policy.php">Delivery Policy</a>
                             </div>
                             <div class="dropdown-link">
                                 <a href="#">Payment Info</a>
@@ -621,7 +621,7 @@
                     <div class="support-dropdown" id="support-content">
                         <a href="#">Warranty & FAQs</a>
                         <a href="#">Reservation Policy</a>
-                        <a href="#">Delivery Policy</a>
+                        <a href="/delivery-policy.php">Delivery Policy</a>
                         <a href="#">Payment Info</a>
                     </div>
                 </div>

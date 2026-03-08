@@ -1,0 +1,123 @@
+.delivery-policy-page {
+    width: min(1180px, calc(100% - 64px));
+    margin: 0 auto;
+    padding: 34px 0 110px;
+}
+
+.delivery-policy-header {
+    text-align: center;
+    margin-bottom: 34px;
+}
+
+.delivery-policy-header h1 {
+    margin: 0;
+    color: #111111;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.delivery-policy-hero {
+    margin-bottom: 72px;
+}
+
+.delivery-plan-card {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #d8d8d8;
+    box-shadow: var(--box-shadow-light);
+}
+
+.delivery-plan-card img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+
+.delivery-policy-content {
+    width: 100%;
+}
+
+.delivery-policy-list {
+    list-style: none;
+    counter-reset: policy;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 34px;
+}
+
+.delivery-policy-list li {
+    counter-increment: policy;
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    align-items: start;
+    column-gap: 18px;
+    color: #181818;
+    font-size: 1rem;
+    line-height: 1.65;
+}
+
+.delivery-policy-list li::before {
+    content: counter(policy) ".";
+    font-weight: 700;
+}
+
+@media (max-width: 900px) {
+    .delivery-policy-page {
+        width: min(100%, calc(100% - 40px));
+        padding-bottom: 90px;
+    }
+
+    .delivery-policy-hero {
+        margin-bottom: 52px;
+    }
+}
+
+@media (max-width: 640px) {
+    .delivery-policy-page {
+        width: min(100%, calc(100% - 28px));
+        padding-top: 20px;
+        padding-bottom: 72px;
+    }
+
+    .delivery-policy-header {
+        margin-bottom: 24px;
+    }
+
+    .delivery-policy-header h1 {
+        font-size: 1.65rem;
+    }
+
+    .delivery-plan-overlay h2 {
+        font-size: 1.25rem;
+    }
+
+    .delivery-policy-list {
+        gap: 24px;
+    }
+
+    .delivery-policy-list li {
+        grid-template-columns: 28px minmax(0, 1fr);
+        column-gap: 12px;
+        font-size: 0.96rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .delivery-policy-page {
+        width: min(100%, calc(100% - 20px));
+    }
+
+    .delivery-policy-header h1 {
+        font-size: 1.42rem;
+    }
+
+    .delivery-policy-list li {
+        grid-template-columns: 24px minmax(0, 1fr);
+        column-gap: 10px;
+        font-size: 0.9rem;
+        line-height: 1.55;
+    }
+}

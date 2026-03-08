@@ -101,19 +101,21 @@ $aboutSections = [
                     </div>
 
                     <div class="map-card" aria-label="Google Maps location">
-                        <span>Google Maps Location Here</span>
+                        <iframe
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3820.026510724878!2d96.1722099!3d16.775356599999995!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30c1ed33a6c6f30d%3A0x256ab0e5a54a67ac!2sZYPP%20Camera%20House!5e0!3m2!1sen!2snl!4v1772969831783!5m2!1sen!2snl"
+                            width="600"
+                            height="450"
+                            style="border:0;"
+                            allowfullscreen=""
+                            loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade"
+                            title="ZYPP Camera House location"
+                        ></iframe>
                     </div>
                 </div>
             </div>
         </section>
     </main>
-
-    <button class="floating-chat" type="button" aria-label="Chat">
-        <i class="fa-solid fa-comment"></i>
-    </button>
-    <button class="floating-logo" type="button" aria-label="Assistant">
-        <img src="/storage/uploads/contents/logo.png" alt="ZYPP Camera House">
-    </button>
 
     <?php include __DIR__ . '/footer.php'; ?>
 </body>
