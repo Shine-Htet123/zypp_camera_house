@@ -220,7 +220,7 @@
                         </div>
                     </div>
                     <a href="/wholesale">Wholesale</a>
-                    <a href="/about">About</a>
+                    <a href="/about.php">About</a>
                     <div class="dropdown-container">
                         <a class="dropdown">Support</a>
                         <i class="fa-solid fa-chevron-down"></i>
@@ -232,7 +232,7 @@
                                 <a href="/reservation-policy">Reservation Policy</a>
                             </div>
                             <div class="dropdown-link">
-                                <a href="#">Delivery Policy</a>
+                                <a href="/delivery-policy.php">Delivery Policy</a>
                             </div>
                             <div class="dropdown-link">
                                 <a href="#">Payment Info</a>
@@ -613,7 +613,7 @@
                     <a href="#">Home</a>
                     <a href="/products.php" class="dropdown">Shop</a>
                     <a href="/wholesale">Wholesale</a>
-                    <a href="/about">About</a>
+                    <a href="/about.php">About</a>
                     <div class="category-container" id="support">
                         <a class="support">Support</a>
                         <i class="fa-solid fa-chevron-down" id="support-chevron"></i>
@@ -621,7 +621,7 @@
                     <div class="support-dropdown" id="support-content">
                         <a href="#">Warranty & FAQs</a>
                         <a href="#">Reservation Policy</a>
-                        <a href="#">Delivery Policy</a>
+                        <a href="/delivery-policy.php">Delivery Policy</a>
                         <a href="#">Payment Info</a>
                     </div>
                 </div>

@@ -8,15 +8,15 @@
             <h3>Quick Links</h3>
             <a href="#">Shop</a>
             <a href="#">Wholesale</a>
-            <a href="#">About Us</a>
-            <a href="#">Contact Us</a>
+            <a href="/about.php">About Us</a>
+            <a href="/about.php#contact">Contact Us</a>
         </div>
 
         <div class="footer-col">
             <h3>Support</h3>
             <a href="#">Warranty & FAQs</a>
-            <a href="#">Reservation Policy</a>
-            <a href="#">Delivery Policy</a>
+            <a href="/reservation-policy.php">Reservation Policy</a>
+            <a href="/delivery-policy.php">Delivery Policy</a>
             <a href="#">Payment Information</a>
         </div>
 
