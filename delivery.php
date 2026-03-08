@@ -152,7 +152,7 @@
                 </div>
 
                 <div class="form-actions">
-                    <button type="button" class="back-btn">Back</button>
+                    <a class="back-btn" href="/cart.php">Back</a>
                     <button type="submit" class="continue-btn">Continue</button>
                 </div>
             </form>

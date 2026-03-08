@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="./assets/css/loading.css">
     <link rel="stylesheet" href="./assets/css/navbar.css">
     <link rel="stylesheet" href="./assets/css/footer.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
     <script src="./assets/js/loading.js" defer></script>
     <script src="./assets/js/scroll-reveal.js" defer></script>
     <script src="./assets/js/navbar.js" defer></script>
