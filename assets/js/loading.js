@@ -1,39 +1,46 @@
-const loadingScreen = document.querySelector(".loading-screen");
+const loadingScreen = document.querySelector('.loading-screen');
 const loadingVideo = loadingScreen
-    ? loadingScreen.querySelector(".page-loading-video")
-    : null;
+  ? loadingScreen.querySelector('.page-loading-video')
+  : null;
 
 if (loadingScreen) {
-    const startTime = performance.now();
-    let videoDurationMs = 0;
-    let speedTimerId = null;
+  let pageLoaded = document.readyState === 'complete';
+  let videoFinished = !loadingVideo;
+  let hideTriggered = false;
 
-    const updatePlaybackRate = () => {
-        if (!loadingVideo || !videoDurationMs) return;
-        const elapsed = performance.now() - startTime;
-        const target = Math.max(videoDurationMs, elapsed);
-        const rate = Math.min(1, videoDurationMs / target);
-        loadingVideo.playbackRate = rate;
-    };
-
-    if (loadingVideo) {
-        loadingVideo.addEventListener("loadedmetadata", () => {
-            videoDurationMs = (loadingVideo.duration || 0) * 1000;
-            updatePlaybackRate();
-            speedTimerId = window.setInterval(updatePlaybackRate, 250);
-        });
+  const hideLoader = () => {
+    if (hideTriggered || !pageLoaded || !videoFinished) {
+      return;
     }
 
-    window.addEventListener("load", () => {
-        const elapsed = performance.now() - startTime;
-        const minTime = videoDurationMs || 0;
-        const remaining = Math.max(0, minTime - elapsed);
+    hideTriggered = true;
+    loadingScreen.classList.add('hidden');
+  };
 
-        window.setTimeout(() => {
-            if (speedTimerId) {
-                window.clearInterval(speedTimerId);
-            }
-            loadingScreen.classList.add("hidden");
-        }, remaining);
+  if (loadingVideo) {
+    loadingVideo.currentTime = 0;
+
+    const playPromise = loadingVideo.play();
+
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(() => {});
+    }
+
+    loadingVideo.addEventListener('ended', () => {
+      videoFinished = true;
+      hideLoader();
     });
+
+    loadingVideo.addEventListener('error', () => {
+      videoFinished = true;
+      hideLoader();
+    });
+  }
+
+  window.addEventListener('load', () => {
+    pageLoaded = true;
+    hideLoader();
+  });
+
+  hideLoader();
 }
