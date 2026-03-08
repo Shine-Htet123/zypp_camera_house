@@ -1,3 +1,11 @@
+<?php
+session_start();
+
+$selectedDeliveryMethod = $_SESSION['checkout_delivery_method'] ?? '';
+$selectedDeliveryMethodLabel = $selectedDeliveryMethod === 'royal'
+    ? 'Royal Express'
+    : ($selectedDeliveryMethod === 'dhl' ? 'DHL' : 'Delivery Method');
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,7 +30,7 @@
 
         <section class="delivery-card">
             <h2>Contact Information</h2>
-            <form class="delivery-form" method="post" action="">
+            <form class="delivery-form" method="post" action="/payment.php">
                 <div class="field-row two-col">
                     <div class="field">
                         <input type="text" name="first_name" placeholder="First Name" required>
@@ -124,14 +132,14 @@
                     <div class="field">
                         <div class="custom-select" data-name="delivery_method">
                             <button type="button" class="select-trigger">
-                                <span class="select-label">Delivery Method</span>
+                                <span class="select-label"><?php echo htmlspecialchars($selectedDeliveryMethodLabel); ?></span>
                                 <span class="select-arrow"></span>
                             </button>
                             <ul class="select-options">
                                 <li data-value="royal">Royal Express</li>
                                 <li data-value="dhl">DHL</li>
                             </ul>
-                            <input type="hidden" name="delivery_method" value="">
+                            <input type="hidden" name="delivery_method" value="<?php echo htmlspecialchars($selectedDeliveryMethod); ?>">
                         </div>
                     </div>
                     <div class="field">
@@ -153,7 +161,7 @@
 
                 <div class="form-actions">
                     <a class="back-btn" href="/cart.php">Back</a>
-                    <button type="submit" class="continue-btn">Continue</button>
+                    <button type="submit" class="continue-btn" formmethod="post" formaction="/payment.php">Continue</button>
                 </div>
             </form>
         </section>

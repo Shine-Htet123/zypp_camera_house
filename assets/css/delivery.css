@@ -1,42 +1,39 @@
 /* Delivery Page */
 .delivery-page {
-    width: 100%;
-    padding: 120px 0 80px;
+    max-width: 1220px;
+    margin: 0 auto;
+    padding: 30px 24px 80px;
     display: flex;
     flex-direction: column;
     gap: 50px;
 }
 
 .checkout-steps {
-    width: 85%;
-    margin: 20px auto;
+    margin: 10px 0 54px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    font-size: 1rem;
-    font-weight: var(--font-weight-bold);
-    color: var(--text-muted);
+    gap: 30px;
 }
 
 .checkout-steps .step {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    color: #9c9c9c;
+    font-size: 18px;
+    font-weight: 700;
 }
 
 .checkout-steps .step.done {
-    color: var(--color-success);
+    color: #50b24e;
 }
 
 .checkout-steps .step.active {
-    color: var(--color-warning);
+    color: #d69a23;
 }
 
 .checkout-steps .step-line {
-    width: 45px;
-    height: 2px;
-    background-color: #cfcfcf;
+    width: 42px;
+    height: 1px;
+    background: #7f7f7f;
 }
 
 .delivery-card {
@@ -247,23 +244,28 @@
     }
 
     .checkout-steps {
-        font-size: 0.95rem;
-        gap: 8px;
+        gap: 18px;
     }
 
-    .checkout-steps .step-line {
-        width: 30px;
+    .checkout-steps .step {
+        font-size: 16px;
     }
 }
 
 @media (max-width: 700px) {
     .delivery-page {
-        padding-top: 100px;
+        padding-left: 16px;
+        padding-right: 16px;
     }
 
     .checkout-steps {
+        gap: 12px;
         flex-wrap: wrap;
-        row-gap: 8px;
+        margin-bottom: 34px;
+    }
+
+    .checkout-steps .step {
+        font-size: 15px;
     }
 
     .delivery-card {
