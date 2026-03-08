@@ -8,8 +8,8 @@
             <h3>Quick Links</h3>
             <a href="#">Shop</a>
             <a href="#">Wholesale</a>
-            <a href="#">About Us</a>
-            <a href="#">Contact Us</a>
+            <a href="/about.php">About Us</a>
+            <a href="/about.php#contact">Contact Us</a>
         </div>
 
         <div class="footer-col">
