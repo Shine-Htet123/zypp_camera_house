@@ -9,7 +9,7 @@
 
     <?php
         $warrantyData = [
-            "cameras" => [
+            "camera" => [
                 "label" => "Cameras",
                 "policy" => [
                     "Camera warranty covers manufacturing defects for 12 months.",
@@ -26,7 +26,7 @@
                     ["q" => "Question 5", "a" => "Repair time depends on parts availability."]
                 ]
             ],
-            "lenses" => [
+            "lens" => [
                 "label" => "Lenses",
                 "policy" => [
                     "Lens warranty covers optical and mechanical defects for 12 months.",
@@ -43,35 +43,52 @@
                     ["q" => "Question 5", "a" => "Modifications void warranty."]
                 ]
             ],
-            "tripods" => [
-                "label" => "Tripods",
+            "action-camera" => [
+                "label" => "Action Cameras",
                 "policy" => [
-                    "Tripod warranty covers manufacturing defects for 6 months.",
+                    "Action camera warranty covers manufacturing defects for 12 months.",
                     "Warranty does not cover wear on rubber feet.",
                     "Locks and clamps are covered for defects.",
                     "Service requires original receipt.",
                     "Warranty excludes misuse or overload."
                 ],
                 "faqs" => [
-                    ["q" => "Question 1", "a" => "Tripod warranty is 6 months."],
+                    ["q" => "Question 1", "a" => "Action camera warranty is 12 months."],
                     ["q" => "Question 2", "a" => "Rubber feet wear is not covered."],
                     ["q" => "Question 3", "a" => "Clamp defects are covered."],
                     ["q" => "Question 4", "a" => "Receipt required for service."],
                     ["q" => "Question 5", "a" => "Overload damage is excluded."]
                 ]
             ],
-            "lightings" => [
-                "label" => "Lightings",
+            "gimbal" => [
+                "label" => "Gimbals",
                 "policy" => [
-                    "Lighting warranty covers defects for 12 months.",
-                    "Bulbs are considered consumables and not covered.",
+                    "Gimbal warranty covers defects for 12 months.",
+                    "Batteries are considered consumables and not covered.",
                     "Power adapter defects are covered.",
                     "Warranty requires proof of purchase.",
                     "Unauthorized repairs void warranty."
                 ],
                 "faqs" => [
-                    ["q" => "Question 1", "a" => "Lighting warranty is 12 months."],
-                    ["q" => "Question 2", "a" => "Bulbs are not covered."],
+                    ["q" => "Question 1", "a" => "Gimbal warranty is 12 months."],
+                    ["q" => "Question 2", "a" => "Batteries are not covered."],
+                    ["q" => "Question 3", "a" => "Power adapters are covered."],
+                    ["q" => "Question 4", "a" => "Proof of purchase required."],
+                    ["q" => "Question 5", "a" => "Unauthorized repairs void warranty."]
+                ]
+            ],
+            "microphone" => [
+                "label" => "Microphones",
+                "policy" => [
+                    "Microphone warranty covers defects for 12 months.",
+                    "Batteries are considered consumables and not covered.",
+                    "Power adapter defects are covered.",
+                    "Warranty requires proof of purchase.",
+                    "Unauthorized repairs void warranty."
+                ],
+                "faqs" => [
+                    ["q" => "Question 1", "a" => "Microphone warranty is 12 months."],
+                    ["q" => "Question 2", "a" => "Batteries are not covered."],
                     ["q" => "Question 3", "a" => "Power adapters are covered."],
                     ["q" => "Question 4", "a" => "Proof of purchase required."],
                     ["q" => "Question 5", "a" => "Unauthorized repairs void warranty."]
@@ -92,38 +109,36 @@
                 <i class="fa-solid fa-chevron-left"></i>
             </button>
             <div class="category-list">
-                <button class="category-card active" type="button" data-category="cameras">
+                <button class="category-card active" type="button" data-category="camera">
                     <div class="category-image">
-                        <img src="../storage/uploads/categories/cameras-category.png" alt="Cameras">
+                        <img src="../storage/uploads/categories/camera.png" alt="Camera">
                     </div>
                     <span>Cameras</span>
                 </button>
-                <button class="category-card" type="button" data-category="lenses">
+                <button class="category-card" type="button" data-category="lens">
                     <div class="category-image">
-                        <img src="../storage/uploads/categories/lenses-category.png" alt="Lenses">
+                        <img src="../storage/uploads/categories/lens.png" alt="Lense">
                     </div>
                     <span>Lenses</span>
                 </button>
-                <button class="category-card" type="button" data-category="tripods">
+                <button class="category-card" type="button" data-category="action-camera">
                     <div class="category-image">
-                        <img src="../storage/uploads/categories/tripods-category.png" alt="Tripods">
+                        <img src="../storage/uploads/categories/action_camera.png" alt="Action Camera">
                     </div>
-                    <span>Tripods</span>
+                    <span>Action Cameras</span>
                 </button>
-                <button class="category-card" type="button" data-category="lightings">
+                <button class="category-card" type="button" data-category="gimbal">
                     <div class="category-image">
-                        <img src="../storage/uploads/categories/lightings-category.png" alt="Lightings">
+                        <img src="../storage/uploads/categories/gimbal.png" alt="Gimbal">
                     </div>
-                    <span>Lightings</span>
+                    <span>Gimbals</span>
                 </button>
-                <?php foreach ($warrantyData as $key => $item): ?>
-                    <button class="category-card <?php echo $key === $defaultCategory ? 'active' : ''; ?>" type="button" data-category="<?php echo $key; ?>">
-                        <div class="category-image">
-                            <img src="../storage/uploads/categories/<?php echo $key; ?>-category.png" alt="<?php echo htmlspecialchars($item['label']); ?>">
-                        </div>
-                        <span><?php echo htmlspecialchars($item['label']); ?></span>
-                    </button>
-                <?php endforeach; ?>
+                <button class="category-card" type="button" data-category="microphone">
+                    <div class="category-image">
+                        <img src="../storage/uploads/categories/microphone.png" alt="Microphone">
+                    </div>
+                    <span>Microphones</span>
+                </button>
             </div>
             <button class="arrow-btn" type="button" aria-label="Next category">
                 <i class="fa-solid fa-chevron-right"></i>

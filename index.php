@@ -154,7 +154,7 @@
                     <img src="../storage/uploads/categories/lens.png">
                 </div>
                 <div class="category-text">
-                    <h3>Lens</h3>
+                    <h3>Lenses</h3>
                 </div>
             </a>
             <a href="#" class="featured-category">
@@ -162,7 +162,7 @@
                     <img src="../storage/uploads/categories/action_camera.png">
                 </div>
                 <div class="category-text">
-                    <h3>Action Camera</h3>
+                    <h3>Action Cameras</h3>
                 </div>
             </a>
             <a href="#" class="featured-category">
@@ -170,7 +170,7 @@
                     <img src="../storage/uploads/categories/gimbal.png">
                 </div>
                 <div class="category-text">
-                    <h3>Gimbal</h3>
+                    <h3>Gimbals</h3>
                 </div>
             </a>
             <a href="#" class="featured-category">
@@ -178,7 +178,7 @@
                     <img src="../storage/uploads/categories/microphone.png">
                 </div>
                 <div class="category-text">
-                    <h3>Microphone</h3>
+                    <h3>Microphones</h3>
                 </div>
             </a>
         </div>

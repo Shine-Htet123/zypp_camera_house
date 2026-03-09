@@ -1,6 +1,6 @@
 .warranty-page {
     width: 100%;
-    padding: 140px 0 80px;
+    padding: 48px 0 80px;
     display: flex;
     flex-direction: column;
     gap: 40px;
@@ -203,7 +203,7 @@
 
 @media (max-width: 600px) {
     .warranty-page {
-        padding-top: 120px;
+        padding-top: 32px;
     }
 
     .warranty-hero h2 {

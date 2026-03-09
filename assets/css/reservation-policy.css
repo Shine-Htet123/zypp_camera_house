@@ -1,11 +1,17 @@
 .reservation-policy-container {
-    margin-top: 150px;
+    margin-top: 48px;
     width: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     gap: 25px;
+}
+
+@media (max-width: 600px) {
+    .reservation-policy-container {
+        margin-top: 32px;
+    }
 }
 
 .reservation-policy-container .policy-box {
