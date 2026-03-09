@@ -4,7 +4,7 @@
         <div class="navbar">
             <div class="nav-left">
                 <div class="logo">
-                    <a href="#">
+                    <a href="/">
                         <img src="../storage/uploads/contents/logo.png" alt="ZYPP Camera House Logo">
                     </a>
                 </div>
@@ -226,10 +226,10 @@
                         <i class="fa-solid fa-chevron-down"></i>
                         <div class="dropdown-content" style="padding-left: 0;">
                             <div class="dropdown-link">
-                                <a href="/warranty-FAQ">Warranty & FAQs</a>
+                                <a href="/warranty-FAQ.php">Warranty & FAQs</a>
                             </div>
                             <div class="dropdown-link">
-                                <a href="/reservation-policy">Reservation Policy</a>
+                                <a href="/reservation-policy.php">Reservation Policy</a>
                             </div>
                             <div class="dropdown-link">
                                 <a href="/delivery-policy.php">Delivery Policy</a>
@@ -374,7 +374,7 @@
                         <a><i class="fa-regular fa-user"></i></a>
                     </div>
                     <div class="cart">
-                        <a href="/cart" class="cart-icon">
+                        <a href="/cart.php" class="cart-icon">
                             <i class="fa-solid fa-cart-shopping"></i>
                             <div class="cart-count">
                                 <span>0</span>
@@ -478,7 +478,7 @@
             </div>
             <div class="nav-menu">
                 <div class="logo">
-                    <a href="#">
+                    <a href="/">
                         <img src="../storage/uploads/contents/logo.png" alt="ZYPP Camera House Logo">
                     </a>
                 </div>
@@ -610,7 +610,7 @@
                     </div>
                 </div>
                 <div class="nav-links">
-                    <a href="#">Home</a>
+                    <a href="/">Home</a>
                     <a href="/products.php" class="dropdown">Shop</a>
                     <a href="/wholesale.php">Wholesale</a>
                     <a href="/about.php">About</a>
@@ -619,8 +619,8 @@
                         <i class="fa-solid fa-chevron-down" id="support-chevron"></i>
                     </div>
                     <div class="support-dropdown" id="support-content">
-                        <a href="#">Warranty & FAQs</a>
-                        <a href="#">Reservation Policy</a>
+                        <a href="/warranty-FAQ.php">Warranty & FAQs</a>
+                        <a href="/reservation-policy.php">Reservation Policy</a>
                         <a href="/delivery-policy.php">Delivery Policy</a>
                         <a href="#">Payment Info</a>
                     </div>

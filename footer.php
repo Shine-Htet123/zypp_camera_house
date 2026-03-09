@@ -6,7 +6,7 @@
 
         <div class="footer-col">
             <h3>Quick Links</h3>
-            <a href="#">Shop</a>
+            <a href="/products.php">Shop</a>
             <a href="/wholesale.php">Wholesale</a>
             <a href="/about.php">About Us</a>
             <a href="/about.php#contact">Contact Us</a>
@@ -14,7 +14,7 @@
 
         <div class="footer-col">
             <h3>Support</h3>
-            <a href="#">Warranty & FAQs</a>
+            <a href="/warranty-FAQ.php">Warranty & FAQs</a>
             <a href="/reservation-policy.php">Reservation Policy</a>
             <a href="/delivery-policy.php">Delivery Policy</a>
             <a href="#">Payment Information</a>
