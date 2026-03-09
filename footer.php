@@ -7,7 +7,7 @@
         <div class="footer-col">
             <h3>Quick Links</h3>
             <a href="#">Shop</a>
-            <a href="#">Wholesale</a>
+            <a href="/wholesale.php">Wholesale</a>
             <a href="/about.php">About Us</a>
             <a href="/about.php#contact">Contact Us</a>
         </div>

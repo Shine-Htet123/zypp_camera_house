@@ -219,7 +219,7 @@
                             </div>
                         </div>
                     </div>
-                    <a href="/wholesale">Wholesale</a>
+                    <a href="/wholesale.php">Wholesale</a>
                     <a href="/about.php">About</a>
                     <div class="dropdown-container">
                         <a class="dropdown">Support</a>
@@ -612,7 +612,7 @@
                 <div class="nav-links">
                     <a href="#">Home</a>
                     <a href="/products.php" class="dropdown">Shop</a>
-                    <a href="/wholesale">Wholesale</a>
+                    <a href="/wholesale.php">Wholesale</a>
                     <a href="/about.php">About</a>
                     <div class="category-container" id="support">
                         <a class="support">Support</a>
