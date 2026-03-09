@@ -47,8 +47,8 @@ $paymentSections = [
     <?php include __DIR__ . '/navbar.php'; ?>
 
     <main class="payment-info-page">
-        <header class="payment-info-header reveal-on-scroll">
-            <h1>Our Available Payment Options</h1>
+        <header class="payment-info-header">
+            <h2>Our Available Payment Options</h2>
         </header>
 
         <section class="payment-info-card reveal-on-scroll">
