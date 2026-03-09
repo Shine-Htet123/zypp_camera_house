@@ -17,7 +17,7 @@
             <a href="/warranty-FAQ.php">Warranty & FAQs</a>
             <a href="/reservation-policy.php">Reservation Policy</a>
             <a href="/delivery-policy.php">Delivery Policy</a>
-            <a href="#">Payment Information</a>
+            <a href="/payment-information.php">Payment Information</a>
         </div>
 
         <div class="footer-col">
