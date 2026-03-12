@@ -1,6 +1,8 @@
-/*Sidebar Toggle */
+﻿/*Sidebar Toggle */
 
 /*User Icon to open Sidebar*/
+const userProfile = document.querySelector(".user-profile");
+const userProfileLink = userProfile ? userProfile.querySelector("a") : null;
 const userIcon = document.getElementById("user-icon");
 const menuContainer = document.getElementById("menu-container");
 const blackSpace = document.getElementById("black-space");
@@ -9,8 +11,8 @@ const userMenu = document.getElementById("user-menu");
 
 const registerLink = document.getElementById("register");
 const logInLink = document.getElementById("login-link");
-const registerForm = document.getElementById("register-form");
-const loginForm = document.getElementById("login");
+const registerPanel = document.getElementById("register-panel");
+const loginPanel = document.getElementById("login-panel");
 const navMenu = document.querySelector(".nav-menu");
 
 const menuBar = document.getElementById("menu-bar");
@@ -18,88 +20,102 @@ const support = document.getElementById("support");
 const supportContent = document.getElementById("support-content");
 const supportChevron = document.getElementById("support-chevron");
 
-menuBar.addEventListener("click", () => {
+const openSidebar = (mode) => {
+    if (!menuContainer || !userMenu) return;
     menuContainer.style.pointerEvents = "auto";
     userMenu.style.transform = "translateX(0)";
     userMenu.style.animation = "slideIn 1s ease 1 normal forwards";
-    navMenu.style.display = "flex";
-    userMenu.classList.add("compact");
-    userMenu.classList.remove("normal");
-});
 
-userIcon.addEventListener("click", () => {
-    menuContainer.style.pointerEvents = "auto";
-    userMenu.style.transform = "translateX(0)";
-    userMenu.style.animation = "slideIn 1s ease 1 normal forwards";
-    loginForm.style.display = "flex";
+    if (mode === "nav") {
+        if (navMenu) navMenu.style.display = "flex";
+        if (loginPanel) loginPanel.style.display = "none";
+        if (registerPanel) registerPanel.style.display = "none";
+        userMenu.classList.add("compact");
+        userMenu.classList.remove("normal");
+        return;
+    }
+
+    if (navMenu) navMenu.style.display = "none";
+    if (loginPanel) loginPanel.style.display = mode === "register" ? "none" : "flex";
+    if (registerPanel) registerPanel.style.display = mode === "register" ? "flex" : "none";
     userMenu.classList.remove("compact");
     userMenu.classList.add("normal");
-});
+};
 
-blackSpace.addEventListener("click", () => {
+const closeSidebar = () => {
+    if (!menuContainer || !userMenu) return;
     menuContainer.style.pointerEvents = "none";
     userMenu.style.transform = "translateX(100%)";
     userMenu.style.animation = "slideOut 1s ease 1 normal forwards";
-    loginForm.style.display = "none";
-    registerForm.style.display = "none";
-    navMenu.style.display = "none";
+    if (loginPanel) loginPanel.style.display = "none";
+    if (registerPanel) registerPanel.style.display = "none";
+    if (navMenu) navMenu.style.display = "none";
+};
+
+menuBar?.addEventListener("click", () => {
+    openSidebar("nav");
 });
 
-sideBarClose.addEventListener("click", () => {
-    menuContainer.style.pointerEvents = "none";
-    userMenu.style.transform = "translateX(100%)";
-    userMenu.style.animation = "slideOut 1s ease 1 normal forwards";
-    loginForm.style.display = "none";
-    registerForm.style.display = "none";
-    userMenu.querySelector(".nav-menu").style.display = "none";
+userIcon?.addEventListener("click", (event) => {
+    if (userProfile?.dataset.authenticated === "true") return;
+    event.preventDefault();
+    openSidebar("login");
+});
+
+blackSpace?.addEventListener("click", () => {
+    closeSidebar();
+});
+
+sideBarClose?.addEventListener("click", () => {
+    closeSidebar();
 });
 
 /*Login to Register Toggle*/
-
-registerLink.addEventListener("click", () => {
-    loginForm.style.display = "none";
-    registerForm.style.display = "flex";
+registerLink?.addEventListener("click", (event) => {
+    event.preventDefault();
+    if (loginPanel) loginPanel.style.display = "none";
+    if (registerPanel) registerPanel.style.display = "flex";
 });
 
 /*Register to Login toggle */
-logInLink.addEventListener("click", () => {
-    registerForm.style.display = "none";
-    loginForm.style.display = "flex";
+logInLink?.addEventListener("click", (event) => {
+    event.preventDefault();
+    if (registerPanel) registerPanel.style.display = "none";
+    if (loginPanel) loginPanel.style.display = "flex";
 });
+
+const initialAuthPanel = menuContainer?.dataset.authPanel || "";
+if (initialAuthPanel === "login" || initialAuthPanel === "register") {
+    openSidebar(initialAuthPanel);
+}
 
 /*Navbar Offset on Scroll*/
 const navbar = document.querySelector('.navbar');
-const navTop = navbar.offsetTop;
+const navTop = navbar ? navbar.offsetTop : 0;
 
 window.addEventListener('scroll', () => {
+    if (!navbar) return;
     if (window.scrollY > navTop) {
         navbar.classList.add('glass');
-        console.log("sroll done")
     } else {
         navbar.classList.remove('glass');
-        console.log("not scrolling")
     }
 });
 
-
 /*Navbar Support Dropdown Toggle*/
-support.addEventListener("click", () => {
+support?.addEventListener("click", () => {
+    if (!supportContent || !supportChevron) return;
     if (supportContent.style.display === "flex") {
-        // play closing animation
         supportContent.style.animation = "slideDown 0.5s ease forwards";
 
-        // delay hiding until animation ends
         setTimeout(() => {
             supportContent.style.display = "none";
-        }, 500); // matches your animation duration
+        }, 500);
     } else {
-        // show + play opening animation
         supportContent.style.display = "flex";
         supportContent.style.animation = "slideUp 0.5s ease forwards";
     }
-});
 
-support.addEventListener("click", () => {
     if (supportChevron.style.transform === "rotate(180deg)") {
         supportChevron.style.transform = "rotate(0deg)";
         supportChevron.style.transition = "transform 0.3s ease";
@@ -107,9 +123,6 @@ support.addEventListener("click", () => {
         supportChevron.style.transform = "rotate(180deg)";
     }
 });
-
-/*Sidebar Toggle End*/
-
 /* Category Dropdown Menu */
 const dropdown = document.querySelector(".dropdown");
 const categoryDropdown = document.querySelector(".category-dropdown");
@@ -222,108 +235,220 @@ document
     .querySelectorAll(".search-bar-container")
     .forEach((searchContainer) => {
         // Core elements
+        const searchForm = searchContainer.querySelector(".search-box");
         const searchInput = searchContainer.querySelector("input");
         const resetBtn = searchContainer.querySelector(".resetbtn");
         const resultsBox = searchContainer.querySelector(".search-bar-content");
+        const resultsList = searchContainer.querySelector(".search-result");
+        const emptyState = searchContainer.querySelector(".search-empty");
+        const viewAll = searchContainer.querySelector(".view-all");
+        const viewAllLink = viewAll ? viewAll.querySelector("a") : null;
+        const divider = searchContainer.querySelector("hr");
+        const endpointUrl = searchForm?.dataset.searchEndpoint || "search-products.php";
+        const productsUrl = searchForm?.dataset.productsUrl || "products.php";
 
         // Safety check (in case markup changes)
         if (!searchInput) return;
 
         // Loading elements
-        const loadingScreen = searchContainer.querySelector("#loading-screen");
+        const loadingScreen = searchContainer.querySelector(".search-loading");
         const loadingVideo = loadingScreen
             ? loadingScreen.querySelector("video")
             : null;
+        let debounceTimer = null;
+        let activeController = null;
 
-        /* -------------------------------
-            Update Search State
-           ------------------------------- */
-        function updateState() {
-            const query = searchInput.value.trim();
+        const escapeHtml = (value) =>
+            String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
 
-            if (query !== "") {
-                // Show result container
-                searchContainer.classList.add("show-results");
+        const setViewAllHref = (query) => {
+            if (!viewAllLink) return;
+            const nextUrl = new URL(productsUrl, window.location.origin);
+            if (query) {
+                nextUrl.searchParams.set("q", query);
+            }
+            viewAllLink.href = nextUrl.toString();
+        };
 
-                // Show loading screen
-                if (loadingScreen) {
-                    loadingScreen.style.display = "flex";
+        const hidePanels = () => {
+            if (loadingScreen) loadingScreen.style.display = "none";
+            if (resultsList) {
+                resultsList.style.display = "none";
+                resultsList.innerHTML = "";
+            }
+            if (emptyState) emptyState.style.display = "none";
+            if (viewAll) viewAll.style.display = "none";
+            if (divider) divider.style.display = "none";
+        };
 
-                    // Restart loading animation
-                    if (loadingVideo) {
-                        loadingVideo.currentTime = 0;
-                        loadingVideo.play();
-                    }
+        const renderResults = (items, query) => {
+            if (!resultsList) return;
+
+            if (!items.length) {
+                if (emptyState) emptyState.style.display = "flex";
+                if (viewAll) viewAll.style.display = "flex";
+                if (divider) divider.style.display = "block";
+                return;
+            }
+
+            const markup = items
+                .map((item) => {
+                    const specs = Array.isArray(item.specs) && item.specs.length
+                        ? `
+                            <div class="specs">
+                                <span>Specifications</span>
+                                <ul>${item.specs
+                                    .map((spec) => `<li>${escapeHtml(spec)}</li>`)
+                                    .join("")}</ul>
+                            </div>
+                        `
+                        : `
+                            <div class="specs">
+                                <span>Brand</span>
+                                <ul><li>${escapeHtml(item.brand_name || "")}</li></ul>
+                            </div>
+                        `;
+
+                    return `
+                        <a href="${escapeHtml(item.detail_url)}" class="result-item">
+                            <div class="item-img">
+                                <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.name)}">
+                            </div>
+                            ${specs}
+                            <div class="item-name">
+                                <span>${escapeHtml(item.name)}</span>
+                            </div>
+                            <div class="price-container">
+                                <span class="discounted-price">${escapeHtml(item.price)}</span>
+                            </div>
+                        </a>
+                    `;
+                })
+                .join("");
+
+            resultsList.innerHTML = markup;
+            resultsList.style.display = "grid";
+            if (viewAll) viewAll.style.display = "flex";
+            if (divider) divider.style.display = "block";
+        };
+
+        const fetchResults = async (query) => {
+            if (activeController) {
+                activeController.abort();
+            }
+
+            activeController = new AbortController();
+            searchContainer.classList.add("show-results");
+            hidePanels();
+
+            if (loadingScreen) {
+                loadingScreen.style.display = "flex";
+                if (loadingVideo) {
+                    loadingVideo.currentTime = 0;
+                    loadingVideo.play().catch(() => {});
+                }
+            }
+
+            try {
+                const requestUrl = new URL(endpointUrl, window.location.origin);
+                requestUrl.searchParams.set("q", query);
+                requestUrl.searchParams.set("limit", "6");
+
+                const response = await fetch(requestUrl.toString(), {
+                    headers: {
+                        Accept: "application/json",
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                    signal: activeController.signal,
+                    credentials: "same-origin",
+                });
+
+                if (!response.ok) {
+                    throw new Error("Search request failed.");
                 }
 
-                // Hide results while loading
-                const result = searchContainer.querySelector(".search-result");
-                const viewAll = searchContainer.querySelector(".view-all");
-                const hr = searchContainer.querySelector("hr");
-
-                if (result) result.style.display = "none";
-                if (viewAll) viewAll.style.display = "none";
-                if (hr) hr.style.display = "none";
-
-                // Simulate backend delay
-                setTimeout(() => {
-                    // Hide loading
-                    if (loadingScreen) loadingScreen.style.display = "none";
-                    if (loadingVideo) loadingVideo.pause();
-
-                    // Show results
-                    if (result) result.style.display = "grid";
-                    if (viewAll) viewAll.style.display = "flex";
-                    if (hr) hr.style.display = "block";
-                }, 2500);
-            } else {
-                // No input → hide everything
-                searchContainer.classList.remove("show-results");
+                const payload = await response.json();
+                hidePanels();
+                renderResults(Array.isArray(payload.items) ? payload.items : [], query);
+            } catch (error) {
+                if (error.name === "AbortError") return;
+                hidePanels();
+                if (emptyState) {
+                    emptyState.textContent = "Unable to load search results.";
+                    emptyState.style.display = "flex";
+                }
+            } finally {
+                if (loadingVideo) loadingVideo.pause();
             }
-        }
+        };
 
-        /* -------------------------------
-           Input Events
-           ------------------------------- */
+        const updateState = () => {
+            const query = searchInput.value.trim();
+            searchContainer.classList.toggle("active", query !== "");
+            setViewAllHref(query);
 
-        // When input is focused
-        searchInput.addEventListener("focus", () => {
-            searchContainer.classList.add("active");
-            updateState();
-        });
+            if (debounceTimer) {
+                clearTimeout(debounceTimer);
+            }
 
-        // When user types
+            if (query === "") {
+                if (activeController) {
+                    activeController.abort();
+                    activeController = null;
+                }
+                searchContainer.classList.remove("show-results");
+                hidePanels();
+                if (emptyState) {
+                    emptyState.textContent = "No products found.";
+                }
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                fetchResults(query);
+            }, 250);
+        };
+
+        searchInput.addEventListener("focus", updateState);
         searchInput.addEventListener("input", updateState);
 
-        /* -------------------------------
-           Reset Button (X)
-           ------------------------------- */
         if (resetBtn) {
-            resetBtn.addEventListener("click", () => {
+            resetBtn.addEventListener("click", (event) => {
+                event.preventDefault();
                 searchInput.value = "";
-                searchContainer.classList.remove("active", "show-results");
-
-                // Hide loading if visible
-                if (loadingScreen) {
-                    loadingScreen.style.display = "none";
-                    if (loadingVideo) loadingVideo.pause();
-                }
+                searchInput.focus();
+                updateState();
             });
         }
 
-        /* -------------------------------
-           Click Outside to Close
-           ------------------------------- */
+        searchForm?.addEventListener("submit", () => {
+            const query = searchInput.value.trim();
+            setViewAllHref(query);
+            if (query) {
+                const nextUrl = new URL(productsUrl, window.location.origin);
+                nextUrl.searchParams.set("q", query);
+                searchForm.action = nextUrl.pathname;
+            }
+        });
+
         document.addEventListener("click", (e) => {
             if (!searchContainer.contains(e.target)) {
                 searchContainer.classList.remove("active", "show-results");
-
-                if (loadingScreen) {
-                    loadingScreen.style.display = "none";
-                    if (loadingVideo) loadingVideo.pause();
+                if (activeController) {
+                    activeController.abort();
+                    activeController = null;
                 }
+                hidePanels();
+                if (loadingVideo) loadingVideo.pause();
             }
         });
+
+        setViewAllHref(searchInput.value.trim());
     });
 
 /* End of Search Bar Functionality */
@@ -357,12 +482,26 @@ const loginFormElement = document.getElementById("login-form");
 const registerFormElement = document.getElementById("register-form");
 const loginWarning = document.getElementById("login-warning");
 const registerWarning = document.getElementById("register-warning");
+const forgotPasswordForm = document.getElementById("forgot-password-form");
+const forgotPasswordFeedback = document.getElementById("forgot-password-feedback");
+const changePasswordModal = document.getElementById("change-password-modal");
+const changePasswordForm = changePasswordModal ? changePasswordModal.querySelector("form") : null;
+const changePasswordFeedback = document.getElementById("change-password-feedback");
 
 const passwordRule =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
 
 const setWarning = (element, message) => {
-    if (!element) return;
+    if (!element) {
+        if (message && typeof Swal !== "undefined") {
+            Swal.fire({
+                icon: "error",
+                text: message,
+                confirmButtonColor: "#b31212",
+            });
+        }
+        return;
+    }
     element.textContent = message;
     element.classList.toggle("show", Boolean(message));
 };
@@ -375,15 +514,79 @@ const setInvalid = (input, isInvalid) => {
     }
 };
 
+const setSubmitting = (form, isSubmitting) => {
+    if (!form) return;
+    const submitButton = form.querySelector('button[type="submit"]');
+    if (!submitButton) return;
+
+    submitButton.dataset.originalText = submitButton.dataset.originalText || submitButton.textContent;
+    submitButton.disabled = isSubmitting;
+    submitButton.textContent = isSubmitting ? "Please wait..." : submitButton.dataset.originalText;
+};
+
+const submitJsonForm = async (url, formData) => {
+    const response = await fetch(url, {
+        method: "POST",
+        body: formData,
+        headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "Accept": "application/json",
+        },
+        credentials: "same-origin",
+    });
+
+    const result = await response.json().catch(() => ({
+        success: false,
+        message: "Something went wrong. Please try again.",
+    }));
+
+    if (!response.ok || !result.success) {
+        throw new Error(result.message || "Something went wrong. Please try again.");
+    }
+
+    return result;
+};
+
+const markCustomerAuthenticated = () => {
+    if (userProfile) {
+        userProfile.dataset.authenticated = "true";
+        userProfile.removeAttribute("id");
+    }
+
+    if (userProfileLink) {
+        const profileUrl = typeof window.appPath === "function" ? window.appPath("/user-profile.php") : "/user-profile.php";
+        userProfileLink.setAttribute("href", profileUrl);
+        userProfileLink.setAttribute("aria-label", "My profile");
+    }
+};
+
+const submitAuthForm = async (form, warningElement, successTitle) => {
+    const result = await submitJsonForm(form.action, new FormData(form));
+
+    setWarning(warningElement, "");
+    markCustomerAuthenticated();
+    form.reset();
+    closeSidebar();
+
+    if (typeof Swal !== "undefined") {
+        await Swal.fire({
+            icon: "success",
+            title: successTitle,
+            text: result.message || "Welcome.",
+            confirmButtonColor: "#56b356",
+        });
+    }
+};
+
 if (loginFormElement) {
-    loginFormElement.addEventListener("submit", (event) => {
+    loginFormElement.addEventListener("submit", async (event) => {
+        event.preventDefault();
         const emailInput = loginFormElement.querySelector('input[type="email"]');
         const passwordInput = loginFormElement.querySelector('input[type="password"]');
         const validEmail = emailInput ? emailInput.checkValidity() : false;
         const validPassword = passwordInput ? passwordInput.value.trim().length > 0 : false;
 
         if (!validEmail || !validPassword) {
-            event.preventDefault();
             setWarning(loginWarning, "Incorrect email or password.");
             setInvalid(emailInput, !validEmail);
             setInvalid(passwordInput, !validPassword);
@@ -393,6 +596,15 @@ if (loginFormElement) {
         setWarning(loginWarning, "");
         setInvalid(emailInput, false);
         setInvalid(passwordInput, false);
+
+        try {
+            setSubmitting(loginFormElement, true);
+            await submitAuthForm(loginFormElement, loginWarning, "Welcome");
+        } catch (error) {
+            setWarning(loginWarning, error.message || "Incorrect email or password.");
+        } finally {
+            setSubmitting(loginFormElement, false);
+        }
     });
 
     loginFormElement.addEventListener("input", () => {
@@ -405,7 +617,8 @@ if (loginFormElement) {
 }
 
 if (registerFormElement) {
-    registerFormElement.addEventListener("submit", (event) => {
+    registerFormElement.addEventListener("submit", async (event) => {
+        event.preventDefault();
         const emailInput = registerFormElement.querySelector('input[type="email"]');
         const passwordInput = registerFormElement.querySelector('input[type="password"]');
         const validEmail = emailInput ? emailInput.checkValidity() : false;
@@ -413,7 +626,6 @@ if (registerFormElement) {
         const validPassword = passwordRule.test(passwordValue);
 
         if (!validEmail || !validPassword) {
-            event.preventDefault();
             if (!validEmail && !validPassword) {
                 setWarning(
                     registerWarning,
@@ -435,6 +647,15 @@ if (registerFormElement) {
         setWarning(registerWarning, "");
         setInvalid(emailInput, false);
         setInvalid(passwordInput, false);
+
+        try {
+            setSubmitting(registerFormElement, true);
+            await submitAuthForm(registerFormElement, registerWarning, "Account Created");
+        } catch (error) {
+            setWarning(registerWarning, error.message || "Unable to create your account.");
+        } finally {
+            setSubmitting(registerFormElement, false);
+        }
     });
 
     registerFormElement.addEventListener("input", () => {
@@ -443,6 +664,96 @@ if (registerFormElement) {
         const passwordInput = registerFormElement.querySelector('input[type="password"]');
         setInvalid(emailInput, false);
         setInvalid(passwordInput, false);
+    });
+}
+
+if (forgotPasswordForm) {
+    forgotPasswordForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        setWarning(forgotPasswordFeedback, "");
+
+        const emailInput = forgotPasswordForm.querySelector('input[name="reset_email"]');
+        const isValid = emailInput ? emailInput.checkValidity() : false;
+        if (!isValid) {
+            setWarning(forgotPasswordFeedback, "Please enter a valid email address.");
+            setInvalid(emailInput, true);
+            return;
+        }
+
+        try {
+            setSubmitting(forgotPasswordForm, true);
+            const result = await submitJsonForm(forgotPasswordForm.action, new FormData(forgotPasswordForm));
+            setWarning(forgotPasswordFeedback, result.message || "If an account matches that email, a reset link has been sent.");
+            if (typeof Swal !== "undefined") {
+                await Swal.fire({
+                    icon: "success",
+                    title: "Check your email",
+                    text: result.message || "If an account matches that email, a reset link has been sent.",
+                    confirmButtonColor: "#56b356",
+                });
+            }
+            forgotPasswordForm.reset();
+            const forgotModal = forgotPasswordForm.closest(".modal-overlay");
+            if (forgotModal) closeModal(forgotModal);
+        } catch (error) {
+            setWarning(forgotPasswordFeedback, error.message || "Unable to send reset link right now.");
+        } finally {
+            setSubmitting(forgotPasswordForm, false);
+        }
+    });
+}
+
+if (changePasswordForm) {
+    const changePasswordEndpoint = typeof window.appPath === "function"
+        ? window.appPath("/profile/security.php")
+        : "/profile/security.php";
+
+    changePasswordForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        setWarning(changePasswordFeedback, "");
+
+        const currentPasswordInput = changePasswordForm.querySelector('input[name="current_password"]');
+        const newPasswordInput = changePasswordForm.querySelector('input[name="new_password"]');
+        const confirmPasswordInput = changePasswordForm.querySelector('input[name="confirm_password"]');
+        const newPasswordValue = newPasswordInput ? newPasswordInput.value.trim() : "";
+        const confirmPasswordValue = confirmPasswordInput ? confirmPasswordInput.value.trim() : "";
+
+        if (!currentPasswordInput?.value.trim()) {
+            setWarning(changePasswordFeedback, "Current password is required.");
+            return;
+        }
+
+        if (!passwordRule.test(newPasswordValue)) {
+            setWarning(changePasswordFeedback, "Password must be 8+ chars with upper, lower, number, and special character.");
+            return;
+        }
+
+        if (newPasswordValue !== confirmPasswordValue) {
+            setWarning(changePasswordFeedback, "Password confirmation does not match.");
+            return;
+        }
+
+        const formData = new FormData(changePasswordForm);
+        formData.set("action", "change_password");
+
+        try {
+            setSubmitting(changePasswordForm, true);
+            const result = await submitJsonForm(changePasswordEndpoint, formData);
+            changePasswordForm.reset();
+            if (typeof Swal !== "undefined") {
+                await Swal.fire({
+                    icon: "success",
+                    title: "Password Updated",
+                    text: result.message || "Password updated successfully.",
+                    confirmButtonColor: "#56b356",
+                });
+            }
+            if (changePasswordModal) closeModal(changePasswordModal);
+        } catch (error) {
+            setWarning(changePasswordFeedback, error.message || "Unable to update password right now.");
+        } finally {
+            setSubmitting(changePasswordForm, false);
+        }
     });
 }
 
@@ -508,3 +819,4 @@ document.addEventListener("keydown", (event) => {
 });
 
 /* End Modal Controls */
+

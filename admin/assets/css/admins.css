@@ -92,6 +92,11 @@
     white-space: nowrap;
 }
 
+.btn-invite:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
 @media (max-width: 800px) {
     .invite-bar {
         flex-direction: column;
@@ -325,6 +330,13 @@
     margin-bottom: 6px;
 }
 
+.admin-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
 .admin-name {
     font-size: 1rem;
     font-weight: 600;
@@ -381,11 +393,15 @@
     color: var(--color-admin);
 }
 
-.admin-status.online {
+.admin-status.active {
     color: #2e9d4b;
 }
 
-.admin-status.offline {
+.admin-status.suspended {
+    color: #df9c21;
+}
+
+.admin-status.banned {
     color: #d24b4b;
 }
 
@@ -410,6 +426,22 @@
 .delete-admin i {
     color: var(--color-danger);
     font-size: 1rem;
+}
+
+.delete-admin:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.admins-empty {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: var(--box-shadow-normal);
+    padding: 28px 22px;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    grid-column: 1 / -1;
+    text-align: center;
 }
 
 .delete-admin:hover i {

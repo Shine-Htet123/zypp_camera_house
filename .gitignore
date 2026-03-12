@@ -1,5 +1,7 @@
 # Environment
 .env
+config/oauth.local.php
+config/mail.local.php
 
 # Dependencies
 /vendor/

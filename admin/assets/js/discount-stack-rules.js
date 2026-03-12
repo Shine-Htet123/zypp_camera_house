@@ -3,6 +3,9 @@ let dragged = null;
 const footerBar = document.querySelector('.stack-footer');
 const footerSave = footerBar?.querySelector('.btn-save');
 const footerDiscard = footerBar?.querySelector('.btn-discard');
+const stackForm = document.querySelector('[data-stack-form]');
+const priorityOrderInput = document.querySelector('[data-priority-order]');
+const stackRulesInput = document.querySelector('[data-stack-rules]');
 let baselineOrder = [];
 let baselineAllowed = new Map();
 
@@ -100,6 +103,24 @@ const renderAllowedPill = (value) => {
     return span;
 };
 
+const serializePayload = () => {
+    if (priorityOrderInput) {
+        priorityOrderInput.value = Array.from(list?.querySelectorAll('.priority-item') || [])
+            .map((item) => item.dataset.type || '')
+            .join(',');
+    }
+
+    if (stackRulesInput) {
+        const rows = Array.from(document.querySelectorAll('.stack-table tbody tr')).map((row) => ({
+            id: Number(row.dataset.ruleId || 0),
+            type_a: row.dataset.typeA || '',
+            type_b: row.dataset.typeB || '',
+            allowed: (row.dataset.allowed || 'No') === 'Yes',
+        }));
+        stackRulesInput.value = JSON.stringify(rows);
+    }
+};
+
 if (stackTable) {
     stackTable.addEventListener('click', (event) => {
         const editBtn = event.target.closest('.icon-btn.edit');
@@ -177,7 +198,8 @@ if (stackTable) {
 
 captureState();
 
-footerSave?.addEventListener('click', () => {
+stackForm?.addEventListener('submit', () => {
+    serializePayload();
     captureState();
     setFooterVisible(false);
 });
@@ -186,3 +208,12 @@ footerDiscard?.addEventListener('click', () => {
     restoreState();
     setFooterVisible(false);
 });
+
+if (window.adminDiscountStackFlash && window.Swal) {
+    Swal.fire({
+        icon: window.adminDiscountStackFlash.type === 'error' ? 'error' : 'success',
+        text: window.adminDiscountStackFlash.message || '',
+        timer: 2200,
+        showConfirmButton: false,
+    });
+}

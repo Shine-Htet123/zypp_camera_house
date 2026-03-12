@@ -130,11 +130,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
 }
 
 .product-image img {
+    max-width: 100%;
     max-height: 140px;
     width: auto;
+    height: auto;
+    object-fit: contain;
     display: block;
 }
 

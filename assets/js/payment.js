@@ -18,10 +18,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const previewImage = document.querySelector('[data-payment-preview-image]');
   const submitButton = document.querySelector('[data-submit-payment-proof]');
   const confirmPaymentButton = document.querySelector('[data-confirm-payment]');
+  const orderPublicIdEl = document.querySelector('[data-order-public-id]');
+  const orderDateEl = document.querySelector('[data-order-date]');
+  const orderTimeEl = document.querySelector('[data-order-time]');
+  const receiptLink = document.querySelector('[data-receipt-link]');
+  const flash = window.__paymentFlash || null;
   const modalAnimationMs = 260;
 
   if (!openButton || !overlay || !mainModal || !formView || !successView) {
     return;
+  }
+
+  if (flash && typeof Swal !== 'undefined' && flash.message) {
+    Swal.fire({
+      icon: flash.type === 'success' ? 'success' : 'error',
+      title: flash.type === 'success' ? 'Payment' : 'Checkout',
+      text: flash.message,
+    });
   }
 
   const clearPreview = () => {
@@ -92,6 +105,58 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  const applyConfirmationPayload = (payload) => {
+    if (!payload) {
+      return;
+    }
+
+    if (orderPublicIdEl && payload.order_public_id) {
+      orderPublicIdEl.textContent = `#${payload.order_public_id}`;
+    }
+
+    if (payload.created_at) {
+      const created = new Date(payload.created_at.replace(' ', 'T'));
+      if (!Number.isNaN(created.getTime())) {
+        if (orderDateEl) {
+          orderDateEl.textContent = created.toLocaleDateString('en-GB');
+        }
+        if (orderTimeEl) {
+          orderTimeEl.textContent = created.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+      }
+    }
+
+    if (receiptLink && payload.order_public_id) {
+      receiptLink.href = `/check-order.php?order=${encodeURIComponent(payload.order_public_id)}`;
+    }
+  };
+
+  const submitCheckoutAction = async (action, formData = null) => {
+    const options = {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json',
+      },
+    };
+
+    if (formData) {
+      formData.set('action', action);
+      options.body = formData;
+    } else {
+      options.headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
+      options.body = new URLSearchParams({ action }).toString();
+    }
+
+    const response = await fetch('/payment.php', options);
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Payment request failed.');
+    }
+
+    return data.payload || {};
+  };
+
   const switchView = (view) => {
     mainModal.classList.remove('is-active');
 
@@ -123,7 +188,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }, modalAnimationMs);
   };
 
-  openButton.addEventListener('click', openModal);
+  openButton.addEventListener('click', () => {
+    if (openButton.dataset.codMode === '1') {
+      submitCheckoutAction('place_cod_order')
+        .then((payload) => {
+          applyConfirmationPayload(payload);
+          showConfirmedPage();
+        })
+        .catch((error) => {
+          if (typeof Swal !== 'undefined') {
+            Swal.fire({
+              icon: 'error',
+              title: 'Checkout failed',
+              text: error.message,
+            });
+          }
+        });
+      return;
+    }
+
+    openModal();
+  });
 
   closeButtons.forEach((button) => {
     button.addEventListener('click', closeModal);
@@ -191,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (submitButton) {
-    submitButton.addEventListener('click', () => {
+    submitButton.addEventListener('click', async () => {
       const selectedFile = uploadInput?.files?.[0];
 
       if (!selectedFile) {
@@ -207,7 +292,21 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      switchView('success');
+      try {
+        const formData = new FormData();
+        formData.set('payment_proof', selectedFile);
+        const payload = await submitCheckoutAction('submit_payment_proof', formData);
+        applyConfirmationPayload(payload);
+        switchView('success');
+      } catch (error) {
+        if (typeof Swal !== 'undefined') {
+          Swal.fire({
+            icon: 'error',
+            title: 'Upload failed',
+            text: error.message || 'Failed to submit payment proof.',
+          });
+        }
+      }
     });
   }
 

@@ -117,6 +117,13 @@
     display: inline-block;
 }
 
+.usp-icon-image {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    display: block;
+}
+
 .usp-title,
 .usp-desc {
     color: var(--text-secondary);

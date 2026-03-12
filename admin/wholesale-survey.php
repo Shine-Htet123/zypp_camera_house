@@ -1,52 +1,15 @@
 <?php
-$answers = [
-    [
-        'business_name' => 'Example Co. Ltd.',
-        'contact_person' => 'Steven Chou',
-        'phone' => '09123456789',
-        'email' => 'example@email.com',
-        'business_type' => 'Expertise',
-        'note' => 'This is the additional notes from the survey.....',
-    ],
-    [
-        'business_name' => 'Example Co. Ltd.',
-        'contact_person' => 'Steven Chou',
-        'phone' => '09123456789',
-        'email' => 'example@email.com',
-        'business_type' => 'Expertise',
-        'note' => 'This is the additional notes from the survey.....',
-    ],
-    [
-        'business_name' => 'Example Co. Ltd.',
-        'contact_person' => 'Steven Chou',
-        'phone' => '09123456789',
-        'email' => 'example@email.com',
-        'business_type' => 'Expertise',
-        'note' => 'This is the additional notes from the survey.....',
-    ],
-    [
-        'business_name' => 'Example Co. Ltd.',
-        'contact_person' => 'Steven Chou',
-        'phone' => '09123456789',
-        'email' => 'example@email.com',
-        'business_type' => 'Expertise',
-        'note' => 'This is the additional notes from the survey.....',
-    ],
-    [
-        'business_name' => 'Example Co. Ltd.',
-        'contact_person' => 'Steven Chou',
-        'phone' => '09123456789',
-        'email' => 'example@email.com',
-        'business_type' => 'Expertise',
-        'note' => 'This is the additional notes from the survey.....',
-    ],
-];
+require_once __DIR__ . '/../config/admin_bootstrap.php';
+require_once __DIR__ . '/../database/admin/wholesale_survey.php';
+
+$answers = admin_fetch_wholesale_survey_answers();
+$chartData = admin_fetch_wholesale_survey_chart_data();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <?php include __DIR__ . '/head.php'; ?>
-    <link rel="stylesheet" href="/admin/assets/css/wholesale-survey.css">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/admin/assets/css/wholesale-survey.css')); ?>">
 </head>
 <body class="admin-page">
     <?php include __DIR__ . '/navbar.php'; ?>
@@ -79,24 +42,30 @@ $answers = [
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($answers as $row): ?>
-                                <tr
-                                    class="answers-row"
-                                    data-business="<?php echo htmlspecialchars($row['business_name']); ?>"
-                                    data-contact="<?php echo htmlspecialchars($row['contact_person']); ?>"
-                                    data-phone="<?php echo htmlspecialchars($row['phone']); ?>"
-                                    data-email="<?php echo htmlspecialchars($row['email']); ?>"
-                                    data-type="<?php echo htmlspecialchars($row['business_type']); ?>"
-                                    data-note="<?php echo htmlspecialchars($row['note']); ?>"
-                                >
-                                    <td><?php echo htmlspecialchars($row['business_name']); ?></td>
-                                    <td><?php echo htmlspecialchars($row['contact_person']); ?></td>
-                                    <td><?php echo htmlspecialchars($row['phone']); ?></td>
-                                    <td><?php echo htmlspecialchars($row['email']); ?></td>
-                                    <td><?php echo htmlspecialchars($row['business_type']); ?></td>
-                                    <td class="note"><?php echo htmlspecialchars($row['note']); ?></td>
+                            <?php if ($answers): ?>
+                                <?php foreach ($answers as $row): ?>
+                                    <tr
+                                        class="answers-row"
+                                        data-business="<?php echo htmlspecialchars($row['business_name']); ?>"
+                                        data-contact="<?php echo htmlspecialchars($row['contact_person']); ?>"
+                                        data-phone="<?php echo htmlspecialchars($row['phone']); ?>"
+                                        data-email="<?php echo htmlspecialchars($row['email']); ?>"
+                                        data-type="<?php echo htmlspecialchars($row['business_type']); ?>"
+                                        data-note="<?php echo htmlspecialchars($row['note']); ?>"
+                                    >
+                                        <td><?php echo htmlspecialchars($row['business_name']); ?></td>
+                                        <td><?php echo htmlspecialchars($row['contact_person']); ?></td>
+                                        <td><?php echo htmlspecialchars($row['phone']); ?></td>
+                                        <td><?php echo htmlspecialchars($row['email']); ?></td>
+                                        <td><?php echo htmlspecialchars($row['business_type']); ?></td>
+                                        <td class="note"><?php echo htmlspecialchars($row['note'] !== '' ? $row['note'] : '-'); ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr class="answers-empty-row">
+                                    <td colspan="6">No wholesale survey responses found.</td>
                                 </tr>
-                            <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -142,8 +111,12 @@ $answers = [
     </div>
 </div>
 
+<script>
+    window.wholesaleSurveyChartData = <?php echo json_encode($chartData, JSON_UNESCAPED_SLASHES); ?>;
+</script>
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-<script src="/admin/assets/js/wholesale-survey.js"></script>
-<script src="/admin/assets/js/admin.js"></script>
+    <script src="<?php echo htmlspecialchars(app_path('/admin/assets/js/wholesale-survey.js')); ?>"></script>
+    <script src="<?php echo htmlspecialchars(app_path('/admin/assets/js/admin.js')); ?>"></script>
 </body>
 </html>
+

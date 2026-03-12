@@ -1,17 +1,30 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const ordersApiUrl = window.appPath ? window.appPath('/admin/orders-api.php') : '/admin/orders-api.php';
   const orderModal = document.getElementById('orderModal');
+  const searchForm = document.querySelector('.orders-search-form');
   const closeBtn = orderModal?.querySelector('.modal-close');
-  const rows = document.querySelectorAll('.orders-row');
+  const rows = Array.from(document.querySelectorAll('.orders-row'));
+  const rowsBody = document.querySelector('.orders-body');
   const modalOrderNo = document.getElementById('modalOrderNo');
   const modalOrderDate = document.getElementById('modalOrderDate');
   const modalOrderStatus = document.getElementById('modalOrderStatus');
   const modalPaymentStatus = document.getElementById('modalPaymentStatus');
-  const ordersBody = document.querySelector('.orders-body');
+  const modalShipName = document.getElementById('modalShipName');
+  const modalShipEmail = document.getElementById('modalShipEmail');
+  const modalShipPhone = document.getElementById('modalShipPhone');
+  const modalShipAddress = document.getElementById('modalShipAddress');
+  const modalAdditionalNote = document.getElementById('modalAdditionalNote');
+  const modalSummaryTable = document.getElementById('orderSummaryTable');
+  const searchInput = document.getElementById('ordersSearchInput');
+  const searchButton = document.getElementById('ordersSearchButton');
   const filterButton = document.querySelector('.btn-filter');
   const filterDropdown = document.getElementById('ordersFilterDropdown');
   const filterPaymentSelect = document.getElementById('filterPaymentStatus');
   const filterOrderSelect = document.getElementById('filterOrderStatus');
+  const filterApplyButton = document.querySelector('.btn-filter-apply');
   const filterResetButton = document.querySelector('.btn-filter-clear');
+  const showAllButton = document.querySelector('.admin-show-all');
+  const emptyRow = document.querySelector('.orders-empty-row');
 
   const clearStatusClasses = (el, base) => {
     if (!el) return;
@@ -27,198 +40,55 @@ document.addEventListener('DOMContentLoaded', () => {
     );
   };
 
-  const applyStatusToRow = (row, paymentStatus, orderStatus) => {
-    const paymentSpan = row.querySelector('.status.payment');
-    const orderSpan = row.querySelector('.status.order');
-    const actionsCell = row.querySelector('.order-actions');
-
-    if (paymentSpan) {
-      clearStatusClasses(paymentSpan, 'payment');
-      paymentSpan.textContent = paymentStatus;
-      paymentSpan.classList.add('status', 'payment', paymentStatus.toLowerCase());
-    }
-
-    if (orderSpan) {
-      clearStatusClasses(orderSpan, 'order');
-      orderSpan.textContent = orderStatus;
-      orderSpan.classList.add('status', 'order', orderStatus.toLowerCase());
-    }
-
-    if (actionsCell) {
-      actionsCell.innerHTML = '';
-      const editIcon = document.createElement('i');
-      editIcon.className = 'fa-regular fa-pen-to-square edit-status';
-      actionsCell.appendChild(editIcon);
-    }
-
-    row.dataset.paymentStatus = paymentStatus;
-    row.dataset.orderStatus = orderStatus;
+  const applyStatusClass = (el, base, value) => {
+    if (!el) return;
+    clearStatusClasses(el, base);
+    el.textContent = value;
+    el.classList.add('status', base, value.toLowerCase());
   };
 
   const createStatusSelect = (options, current) => {
     const select = document.createElement('select');
     select.className = 'status-select';
-
     options.forEach((value) => {
-      const opt = document.createElement('option');
-      opt.value = value;
-      opt.textContent = value;
-      if (value.toLowerCase() === current.toLowerCase()) {
-        opt.selected = true;
-      }
-      select.appendChild(opt);
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = value;
+      option.selected = value.toLowerCase() === current.toLowerCase();
+      select.appendChild(option);
     });
-
     return select;
   };
 
-  let currentlyEditingRow = null;
-
-  const resetRowFromDataset = (row) => {
-    if (!row) return;
-    const payment = row.dataset.paymentStatus || row.dataset.originalPaymentStatus;
-    const order = row.dataset.orderStatus || row.dataset.originalOrderStatus;
-    if (payment && order) {
-      applyStatusToRow(row, payment, order);
-    }
-    row.classList.remove('editing');
+  const updateEmptyState = () => {
+    if (!rowsBody || !emptyRow) return;
+    const visibleRows = rows.filter((row) => row.style.display !== 'none');
+    emptyRow.style.display = visibleRows.length === 0 ? '' : 'none';
   };
 
-  const enterEditMode = (row) => {
-    if (row.classList.contains('editing')) return;
+  const applyFilters = () => {
+    const query = (searchInput?.value || '').trim().toLowerCase();
+    const paymentFilter = (filterPaymentSelect?.value || '').trim().toLowerCase();
+    const orderFilter = (filterOrderSelect?.value || '').trim().toLowerCase();
 
-    if (currentlyEditingRow && currentlyEditingRow !== row) {
-      resetRowFromDataset(currentlyEditingRow);
-    }
+    rows.forEach((row) => {
+      const haystack = [
+        row.dataset.orderNo,
+        row.dataset.customer,
+        row.dataset.name,
+      ].join(' ').toLowerCase();
 
-    row.classList.add('editing');
-    currentlyEditingRow = row;
+      const matchesQuery = query === '' || haystack.includes(query);
+      const matchesPayment =
+        paymentFilter === '' || (row.dataset.paymentStatus || '').toLowerCase() === paymentFilter;
+      const matchesOrder =
+        orderFilter === '' || (row.dataset.orderStatus || '').toLowerCase() === orderFilter;
 
-    const paymentSpan = row.querySelector('.status.payment');
-    const orderSpan = row.querySelector('.status.order');
-    const actionsCell = row.querySelector('.order-actions');
-
-    if (!paymentSpan || !orderSpan || !actionsCell) return;
-
-    const originalPayment = row.dataset.paymentStatus || paymentSpan.textContent.trim();
-    const originalOrder = row.dataset.orderStatus || orderSpan.textContent.trim();
-
-    row.dataset.originalPaymentStatus = originalPayment;
-    row.dataset.originalOrderStatus = originalOrder;
-
-    paymentSpan.innerHTML = '';
-    orderSpan.innerHTML = '';
-    actionsCell.innerHTML = '';
-
-    const paymentSelect = createStatusSelect(['Unpaid', 'Paid', 'Pending'], originalPayment);
-    const orderSelect = createStatusSelect(
-      ['Pending', 'Cancelled', 'Confirmed', 'Delivered', 'Shipped'],
-      originalOrder
-    );
-
-    paymentSpan.appendChild(paymentSelect);
-    orderSpan.appendChild(orderSelect);
-
-    const confirmIcon = document.createElement('i');
-    confirmIcon.className = 'fa-solid fa-check status-confirm';
-
-    const cancelIcon = document.createElement('i');
-    cancelIcon.className = 'fa-solid fa-xmark status-cancel';
-
-    actionsCell.appendChild(confirmIcon);
-    actionsCell.appendChild(cancelIcon);
-
-    confirmIcon.addEventListener('click', (event) => {
-      event.stopPropagation();
-
-      const newPayment = paymentSelect.value;
-      const newOrder = orderSelect.value;
-
-      const proceed = (confirmed) => {
-        if (confirmed) {
-          applyStatusToRow(row, newPayment, newOrder);
-          row.dataset.paymentStatus = newPayment;
-          row.dataset.orderStatus = newOrder;
-        } else {
-          applyStatusToRow(row, originalPayment, originalOrder);
-        }
-        row.classList.remove('editing');
-        currentlyEditingRow = null;
-      };
-
-      if (typeof Swal !== 'undefined') {
-        Swal.fire({
-          title: 'Confirm status update?',
-          text: 'Are you sure you want to save these changes?',
-          icon: 'question',
-          showCancelButton: true,
-          confirmButtonText: 'Yes, confirm',
-          cancelButtonText: 'No, cancel',
-        }).then((result) => {
-          proceed(result.isConfirmed);
-        });
-      } else {
-        proceed(true);
-      }
+      row.style.display = matchesQuery && matchesPayment && matchesOrder ? '' : 'none';
     });
 
-    cancelIcon.addEventListener('click', (event) => {
-      event.stopPropagation();
-      applyStatusToRow(row, originalPayment, originalOrder);
-      row.classList.remove('editing');
-      currentlyEditingRow = null;
-    });
+    updateEmptyState();
   };
-
-  rows.forEach((row) => {
-    row.addEventListener('click', (event) => {
-      const target = event.target;
-      if (target.closest('.edit-status')) return;
-      if (!target.closest('.order-id-link')) return;
-
-      const dataset = row.dataset;
-
-      if (modalOrderNo && dataset.orderNo) {
-        modalOrderNo.textContent = dataset.orderNo;
-      }
-
-      if (modalOrderDate && dataset.orderTime) {
-        modalOrderDate.textContent = dataset.orderTime;
-      }
-
-      if (modalOrderStatus && dataset.orderStatus) {
-        clearStatusClasses(modalOrderStatus, 'order');
-        modalOrderStatus.textContent = dataset.orderStatus;
-        modalOrderStatus.classList.add(
-          'status',
-          'order',
-          dataset.orderStatus.toLowerCase()
-        );
-      }
-
-      if (modalPaymentStatus && dataset.paymentStatus) {
-        clearStatusClasses(modalPaymentStatus, 'payment');
-        modalPaymentStatus.textContent = dataset.paymentStatus;
-        modalPaymentStatus.classList.add(
-          'status',
-          'payment',
-          dataset.paymentStatus.toLowerCase()
-        );
-      }
-
-      orderModal?.classList.add('open');
-      orderModal?.setAttribute('aria-hidden', 'false');
-    });
-  });
-
-  ordersBody?.addEventListener('click', (event) => {
-    const icon = event.target.closest('.edit-status');
-    if (!icon) return;
-    event.stopPropagation();
-    const row = icon.closest('.orders-row');
-    if (!row) return;
-    enterEditMode(row);
-  });
 
   const toggleFilterDropdown = () => {
     if (!filterDropdown) return;
@@ -227,6 +97,198 @@ document.addEventListener('DOMContentLoaded', () => {
     filterDropdown.setAttribute('aria-hidden', isOpen ? 'true' : 'false');
   };
 
+  const closeModal = () => {
+    orderModal?.classList.remove('open');
+    orderModal?.setAttribute('aria-hidden', 'true');
+  };
+
+  const openModal = () => {
+    orderModal?.classList.add('open');
+    orderModal?.setAttribute('aria-hidden', 'false');
+  };
+
+  const renderSummary = (detail) => {
+    if (!modalSummaryTable) return;
+
+    modalSummaryTable.querySelectorAll('.summary-row').forEach((row) => row.remove());
+
+    (detail.items || []).forEach((item) => {
+      const row = document.createElement('div');
+      row.className = 'summary-row';
+      row.innerHTML = `
+        <span>${item.qty}</span>
+        <span>${item.name}</span>
+        <span>${item.price_display}</span>
+      `;
+      modalSummaryTable.appendChild(row);
+    });
+
+    [
+      ['Subtotal', detail.subtotal_display],
+      ['Shipping Fees', detail.shipping_fee_display],
+      ['Total', detail.total_display],
+    ].forEach(([label, value]) => {
+      const row = document.createElement('div');
+      row.className = 'summary-row summary-total';
+      row.innerHTML = `<span>${label}</span><span>${value}</span>`;
+      modalSummaryTable.appendChild(row);
+    });
+  };
+
+  const loadOrderDetail = async (orderId) => {
+    const response = await fetch(`${ordersApiUrl}?action=detail&order_id=${encodeURIComponent(orderId)}`, {
+      headers: { Accept: 'application/json' },
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload.success) {
+      throw new Error(payload.message || 'Failed to load order details.');
+    }
+    return payload.data;
+  };
+
+  const populateModal = (detail) => {
+    if (modalOrderNo) modalOrderNo.textContent = detail.order_no_display || '#-';
+    if (modalOrderDate) modalOrderDate.textContent = detail.order_date_display || '-';
+    if (modalShipName) modalShipName.textContent = detail.delivery_name || '-';
+    if (modalShipEmail) modalShipEmail.textContent = detail.delivery_email || '-';
+    if (modalShipPhone) modalShipPhone.textContent = detail.delivery_phone || '-';
+    if (modalShipAddress) modalShipAddress.textContent = detail.delivery_address || '-';
+    if (modalAdditionalNote) modalAdditionalNote.textContent = detail.additional_note || '-';
+    applyStatusClass(modalOrderStatus, 'order', detail.order_status_label || 'Pending');
+    applyStatusClass(modalPaymentStatus, 'payment', detail.payment_status_label || 'Unpaid');
+    renderSummary(detail);
+  };
+
+  let currentlyEditingRow = null;
+
+  const resetRow = (row) => {
+    if (!row) return;
+    row.classList.remove('editing');
+    const paymentCell = row.querySelector('.status.payment');
+    const orderCell = row.querySelector('.status.order');
+    const actionsCell = row.querySelector('.order-actions');
+    applyStatusClass(paymentCell, 'payment', row.dataset.paymentStatus || 'Unpaid');
+    applyStatusClass(orderCell, 'order', row.dataset.orderStatus || 'Pending');
+    if (actionsCell) {
+      actionsCell.innerHTML = '<i class="fa-regular fa-pen-to-square edit-status"></i>';
+    }
+  };
+
+  const saveRowStatuses = async (row, orderStatus) => {
+    const formData = new FormData();
+    formData.append('action', 'update-status');
+    formData.append('order_id', row.dataset.orderId || '');
+    formData.append('order_status', orderStatus);
+
+    const response = await fetch(ordersApiUrl, {
+      method: 'POST',
+      body: formData,
+      headers: { Accept: 'application/json' },
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload.success) {
+      throw new Error(payload.message || 'Failed to update order statuses.');
+    }
+
+    row.dataset.orderStatus = payload.data.order_status;
+    resetRow(row);
+  };
+
+  const enterEditMode = (row) => {
+    if (!row || row.classList.contains('editing')) return;
+    if (currentlyEditingRow && currentlyEditingRow !== row) {
+      resetRow(currentlyEditingRow);
+    }
+    currentlyEditingRow = row;
+    row.classList.add('editing');
+
+    const paymentCell = row.querySelector('.status.payment');
+    const orderCell = row.querySelector('.status.order');
+    const actionsCell = row.querySelector('.order-actions');
+    if (!paymentCell || !orderCell || !actionsCell) return;
+
+    const originalOrder = row.dataset.orderStatus || orderCell.textContent.trim();
+
+    orderCell.innerHTML = '';
+    actionsCell.innerHTML = '';
+
+    const orderSelect = createStatusSelect(
+      ['Pending', 'Cancelled', 'Confirmed', 'Delivered', 'Shipped'],
+      originalOrder
+    );
+
+    orderCell.appendChild(orderSelect);
+    actionsCell.innerHTML = `
+      <i class="fa-solid fa-check status-confirm"></i>
+      <i class="fa-solid fa-xmark status-cancel"></i>
+    `;
+
+    actionsCell.querySelector('.status-confirm')?.addEventListener('click', async (event) => {
+      event.stopPropagation();
+      try {
+        await saveRowStatuses(row, orderSelect.value);
+        currentlyEditingRow = null;
+        if (typeof Swal !== 'undefined') {
+          Swal.fire({
+            icon: 'success',
+            title: 'Updated',
+            text: 'Order status has been updated.',
+            timer: 1400,
+            showConfirmButton: false,
+          });
+        }
+      } catch (error) {
+        if (typeof Swal !== 'undefined') {
+          Swal.fire({ icon: 'error', title: 'Update failed', text: error.message });
+        }
+      }
+    });
+
+    actionsCell.querySelector('.status-cancel')?.addEventListener('click', (event) => {
+      event.stopPropagation();
+      resetRow(row);
+      currentlyEditingRow = null;
+    });
+  };
+
+  searchForm?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    applyFilters();
+  });
+
+  searchButton?.addEventListener('click', (event) => {
+    event.preventDefault();
+    applyFilters();
+  });
+
+  showAllButton?.addEventListener('click', (event) => {
+    event.preventDefault();
+    if (searchInput) searchInput.value = '';
+    if (filterPaymentSelect) filterPaymentSelect.value = '';
+    if (filterOrderSelect) filterOrderSelect.value = '';
+    applyFilters();
+  });
+
+  searchInput?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      applyFilters();
+    }
+  });
+
+  filterApplyButton?.addEventListener('click', () => {
+    applyFilters();
+    filterDropdown?.classList.remove('open');
+    filterDropdown?.setAttribute('aria-hidden', 'true');
+  });
+
+  filterResetButton?.addEventListener('click', () => {
+    if (filterPaymentSelect) filterPaymentSelect.value = '';
+    if (filterOrderSelect) filterOrderSelect.value = '';
+    if (searchInput) searchInput.value = '';
+    applyFilters();
+  });
+
   filterButton?.addEventListener('click', (event) => {
     event.stopPropagation();
     toggleFilterDropdown();
@@ -234,30 +296,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.addEventListener('click', (event) => {
     if (!filterDropdown || !filterDropdown.classList.contains('open')) return;
-    if (
-      event.target.closest('.filter-dropdown') ||
-      event.target.closest('.btn-filter')
-    ) {
-      return;
-    }
+    if (event.target.closest('.filter-dropdown') || event.target.closest('.btn-filter')) return;
     filterDropdown.classList.remove('open');
     filterDropdown.setAttribute('aria-hidden', 'true');
   });
 
-  filterResetButton?.addEventListener('click', () => {
-    if (filterPaymentSelect) filterPaymentSelect.value = '';
-    if (filterOrderSelect) filterOrderSelect.value = '';
+  rows.forEach((row) => {
+    row.querySelector('.order-id-link')?.addEventListener('click', async () => {
+      try {
+        const detail = await loadOrderDetail(row.dataset.orderId || '');
+        populateModal(detail);
+        openModal();
+      } catch (error) {
+        if (typeof Swal !== 'undefined') {
+          Swal.fire({ icon: 'error', title: 'Load failed', text: error.message });
+        }
+      }
+    });
   });
 
-  closeBtn?.addEventListener('click', () => {
-    orderModal?.classList.remove('open');
-    orderModal?.setAttribute('aria-hidden', 'true');
+  rowsBody?.addEventListener('click', (event) => {
+    const editIcon = event.target.closest('.edit-status');
+    if (!editIcon) return;
+    enterEditMode(editIcon.closest('.orders-row'));
   });
 
+  closeBtn?.addEventListener('click', closeModal);
   orderModal?.addEventListener('click', (event) => {
     if (event.target === orderModal) {
-      orderModal.classList.remove('open');
-      orderModal.setAttribute('aria-hidden', 'true');
+      closeModal();
     }
   });
+
+  applyFilters();
 });

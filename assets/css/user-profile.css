@@ -178,6 +178,10 @@
     display: flex;
 }
 
+.profile-card.editing .card-actions {
+    display: none;
+}
+
 .profile-card-form .form-row {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -397,6 +401,26 @@
 
 .status.pending {
     color: var(--color-warning);
+}
+
+.status.confirmed,
+.status.paid {
+    color: var(--color-success);
+}
+
+.status.shipped {
+    color: var(--brand-primary);
+}
+
+.status.unpaid {
+    color: var(--color-danger);
+}
+
+.orders-empty {
+    padding: 20px 18px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.95rem;
 }
 
 
@@ -717,6 +741,122 @@
     gap: 20px;
 }
 
+.social-connect-section {
+    background-color: var(--bg-card);
+    border-radius: 10px;
+    padding: 18px;
+    box-shadow: var(--box-shadow-normal);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.social-connect-header h3 {
+    font-size: 1rem;
+    margin: 0 0 4px;
+}
+
+.social-connect-header p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.social-connect-flash {
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.social-connect-flash.success,
+.social-connect-flash.info {
+    background-color: rgba(86, 179, 86, 0.12);
+    color: #2f7b2f;
+}
+
+.social-connect-flash.error {
+    background-color: rgba(179, 18, 18, 0.12);
+    color: var(--color-danger);
+}
+
+.referral-section {
+    margin-top: 20px;
+}
+
+.referral-card {
+    align-items: flex-start;
+}
+
+.referral-link-text {
+    margin: 0;
+    word-break: break-all;
+}
+
+.referral-copy-btn {
+    border: none;
+    cursor: pointer;
+}
+
+.social-connect-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.social-connect-card {
+    border: 1px solid #d8d8d8;
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.social-connect-card.is-connected {
+    border-color: rgba(86, 179, 86, 0.35);
+}
+
+.social-connect-copy h4 {
+    margin: 0 0 4px;
+    font-size: 0.95rem;
+}
+
+.social-connect-copy p {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+}
+
+.social-connect-state,
+.social-connect-btn {
+    flex-shrink: 0;
+    min-width: 108px;
+    text-align: center;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    font-weight: var(--font-weight-bold);
+}
+
+.social-connect-btn {
+    background-color: var(--brand-primary);
+    color: var(--text-inverse);
+}
+
+.social-connect-btn:hover {
+    background-color: var(--brand-primary-dark);
+}
+
+.social-connect-state.connected {
+    background-color: rgba(86, 179, 86, 0.12);
+    color: #2f7b2f;
+}
+
+.social-connect-state.unavailable {
+    background-color: rgba(179, 18, 18, 0.12);
+    color: var(--color-danger);
+}
+
 .settings-row {
     display: flex;
     align-items: center;
@@ -825,6 +965,10 @@
 
     .profile-card-form .form-row {
         grid-template-columns: 1fr;
+    }
+
+    .referral-copy-btn {
+        width: 100%;
     }
 
     .track-result {
@@ -946,6 +1090,16 @@
     .track-result {
         max-width: 100%;
         margin: 0 auto;
+    }
+
+    .social-connect-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .social-connect-state,
+    .social-connect-btn {
+        width: 100%;
     }
 
     .summary-table {

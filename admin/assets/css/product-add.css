@@ -224,6 +224,10 @@
     color: #d9534f;
 }
 
+.image-previews .image-tools .icon-btn.reupload {
+    color: #3b2615;
+}
+
 .image-previews .primary-radio {
     display: inline-flex;
     align-items: center;
@@ -303,6 +307,14 @@
     flex-shrink: 0;
 }
 
+.spec-actions .icon-btn.edit {
+    color: #3b2615;
+}
+
+.spec-actions .icon-btn.delete {
+    color: #d9534f;
+}
+
 .spec-text {
     white-space: nowrap;
     max-width: 520px;
@@ -343,7 +355,7 @@
     margin: 0 auto;
     position: fixed;
     left: 50%;
-    bottom: 16px;
+    bottom: 28px;
     transform: translate(-50%, 120%);
     opacity: 0;
     pointer-events: none;

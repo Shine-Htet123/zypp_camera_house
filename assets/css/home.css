@@ -104,7 +104,7 @@
     margin-top: 20px;
 }
 
-.hero-section .hero-container .hero-wrapper .hero-elements .hero-btn button {
+.hero-section .hero-container .hero-wrapper .hero-elements .hero-btn .hero-action {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -116,9 +116,10 @@
     box-shadow: var(--box-shadow-normal);
     transition: all 0.3s ease;
     font-weight: var(--font-weight-bold);
+    text-decoration: none;
 }
 
-.hero-section .hero-container .hero-wrapper .hero-elements .hero-btn button:hover{
+.hero-section .hero-container .hero-wrapper .hero-elements .hero-btn .hero-action:hover{
     box-shadow: none;
 }
 
@@ -208,6 +209,24 @@
     display: none;
 }
 
+.home-empty-state {
+    width: 100%;
+    min-height: 120px;
+    border: 2px dashed var(--text-muted);
+    border-radius: 12px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    font-weight: var(--font-weight-medium);
+}
+
+.home-empty-state-wide {
+    grid-column: 1 / -1;
+}
+
 .trusted-brands .brand-logos{
     width: 80%;
 }
@@ -218,6 +237,10 @@
     align-items: center;
     justify-content: center;
     margin: 0 auto;
+}
+
+.trusted-brands .brand-logos a.logo:hover{
+    transform: translateY(-2px);
 }
 
 .trusted-brands .brand-logos .logo img{
@@ -479,6 +502,7 @@
     justify-content: center;
     flex-direction: column;
     gap: 20px;
+    color: inherit;
 }
 
 .best-sellers-container .best-seller-slider .product-card:hover {
@@ -534,47 +558,6 @@
     border-radius: 5px;
     background-color: var(--color-danger);
     color: var(--text-inverse);
-}
-
-.best-sellers-container .product-description .description-buttons {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
-    width: 100%;
-}
-
-.best-sellers-container .product-description .description-buttons button{
-    width: 40%;
-    height: 40px;
-    border-radius: 5px;
-    font-size: 0.9rem;
-    font-weight: 500;
-}
-
-.best-sellers-container .product-description .description-buttons .buy-now {
-    border: 2px solid var(--brand-primary);
-    color: var(--brand-primary);
-    background-color: transparent;
-}
-
-.best-sellers-container .product-description .description-buttons .buy-now:hover {
-    border: 2px solid var(--brand-primary);
-    color: var(--text-inverse);
-    background-color: var(--brand-primary);
-}
-
-.best-sellers-container .product-description .description-buttons .add-to-cart {
-    border: 2px solid var(--brand-primary);
-    color: var(--text-inverse);
-    background-color: var(--brand-primary);
-}
-
-.best-sellers-container .product-description .description-buttons .add-to-cart:hover {
-
-    border: 2px solid var(--brand-primary);
-    color: var(--brand-primary);
-    background-color: transparent;
 }
 
 .best-sellers-box .see-more {
@@ -957,14 +940,6 @@
         scroll-snap-align: start;
     }
 
-    .best-sellers-container .product-description .description-buttons {
-        flex-direction: column;
-    }
-
-    .best-sellers-container .product-description .description-buttons button {
-        width: 100%;
-    }
-
     .review-container .rating-input {
         flex-direction: column;
         align-items: flex-start;
@@ -977,7 +952,7 @@
 }
 
 @media (max-width: 860px) {
-    .hero-section .hero-container .hero-wrapper .hero-elements .hero-btn button {
+    .hero-section .hero-container .hero-wrapper .hero-elements .hero-btn .hero-action {
         width: 160px;
         height: 55px;
         font-size: 1rem;
@@ -988,15 +963,6 @@
     .best-sellers-container .product-description .product-price {
         flex-direction: column;
         gap: 8px;
-    }
-
-    .best-sellers-container .product-description .description-buttons {
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .best-sellers-container .product-description .description-buttons button {
-        width: 100%;
     }
 
     .best-sellers-container .best-sellers-box .best-seller-slider{
@@ -1014,7 +980,7 @@
         font-size: 1rem;
     }
 
-    .hero-section .hero-container .hero-wrapper .hero-elements .hero-btn button {
+    .hero-section .hero-container .hero-wrapper .hero-elements .hero-btn .hero-action {
         width: 100%;
         height: 55px;
     }

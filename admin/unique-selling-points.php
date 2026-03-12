@@ -1,22 +1,53 @@
 <?php
-$points = [
-    [
-        'id' => 1,
-        'title' => 'Lorem ipsum dolor sit amet, consectetur',
-        'description' => 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    ],
-    [
-        'id' => 2,
-        'title' => 'Lorem ipsum dolor sit amet, consectetur',
-        'description' => 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    ],
-];
+require_once __DIR__ . '/../config/admin_bootstrap.php';
+
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
+require_once __DIR__ . '/../database/admin/unique_selling_points.php';
+
+$setFlash = static function (string $message, string $type = 'success'): void {
+    $_SESSION['admin_usp_flash'] = [
+        'message' => $message,
+        'type' => $type,
+    ];
+};
+
+$consumeFlash = static function (): ?array {
+    $flash = $_SESSION['admin_usp_flash'] ?? null;
+    unset($_SESSION['admin_usp_flash']);
+    return is_array($flash) ? $flash : null;
+};
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        $action = (string) ($_POST['usp_action'] ?? '');
+        if ($action === 'save') {
+            admin_usp_save($_POST, $_FILES);
+            $setFlash('Unique selling point saved successfully.');
+        } elseif ($action === 'delete') {
+            admin_usp_delete((int) ($_POST['entity_id'] ?? 0));
+            $setFlash('Unique selling point deleted successfully.');
+        }
+
+        header('Location: ' . app_path('/admin/unique-selling-points.php'));
+        exit;
+    } catch (Throwable $exception) {
+        $setFlash($exception->getMessage(), 'error');
+        header('Location: ' . app_path('/admin/unique-selling-points.php'));
+        exit;
+    }
+}
+
+$flash = $consumeFlash();
+$points = admin_fetch_unique_selling_points();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <?php include __DIR__ . '/head.php'; ?>
-    <link rel="stylesheet" href="/admin/assets/css/unique-selling-points.css">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/admin/assets/css/unique-selling-points.css')); ?>">
 </head>
 <body class="admin-page">
     <?php include __DIR__ . '/navbar.php'; ?>
@@ -44,13 +75,23 @@ $points = [
                     </thead>
                     <tbody>
                         <?php foreach ($points as $point): ?>
-                            <tr class="usp-row" data-id="<?php echo htmlspecialchars($point['id']); ?>">
-                                <td><?php echo htmlspecialchars($point['id']); ?></td>
+                            <tr
+                                class="usp-row"
+                                data-id="<?php echo (int) $point['item_id']; ?>"
+                                data-title="<?php echo htmlspecialchars((string) $point['title']); ?>"
+                                data-description="<?php echo htmlspecialchars((string) $point['subtitle']); ?>"
+                                data-icon="<?php echo htmlspecialchars((string) $point['icon_url']); ?>"
+                            >
+                                <td><?php echo (int) $point['item_id']; ?></td>
                                 <td class="icon-cell">
-                                    <span class="icon-placeholder"></span>
+                                    <?php if (!empty($point['icon_url'])): ?>
+                                        <img class="usp-icon-image" src="<?php echo htmlspecialchars((string) $point['icon_url']); ?>" alt="<?php echo htmlspecialchars((string) $point['title']); ?>">
+                                    <?php else: ?>
+                                        <span class="icon-placeholder"></span>
+                                    <?php endif; ?>
                                 </td>
-                                <td class="usp-title"><?php echo htmlspecialchars($point['title']); ?></td>
-                                <td class="usp-desc"><?php echo htmlspecialchars($point['description']); ?></td>
+                                <td class="usp-title"><?php echo htmlspecialchars((string) $point['title']); ?></td>
+                                <td class="usp-desc"><?php echo htmlspecialchars((string) $point['subtitle']); ?></td>
                                 <td class="usp-actions">
                                     <button type="button" class="icon-btn edit" aria-label="Edit point">
                                         <i class="fa-regular fa-pen-to-square"></i>
@@ -58,6 +99,12 @@ $points = [
                                     <button type="button" class="icon-btn delete" aria-label="Delete point">
                                         <i class="fa-regular fa-trash-can"></i>
                                     </button>
+                                </td>
+                                <td hidden>
+                                    <form method="post" class="usp-delete-form">
+                                        <input type="hidden" name="usp_action" value="delete">
+                                        <input type="hidden" name="entity_id" value="<?php echo (int) $point['item_id']; ?>">
+                                    </form>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -72,7 +119,9 @@ $points = [
                     <i class="fa-solid fa-xmark"></i>
                 </button>
                 <h2 id="uspModalTitle">Add</h2>
-                <form class="modal-form">
+                <form class="modal-form" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="usp_action" value="save">
+                    <input type="hidden" name="entity_id" value="0">
                     <div class="usp-icon-row">
                         <span>Icon:</span>
                         <button type="button" class="btn-upload" data-upload="uspIconInput">
@@ -83,7 +132,7 @@ $points = [
                     <div class="modal-icon-preview" id="uspIconPreview">
                         <span class="icon-placeholder"></span>
                     </div>
-                    <input type="file" id="uspIconInput" accept="image/*" hidden>
+                    <input type="file" id="uspIconInput" name="uspIcon" accept="image/*" hidden>
 
                     <label class="modal-field">
                         <span>Title:</span>
@@ -96,7 +145,7 @@ $points = [
                     <div class="modal-footer">
                         <span class="modal-note">Unsaved data will be deleted</span>
                         <div class="modal-actions">
-                            <button type="button" class="btn-footer save">Save</button>
+                            <button type="submit" class="btn-footer save">Save</button>
                             <button type="button" class="btn-footer discard">Discard</button>
                         </div>
                     </div>
@@ -105,11 +154,12 @@ $points = [
         </div>
     </main>
 
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="/admin/assets/js/unique-selling-points.js"></script>
-<script src="/admin/assets/js/admin.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        window.adminUspFlash = <?php echo json_encode($flash, JSON_UNESCAPED_SLASHES); ?>;
+    </script>
+    <script src="<?php echo htmlspecialchars(app_path('/admin/assets/js/unique-selling-points.js')); ?>"></script>
+    <script src="<?php echo htmlspecialchars(app_path('/admin/assets/js/admin.js')); ?>"></script>
 </body>
 </html>
+

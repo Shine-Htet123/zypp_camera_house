@@ -1,4 +1,4 @@
-@import url("/admin/assets/css/product-add.css");
+@import url("./product-add.css");
 
 .images-edit {
     display: flex;
@@ -103,6 +103,10 @@
 
 .image-tools .icon-btn.delete {
     color: #d9534f;
+}
+
+.image-tools .icon-btn.reupload {
+    color: #3b2615;
 }
 
 .primary-radio {

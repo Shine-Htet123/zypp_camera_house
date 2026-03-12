@@ -1,61 +1,28 @@
 <?php
-$kpis = [
-    [
-        'period_type' => 'year',
-        'period_name' => 'sales_year',
-        'period_value' => '2026',
-        'icon' => 'fa-chart-column',
-        'unit' => 'MMK',
-        'value' => '1.04 M',
-        'label' => 'Yearly Sales',
-    ],
-    [
-        'period_type' => 'month',
-        'period_name' => 'sales_month',
-        'period_value' => '2026-12',
-        'icon' => 'fa-chart-line',
-        'unit' => 'MMK',
-        'value' => '300,000',
-        'label' => 'Monthly Sales',
-    ],
-];
+require_once __DIR__ . '/../config/admin_bootstrap.php';
 
-$salesRanges = ['1M', '3M', '6M', '1Y', 'ALL'];
-$salesRangeActive = '1Y';
+require_once __DIR__ . '/../database/catalog.php';
+require_once __DIR__ . '/../database/admin/dashboard.php';
 
-$stockItems = [
-    ['name' => 'Product Name', 'quantity' => 10, 'status' => 'In Stock', 'status_class' => 'in-stock'],
-    ['name' => 'Product Name', 'quantity' => 23, 'status' => 'In Stock', 'status_class' => 'in-stock'],
-    ['name' => 'Product Name', 'quantity' => 3, 'status' => 'In Stock', 'status_class' => 'in-stock'],
-    ['name' => 'Product Name', 'quantity' => 10, 'status' => 'In Stock', 'status_class' => 'in-stock'],
-    ['name' => 'Product Name', 'quantity' => 0, 'status' => 'Out of Stock', 'status_class' => 'out-stock'],
-    ['name' => 'Product Name', 'quantity' => 3, 'status' => 'In Stock', 'status_class' => 'in-stock'],
-    ['name' => 'Product Name', 'quantity' => 0, 'status' => 'Out of Stock', 'status_class' => 'out-stock'],
-    ['name' => 'Product Name', 'quantity' => 23, 'status' => 'In Stock', 'status_class' => 'in-stock'],
-    ['name' => 'Product Name', 'quantity' => 3, 'status' => 'In Stock', 'status_class' => 'in-stock'],
-    ['name' => 'Product Name', 'quantity' => 10, 'status' => 'In Stock', 'status_class' => 'in-stock'],
-    ['name' => 'Product Name', 'quantity' => 0, 'status' => 'Out of Stock', 'status_class' => 'out-stock'],
-    ['name' => 'Product Name', 'quantity' => 3, 'status' => 'In Stock', 'status_class' => 'in-stock'],
-    ['name' => 'Product Name', 'quantity' => 3, 'status' => 'In Stock', 'status_class' => 'in-stock'],
-    ['name' => 'Product Name', 'quantity' => 10, 'status' => 'In Stock', 'status_class' => 'in-stock'],
-    ['name' => 'Product Name', 'quantity' => 0, 'status' => 'Out of Stock', 'status_class' => 'out-stock'],
-    ['name' => 'Product Name', 'quantity' => 3, 'status' => 'In Stock', 'status_class' => 'in-stock'],
-];
-
-$recentOrders = [
-    ['order_no' => '#10011', 'customer' => 'ZC-0021', 'name' => 'John Doe', 'status' => 'Pending', 'status_class' => 'pending', 'time' => '12.02.2025 12:00:00'],
-    ['order_no' => '#10011', 'customer' => 'ZC-0021', 'name' => 'John Doe', 'status' => 'Pending', 'status_class' => 'pending', 'time' => '12.02.2025 12:00:00'],
-    ['order_no' => '#10011', 'customer' => 'ZC-0021', 'name' => 'John Doe', 'status' => 'Pending', 'status_class' => 'pending', 'time' => '12.02.2025 12:00:00'],
-    ['order_no' => '#10011', 'customer' => 'ZC-0021', 'name' => 'John Doe', 'status' => 'Pending', 'status_class' => 'pending', 'time' => '12.02.2025 12:00:00'],
-    ['order_no' => '#10011', 'customer' => 'ZC-0021', 'name' => 'John Doe', 'status' => 'Pending', 'status_class' => 'pending', 'time' => '12.02.2025 12:00:00'],
-    ['order_no' => '#10011', 'customer' => 'ZC-0021', 'name' => 'John Doe', 'status' => 'Pending', 'status_class' => 'pending', 'time' => '12.02.2025 12:00:00'],
+$selectedSalesMonth = admin_dashboard_parse_month($_GET['sales_month'] ?? '');
+$salesRangeActive = admin_dashboard_normalize_range($_GET['sales_range'] ?? '1y');
+$dashboardData = admin_dashboard_build($selectedSalesMonth, $salesRangeActive);
+$kpis = $dashboardData['kpis'];
+$stockItems = $dashboardData['stock_items'];
+$recentOrders = $dashboardData['recent_orders'];
+$salesRanges = [
+    ['value' => '1m', 'label' => '1M'],
+    ['value' => '3m', 'label' => '3M'],
+    ['value' => '6m', 'label' => '6M'],
+    ['value' => '1y', 'label' => '1Y'],
+    ['value' => 'all', 'label' => 'ALL'],
 ];
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <?php include __DIR__ . '/head.php'; ?>
-    <link rel="stylesheet" href="/admin/assets/css/index.css">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/admin/assets/css/index.css')); ?>">
 </head>
 <body class="admin-page">
     <?php include __DIR__ . '/navbar.php'; ?>
@@ -69,9 +36,9 @@ $recentOrders = [
             <div class="kpi-stack">
                 <?php
                     $monthInputId = 'sales_month';
-                    $monthValue = '2026-12';
+                    $monthValue = $dashboardData['selected_month'];
                     $monthDate = DateTime::createFromFormat('Y-m', $monthValue);
-                    $monthLabel = $monthDate ? strtoupper($monthDate->format('M Y')) : 'DEC 2026';
+                    $monthLabel = $monthDate ? strtoupper($monthDate->format('M Y')) : strtoupper(date('M Y'));
                 ?>
                 <div class="kpi-filter">
                     <label class="kpi-filter-pill" for="<?php echo htmlspecialchars($monthInputId); ?>">
@@ -105,8 +72,8 @@ $recentOrders = [
                     <h2>Sales</h2>
                     <div class="range-tabs">
                         <?php foreach ($salesRanges as $range): ?>
-                            <button type="button" class="range-tab<?php echo $range === $salesRangeActive ? ' active' : ''; ?>">
-                                <?php echo htmlspecialchars($range); ?>
+                            <button type="button" class="range-tab<?php echo $range['value'] === $salesRangeActive ? ' active' : ''; ?>" data-range-value="<?php echo htmlspecialchars($range['value']); ?>">
+                                <?php echo htmlspecialchars($range['label']); ?>
                             </button>
                         <?php endforeach; ?>
                     </div>
@@ -166,7 +133,7 @@ $recentOrders = [
                         </tbody>
                     </table>
                 </div>
-                <a class="card-link" href="/admin/orders.php">See All Orders</a>
+                <a class="card-link" href="<?php echo htmlspecialchars(app_path('/admin/orders.php')); ?>">See All Orders</a>
             </article>
 
             <article class="admin-card stock-card">
@@ -183,21 +150,27 @@ $recentOrders = [
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($stockItems as $item): ?>
-                                <tr class="stock-row">
-                                    <td><?php echo htmlspecialchars($item['name']); ?></td>
-                                    <td><?php echo htmlspecialchars($item['quantity']); ?></td>
-                                    <td>
-                                        <span class="status <?php echo htmlspecialchars($item['status_class']); ?>">
-                                            <?php echo htmlspecialchars($item['status']); ?>
-                                        </span>
-                                    </td>
+                            <?php if ($stockItems === []): ?>
+                                <tr class="stock-row stock-empty-row">
+                                    <td colspan="3">No products found.</td>
                                 </tr>
-                            <?php endforeach; ?>
+                            <?php else: ?>
+                                <?php foreach ($stockItems as $item): ?>
+                                    <tr class="stock-row">
+                                        <td><?php echo htmlspecialchars($item['name']); ?></td>
+                                        <td><?php echo htmlspecialchars((string) $item['stock_quantity']); ?></td>
+                                        <td>
+                                            <span class="status <?php echo htmlspecialchars($item['status_class']); ?>">
+                                                <?php echo htmlspecialchars($item['status']); ?>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
-                <a class="card-link" href="/admin/products.php">All Products</a>
+                <a class="card-link" href="<?php echo htmlspecialchars(app_path('/admin/products.php')); ?>">All Products</a>
             </article>
         </section>
     </main>
@@ -205,8 +178,18 @@ $recentOrders = [
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-<script src="/admin/assets/js/index.js"></script>
-<script src="/admin/assets/js/admin.js"></script>
+    <script>
+        window.adminDashboardData = <?php echo json_encode([
+            'selectedMonth' => $dashboardData['selected_month'],
+            'selectedRange' => $dashboardData['selected_range'],
+            'salesChart' => $dashboardData['sales_chart'],
+            'trendingChart' => $dashboardData['trending_chart'],
+            'bestSellersChart' => $dashboardData['best_sellers_chart'],
+        ], JSON_UNESCAPED_SLASHES); ?>;
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script src="<?php echo htmlspecialchars(app_path('/admin/assets/js/index.js')); ?>"></script>
+<script src="<?php echo htmlspecialchars(app_path('/admin/assets/js/admin.js')); ?>"></script>
 </body>
 </html>
+

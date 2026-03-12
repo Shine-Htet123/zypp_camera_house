@@ -30,7 +30,8 @@
     font-size: 0.88rem;
     font-weight: 600;
     color: #333;
-    text-align: center;
+    text-align: left;
+    max-width: 520px;
 }
 
 .priority-card {

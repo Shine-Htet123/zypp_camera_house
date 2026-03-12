@@ -1,3 +1,157 @@
+const adminLoader = document.querySelector("[data-admin-loader]");
+const adminLoaderVideo = adminLoader?.querySelector(".admin-loading-video");
+const adminLoaderText = adminLoader?.querySelector("[data-admin-loader-text]");
+let adminLoaderRequests = 0;
+let adminInitialLoadPending = Boolean(adminLoader);
+let adminInitialPageLoaded = document.readyState === "complete";
+let adminInitialAnimationFinished = !adminLoaderVideo;
+let adminInitialHideTriggered = false;
+
+const setAdminLoaderVisibility = (visible, message = "") => {
+    if (!adminLoader) {
+        return;
+    }
+
+    adminLoader.classList.toggle("is-hidden", !visible);
+    adminLoader.setAttribute("aria-hidden", visible ? "false" : "true");
+    document.body.classList.toggle("admin-loading-active", visible);
+    if (visible && adminLoaderText && message) {
+        adminLoaderText.textContent = message;
+    }
+};
+
+const syncAdminLoader = () => {
+    const shouldShow = adminInitialLoadPending || adminLoaderRequests > 0;
+    setAdminLoaderVisibility(shouldShow);
+};
+
+const showAdminLoader = (message = "Loading admin dashboard...") => {
+    if (!adminLoader) {
+        return;
+    }
+
+    adminLoaderRequests += 1;
+    setAdminLoaderVisibility(true, message);
+};
+
+const hideAdminLoader = () => {
+    if (!adminLoader) {
+        return;
+    }
+
+    adminLoaderRequests = Math.max(0, adminLoaderRequests - 1);
+    syncAdminLoader();
+};
+
+window.AdminLoading = {
+    show: showAdminLoader,
+    hide: hideAdminLoader,
+    async while(task, message = "Loading admin dashboard...") {
+        showAdminLoader(message);
+        try {
+            return await task();
+        } finally {
+            hideAdminLoader();
+        }
+    },
+};
+
+const finishInitialAdminLoad = () => {
+    if (
+        adminInitialHideTriggered ||
+        !adminInitialPageLoaded ||
+        !adminInitialAnimationFinished
+    ) {
+        return;
+    }
+
+    adminInitialHideTriggered = true;
+    adminInitialLoadPending = false;
+    syncAdminLoader();
+};
+
+if (adminLoader) {
+    setAdminLoaderVisibility(true, "Loading admin dashboard...");
+
+    if (adminLoaderVideo) {
+        adminLoaderVideo.currentTime = 0;
+        const playPromise = adminLoaderVideo.play();
+        if (playPromise && typeof playPromise.catch === "function") {
+            playPromise.catch(() => {
+                adminLoader.classList.add("is-fallback");
+            });
+        }
+
+        adminLoaderVideo.addEventListener("ended", () => {
+            adminInitialAnimationFinished = true;
+            finishInitialAdminLoad();
+        }, { once: true });
+    }
+
+    if (document.readyState === "complete") {
+        finishInitialAdminLoad();
+    } else {
+        window.addEventListener("load", finishInitialAdminLoad, { once: true });
+    }
+
+    adminLoaderVideo?.addEventListener("error", () => {
+        adminLoader.classList.add("is-fallback");
+        adminInitialAnimationFinished = true;
+        finishInitialAdminLoad();
+    }, { once: true });
+
+    window.addEventListener("load", () => {
+        adminInitialPageLoaded = true;
+        finishInitialAdminLoad();
+    }, { once: true });
+}
+
+document.addEventListener("submit", (event) => {
+    if (event.defaultPrevented) {
+        return;
+    }
+
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement)) {
+        return;
+    }
+
+    if (form.matches(".admin-search-form") || form.hasAttribute("data-skip-loader")) {
+        return;
+    }
+
+    showAdminLoader("Saving changes...");
+});
+
+document.addEventListener("click", (event) => {
+    const link = event.target.closest("a[href]");
+    if (!link || event.defaultPrevented) {
+        return;
+    }
+
+    const href = link.getAttribute("href") || "";
+    if (
+        href === "" ||
+        href.startsWith("#") ||
+        href.startsWith("javascript:") ||
+        link.target === "_blank" ||
+        link.hasAttribute("download")
+    ) {
+        return;
+    }
+
+    try {
+        const targetUrl = new URL(link.href, window.location.href);
+        if (targetUrl.origin !== window.location.origin || targetUrl.href === window.location.href) {
+            return;
+        }
+
+        showAdminLoader("Opening page...");
+    } catch (_) {
+        // ignore malformed urls
+    }
+});
+
 const toggles = document.querySelectorAll(".nav-group-toggle");
 
 toggles.forEach((toggle) => {
@@ -68,10 +222,12 @@ if (logoutBtn) {
                 cancelButtonText: "Cancel",
             }).then((result) => {
                 if (result.isConfirmed) {
+                    showAdminLoader("Signing out...");
                     window.location.href = targetUrl;
                 }
             });
         } else {
+            showAdminLoader("Signing out...");
             window.location.href = targetUrl;
         }
     });

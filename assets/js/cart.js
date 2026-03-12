@@ -1,8 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.querySelector('.summary-card');
+  const flash = window.__cartFlash || null;
 
   if (!form) {
     return;
+  }
+
+  if (flash && typeof Swal !== 'undefined' && flash.message) {
+    Swal.fire({
+      icon: flash.type === 'success' ? 'success' : 'error',
+      title: flash.type === 'success' ? 'Updated' : 'Cart',
+      text: flash.message,
+    });
   }
 
   const subtotalEl = form.querySelector('[data-cart-subtotal]');
@@ -96,13 +105,49 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const removeRow = (row) => {
+  const syncNavbarCount = (count) => {
+    const cartCount = document.querySelector('.cart-count span');
+    if (cartCount && typeof count !== 'undefined') {
+      cartCount.textContent = String(count);
+    }
+  };
+
+  const postCartAction = async (payload) => {
+    const response = await fetch('/cart.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json',
+      },
+      body: new URLSearchParams(payload).toString(),
+    });
+
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      if (data.login_required) {
+        document.getElementById('user-icon')?.click();
+      }
+      throw new Error(data.message || 'Cart update failed.');
+    }
+
+    return data.payload || {};
+  };
+
+  const removeRow = async (row) => {
     if (!row) {
       return;
     }
 
+    const productId = row.dataset.productId || '';
+    const payload = await postCartAction({
+      action: 'remove_item',
+      product_id: productId,
+    });
+
     row.remove();
     updateTotals();
+    syncNavbarCount(payload.cart_count);
   };
 
   const confirmRemove = (row) => {
@@ -125,7 +170,11 @@ document.addEventListener('DOMContentLoaded', () => {
       cancelButtonColor: '#8f8f8f',
     }).then((result) => {
       if (result.isConfirmed) {
-        removeRow(row);
+        removeRow(row).catch((error) => {
+          if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon: 'error', title: 'Remove failed', text: error.message });
+          }
+        });
       }
     });
   };
@@ -163,6 +212,17 @@ document.addEventListener('DOMContentLoaded', () => {
     qtyInput.value = clampQuantity(next, max);
     updateRow(row);
     updateTotals();
+    postCartAction({
+      action: 'update_item',
+      product_id: row.dataset.productId || '',
+      quantity: qtyInput.value,
+    }).then((payload) => {
+      syncNavbarCount(payload.cart_count);
+    }).catch((error) => {
+      if (typeof Swal !== 'undefined') {
+        Swal.fire({ icon: 'error', title: 'Update failed', text: error.message });
+      }
+    });
   });
 
   form.addEventListener('input', (event) => {
@@ -178,5 +238,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateRow(row);
     updateTotals();
+    postCartAction({
+      action: 'update_item',
+      product_id: row.dataset.productId || '',
+      quantity: event.target.value,
+    }).then((payload) => {
+      syncNavbarCount(payload.cart_count);
+    }).catch((error) => {
+      if (typeof Swal !== 'undefined') {
+        Swal.fire({ icon: 'error', title: 'Update failed', text: error.message });
+      }
+    });
+  });
+
+  let noteTimer = null;
+  const noteField = form.querySelector('[data-cart-note]');
+  noteField?.addEventListener('input', () => {
+    if (noteTimer) {
+      clearTimeout(noteTimer);
+    }
+
+    noteTimer = window.setTimeout(() => {
+      postCartAction({
+        action: 'save_note',
+        additional_note: noteField.value,
+      }).catch(() => {});
+    }, 400);
   });
 });

@@ -1,75 +1,49 @@
 <?php
-$products = [
-    [
-        'name' => 'Product Name',
-        'brand' => 'Brand Name',
-        'price' => '10,000,000 MMK',
-        'stock' => 23,
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-    ],
-    [
-        'name' => 'Product Name',
-        'brand' => 'Brand Name',
-        'price' => '10,000,000 MMK',
-        'stock' => 23,
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-    ],
-    [
-        'name' => 'Product Name',
-        'brand' => 'Brand Name',
-        'price' => '10,000,000 MMK',
-        'stock' => 23,
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-    ],
-    [
-        'name' => 'Product Name',
-        'brand' => 'Brand Name',
-        'price' => '10,000,000 MMK',
-        'stock' => 23,
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-    ],
-    [
-        'name' => 'Product Name',
-        'brand' => 'Brand Name',
-        'price' => '10,000,000 MMK',
-        'stock' => 23,
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-    ],
-    [
-        'name' => 'Product Name',
-        'brand' => 'Brand Name',
-        'price' => '10,000,000 MMK',
-        'stock' => 23,
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-    ],
-    [
-        'name' => 'Product Name',
-        'brand' => 'Brand Name',
-        'price' => '10,000,000 MMK',
-        'stock' => 23,
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-    ],
-    [
-        'name' => 'Product Name',
-        'brand' => 'Brand Name',
-        'price' => '10,000,000 MMK',
-        'stock' => 23,
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-    ],
-    [
-        'name' => 'Product Name',
-        'brand' => 'Brand Name',
-        'price' => '10,000,000 MMK',
-        'stock' => 23,
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-    ],
-];
+require_once __DIR__ . '/../config/admin_bootstrap.php';
+
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
+require_once __DIR__ . '/../database/catalog.php';
+require_once __DIR__ . '/../database/admin/catalog_management.php';
+
+$setFlash = static function (string $message, string $type = 'success'): void {
+    $_SESSION['admin_products_flash'] = [
+        'message' => $message,
+        'type' => $type,
+    ];
+};
+
+$consumeFlash = static function (): ?array {
+    $flash = $_SESSION['admin_products_flash'] ?? null;
+    unset($_SESSION['admin_products_flash']);
+    return is_array($flash) ? $flash : null;
+};
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['product_action'] ?? '') === 'delete') {
+    try {
+        admin_product_delete((int) ($_POST['product_id'] ?? 0));
+        $setFlash('Product deleted successfully.');
+    } catch (Throwable $exception) {
+        $setFlash($exception->getMessage(), 'error');
+    }
+
+    header('Location: ' . app_path('/admin/products.php'));
+    exit;
+}
+
+$flash = $consumeFlash();
+$searchQuery = trim((string) ($_GET['q'] ?? ''));
+$products = catalog_fetch_admin_products();
+$categories = catalog_fetch_category_options();
+$brands = catalog_fetch_brand_options();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <?php include __DIR__ . '/head.php'; ?>
-    <link rel="stylesheet" href="/admin/assets/css/products.css">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/admin/assets/css/products.css')); ?>">
 </head>
 <body class="admin-page">
     <?php include __DIR__ . '/navbar.php'; ?>
@@ -78,14 +52,17 @@ $products = [
         <header class="products-header">
             <h1>Products</h1>
             <div class="products-controls">
-                <div class="search-box">
-                    <input type="search" id="productSearch" placeholder="Search your product...">
-                    <button type="button" class="search-icon" id="productSearchBtn" aria-label="Search">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </button>
-                </div>
-                <button type="button" class="btn btn-primary">Search</button>
-                <a href="/admin/product-add.php" class="btn btn-success">+ New Product</a>
+                <form class="products-search-form admin-search-form" method="get" action="<?php echo htmlspecialchars(app_path('/admin/products.php')); ?>">
+                    <div class="search-box admin-search-box">
+                        <input type="search" id="productSearch" name="q" placeholder="Search your product..." value="<?php echo htmlspecialchars($searchQuery); ?>">
+                        <button type="submit" class="search-icon" id="productSearchBtn" aria-label="Search">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+                    <button type="submit" class="btn btn-primary search-trigger admin-search-submit" id="productSearchTrigger">Search</button>
+                    <a href="<?php echo htmlspecialchars(app_path('/admin/products.php')); ?>" class="btn admin-show-all">Show All</a>
+                </form>
+                <a href="<?php echo htmlspecialchars(app_path('/admin/product-add.php')); ?>" class="btn btn-success btn-new-product">+ New Product</a>
                 <div class="filter-wrapper">
                     <button type="button" class="btn btn-filter" aria-label="Filter" id="filterToggle">
                         <i class="fa-solid fa-filter"></i>
@@ -94,17 +71,15 @@ $products = [
                         <form class="filter-form" id="filterForm">
                             <div class="filter-group">
                                 <div class="filter-title">Category</div>
-                                <label><input type="checkbox" name="cat[]" value="camera"> Cameras</label>
-                                <label><input type="checkbox" name="cat[]" value="lenses"> Lenses</label>
-                                <label><input type="checkbox" name="cat[]" value="tripods"> Tripods</label>
-                                <label><input type="checkbox" name="cat[]" value="lighting"> Lighting</label>
+                                <?php foreach ($categories as $category): ?>
+                                    <label><input type="checkbox" name="cat[]" value="<?php echo htmlspecialchars($category['name']); ?>"> <?php echo htmlspecialchars($category['name']); ?></label>
+                                <?php endforeach; ?>
                             </div>
                             <div class="filter-group">
                                 <div class="filter-title">Brand</div>
-                                <label><input type="checkbox" name="brand[]" value="canon"> Canon</label>
-                                <label><input type="checkbox" name="brand[]" value="sony"> Sony</label>
-                                <label><input type="checkbox" name="brand[]" value="nikon"> Nikon</label>
-                                <label><input type="checkbox" name="brand[]" value="dji"> DJI</label>
+                                <?php foreach ($brands as $brand): ?>
+                                    <label><input type="checkbox" name="brand[]" value="<?php echo htmlspecialchars($brand['name']); ?>"> <?php echo htmlspecialchars($brand['name']); ?></label>
+                                <?php endforeach; ?>
                             </div>
                             <div class="filter-group">
                                 <div class="filter-title">Stock</div>
@@ -122,53 +97,70 @@ $products = [
             </div>
         </header>
 
-        <section class="products-grid" id="productsGrid">
-            <?php foreach ($products as $index => $product): ?>
-                <article class="product-card" data-product-id="<?php echo $index + 1; ?>">
-                    <div class="product-image">
-                        <img src="<?php echo htmlspecialchars($product['image']); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
-                    </div>
-                    <div class="product-body">
-                        <h3 class="product-name"><?php echo htmlspecialchars($product['name']); ?></h3>
-                        <div class="product-brand"><?php echo htmlspecialchars($product['brand']); ?></div>
-                        <div class="product-price"><?php echo htmlspecialchars($product['price']); ?></div>
-                        <div class="product-stock">
-                            <span class="label">Stock:</span>
-                            <span class="value"><?php echo htmlspecialchars($product['stock']); ?></span>
+        <?php if (!empty($products)): ?>
+            <section class="products-grid" id="productsGrid">
+                <?php foreach ($products as $product): ?>
+                    <article
+                        class="product-card"
+                        data-product-id="<?php echo (int) $product['product_id']; ?>"
+                        data-category="<?php echo htmlspecialchars($product['category_name']); ?>"
+                        data-brand="<?php echo htmlspecialchars($product['brand_name']); ?>"
+                        data-stock="<?php echo (int) $product['stock_quantity']; ?>"
+                    >
+                        <div class="product-image">
+                            <img src="<?php echo htmlspecialchars($product['image_url']); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
                         </div>
-                    </div>
-                    <div class="product-actions">
-                        <a href="/admin/product-edit.php" class="icon-btn edit" aria-label="Edit product">
-                            <i class="fa-regular fa-pen-to-square"></i>
-                        </a>
-                        <button type="button" class="icon-btn delete" data-product-id="<?php echo $index + 1; ?>">
-                            <i class="fa-regular fa-trash-can"></i>
-                        </button>
-                    </div>
-                </article>
-            <?php endforeach; ?>
-        </section>
+                        <div class="product-body">
+                            <h3 class="product-name"><?php echo htmlspecialchars($product['name']); ?></h3>
+                            <div class="product-brand"><?php echo htmlspecialchars($product['brand_name']); ?></div>
+                            <div class="product-price"><?php echo htmlspecialchars(number_format((float) $product['price']) . ' MMK'); ?></div>
+                            <div class="product-stock">
+                                <span class="label">Stock:</span>
+                                <span class="value"><?php echo (int) $product['stock_quantity']; ?></span>
+                            </div>
+                        </div>
+                        <div class="product-actions">
+                            <a href="<?php echo htmlspecialchars(app_path('/admin/product-edit.php?id=' . (int) $product['product_id'])); ?>" class="icon-btn edit" aria-label="Edit product">
+                                <i class="fa-regular fa-pen-to-square"></i>
+                            </a>
+                            <button type="button" class="icon-btn delete" data-product-id="<?php echo (int) $product['product_id']; ?>">
+                                <i class="fa-regular fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            </section>
 
-        <nav class="products-pagination" aria-label="Products pagination">
-            <button class="pager-btn prev" aria-label="Previous page">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <button class="page-number active">1</button>
-            <button class="page-number">2</button>
-            <button class="page-number">3</button>
-            <button class="page-number">4</button>
-            <button class="page-number">5</button>
-            <button class="pager-btn next" aria-label="Next page">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
-        </nav>
+            <nav class="products-pagination" aria-label="Products pagination">
+                <button class="pager-btn prev" aria-label="Previous page">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button class="page-number active">1</button>
+                <button class="page-number">2</button>
+                <button class="page-number">3</button>
+                <button class="page-number">4</button>
+                <button class="page-number">5</button>
+                <button class="pager-btn next" aria-label="Next page">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </nav>
+        <?php else: ?>
+            <div class="products-empty-state">No products found.</div>
+        <?php endif; ?>
     </main>
 
-    </div>
-</div>
+    <form id="productDeleteForm" method="post" hidden>
+        <input type="hidden" name="product_action" value="delete">
+        <input type="hidden" name="product_id" value="">
+    </form>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="/admin/assets/js/products.js"></script>
-    <script src="/admin/assets/js/admin.js"></script>
+    <script>
+        window.adminProductsFlash = <?php echo json_encode($flash, JSON_UNESCAPED_SLASHES); ?>;
+    </script>
+    <script src="<?php echo htmlspecialchars(app_path('/admin/assets/js/products.js')); ?>"></script>
+    <script src="<?php echo htmlspecialchars(app_path('/admin/assets/js/admin.js')); ?>"></script>
 </body>
 </html>
+
+

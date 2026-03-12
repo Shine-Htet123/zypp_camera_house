@@ -1,29 +1,75 @@
 <?php
-$categories = [
-    ['id' => 1, 'name' => 'Camera', 'featured' => true],
-    ['id' => 2, 'name' => 'Lenses', 'featured' => false],
-    ['id' => 3, 'name' => 'Accessories', 'featured' => true],
-];
+require_once __DIR__ . '/../config/admin_bootstrap.php';
 
-$subCategories = [
-    ['id' => 1, 'name' => 'Camera', 'category' => 'Camera', 'featured' => true],
-    ['id' => 2, 'name' => 'Lenses', 'category' => 'Lenses', 'featured' => false],
-    ['id' => 3, 'name' => 'Accessories', 'category' => 'Accessories', 'featured' => true],
-    ['id' => 4, 'name' => 'Audio & Video', 'category' => 'Audio & Video', 'featured' => false],
-    ['id' => 5, 'name' => 'Lighting', 'category' => 'Lighting', 'featured' => true],
-];
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
 
-$brands = [
-    ['id' => 1, 'name' => 'Canon', 'featured' => true],
-    ['id' => 2, 'name' => 'DJI', 'featured' => false],
-    ['id' => 3, 'name' => 'Sony', 'featured' => true],
-];
+require_once __DIR__ . '/../database/catalog.php';
+require_once __DIR__ . '/../database/admin/catalog_management.php';
+
+$setFlash = static function (string $message, string $type = 'success'): void {
+    $_SESSION['admin_category_brand_flash'] = [
+        'message' => $message,
+        'type' => $type,
+    ];
+};
+
+$consumeFlash = static function (): ?array {
+    $flash = $_SESSION['admin_category_brand_flash'] ?? null;
+    unset($_SESSION['admin_category_brand_flash']);
+    return is_array($flash) ? $flash : null;
+};
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        $action = (string) ($_POST['entity_action'] ?? '');
+        switch ($action) {
+            case 'save_category':
+                admin_category_save($_POST, $_FILES);
+                $setFlash('Category saved successfully.');
+                break;
+            case 'delete_category':
+                admin_category_delete((int) ($_POST['entity_id'] ?? 0));
+                $setFlash('Category deleted successfully.');
+                break;
+            case 'save_brand':
+                admin_brand_save($_POST, $_FILES);
+                $setFlash('Brand saved successfully.');
+                break;
+            case 'delete_brand':
+                admin_brand_delete((int) ($_POST['entity_id'] ?? 0));
+                $setFlash('Brand deleted successfully.');
+                break;
+            case 'save_subcategory':
+                admin_sub_category_save($_POST);
+                $setFlash('Sub-category saved successfully.');
+                break;
+            case 'delete_subcategory':
+                admin_sub_category_delete((int) ($_POST['entity_id'] ?? 0));
+                $setFlash('Sub-category deleted successfully.');
+                break;
+            default:
+                throw new RuntimeException('Unknown action.');
+        }
+    } catch (Throwable $exception) {
+        $setFlash($exception->getMessage(), 'error');
+    }
+
+    header('Location: ' . app_path('/admin/category-brand.php'));
+    exit;
+}
+
+$flash = $consumeFlash();
+$categories = catalog_fetch_category_options();
+$subCategories = catalog_fetch_sub_category_options();
+$brands = catalog_fetch_brand_options();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <?php include __DIR__ . '/head.php'; ?>
-    <link rel="stylesheet" href="/admin/assets/css/category-brand.css">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/admin/assets/css/category-brand.css')); ?>">
 </head>
 <body class="admin-page">
     <?php include __DIR__ . '/navbar.php'; ?>
@@ -51,20 +97,30 @@ $brands = [
                     </thead>
                     <tbody>
                         <?php foreach ($categories as $row): ?>
-                            <tr class="data-row cols-category" data-type="Category" data-name="<?php echo htmlspecialchars($row['name']); ?>">
-                                <td><?php echo htmlspecialchars($row['id']); ?></td>
+                            <tr
+                                class="data-row cols-category"
+                                data-type="Category"
+                                data-id="<?php echo (int) $row['category_id']; ?>"
+                                data-name="<?php echo htmlspecialchars($row['name']); ?>"
+                                data-featured="<?php echo !empty($row['featured']) ? 'yes' : 'no'; ?>"
+                            >
+                                <td><?php echo (int) $row['category_id']; ?></td>
                                 <td><?php echo htmlspecialchars($row['name']); ?></td>
-                                <td class="image-placeholder">
-                                    <i class="fa-regular fa-image"></i>
+                                <td class="image-cell">
+                                    <?php if (!empty($row['category_img'])): ?>
+                                        <img class="table-image" src="<?php echo htmlspecialchars(catalog_public_file_url($row['category_img'], '/storage/uploads/contents/logo.png')); ?>" alt="<?php echo htmlspecialchars($row['name']); ?>">
+                                    <?php else: ?>
+                                        <div class="image-placeholder"><i class="fa-regular fa-image"></i></div>
+                                    <?php endif; ?>
                                 </td>
-                                <td class="status <?php echo $row['featured'] ? 'yes' : 'no'; ?>">
-                                    <i class="fa-solid <?php echo $row['featured'] ? 'fa-circle-check' : 'fa-circle-xmark'; ?>"></i>
+                                <td class="status <?php echo !empty($row['featured']) ? 'yes' : 'no'; ?>">
+                                    <i class="fa-solid <?php echo !empty($row['featured']) ? 'fa-circle-check' : 'fa-circle-xmark'; ?>"></i>
                                 </td>
                                 <td class="action-buttons">
                                     <button type="button" class="icon-btn edit" aria-label="Edit category" data-edit="category">
                                         <i class="fa-regular fa-pen-to-square"></i>
                                     </button>
-                                    <button type="button" class="icon-btn delete" aria-label="Delete category">
+                                    <button type="button" class="icon-btn delete" aria-label="Delete category" data-delete-type="category">
                                         <i class="fa-regular fa-trash-can"></i>
                                     </button>
                                 </td>
@@ -97,18 +153,26 @@ $brands = [
                     </thead>
                     <tbody>
                         <?php foreach ($subCategories as $row): ?>
-                            <tr class="data-row cols-subcategory" data-type="Sub-Category" data-name="<?php echo htmlspecialchars($row['name']); ?>">
-                                <td><?php echo htmlspecialchars($row['id']); ?></td>
+                            <tr
+                                class="data-row cols-subcategory"
+                                data-type="Sub-Category"
+                                data-id="<?php echo (int) $row['sub_category_id']; ?>"
+                                data-name="<?php echo htmlspecialchars($row['name']); ?>"
+                                data-parent-id="<?php echo (int) $row['category_id']; ?>"
+                                data-parent-name="<?php echo htmlspecialchars($row['category_name']); ?>"
+                                data-featured="<?php echo !empty($row['featured']) ? 'yes' : 'no'; ?>"
+                            >
+                                <td><?php echo (int) $row['sub_category_id']; ?></td>
                                 <td><?php echo htmlspecialchars($row['name']); ?></td>
-                                <td><?php echo htmlspecialchars($row['category']); ?></td>
-                                <td class="status <?php echo $row['featured'] ? 'yes' : 'no'; ?>">
-                                    <i class="fa-solid <?php echo $row['featured'] ? 'fa-circle-check' : 'fa-circle-xmark'; ?>"></i>
+                                <td><?php echo htmlspecialchars($row['category_name']); ?></td>
+                                <td class="status <?php echo !empty($row['featured']) ? 'yes' : 'no'; ?>">
+                                    <i class="fa-solid <?php echo !empty($row['featured']) ? 'fa-circle-check' : 'fa-circle-xmark'; ?>"></i>
                                 </td>
                                 <td class="action-buttons">
                                     <button type="button" class="icon-btn edit" aria-label="Edit sub-category" data-edit="subcategory">
                                         <i class="fa-regular fa-pen-to-square"></i>
                                     </button>
-                                    <button type="button" class="icon-btn delete" aria-label="Delete sub-category">
+                                    <button type="button" class="icon-btn delete" aria-label="Delete sub-category" data-delete-type="subcategory">
                                         <i class="fa-regular fa-trash-can"></i>
                                     </button>
                                 </td>
@@ -141,20 +205,30 @@ $brands = [
                     </thead>
                     <tbody>
                         <?php foreach ($brands as $row): ?>
-                            <tr class="data-row cols-brand" data-type="Brand" data-name="<?php echo htmlspecialchars($row['name']); ?>">
-                                <td><?php echo htmlspecialchars($row['id']); ?></td>
+                            <tr
+                                class="data-row cols-brand"
+                                data-type="Brand"
+                                data-id="<?php echo (int) $row['brand_id']; ?>"
+                                data-name="<?php echo htmlspecialchars($row['name']); ?>"
+                                data-featured="<?php echo !empty($row['featured']) ? 'yes' : 'no'; ?>"
+                            >
+                                <td><?php echo (int) $row['brand_id']; ?></td>
                                 <td><?php echo htmlspecialchars($row['name']); ?></td>
-                                <td class="image-placeholder">
-                                    <i class="fa-regular fa-image"></i>
+                                <td class="image-cell">
+                                    <?php if (!empty($row['logo_file'])): ?>
+                                        <img class="table-image" src="<?php echo htmlspecialchars(catalog_public_file_url($row['logo_file'], '/storage/uploads/contents/logo.png')); ?>" alt="<?php echo htmlspecialchars($row['name']); ?>">
+                                    <?php else: ?>
+                                        <div class="image-placeholder"><i class="fa-regular fa-image"></i></div>
+                                    <?php endif; ?>
                                 </td>
-                                <td class="status <?php echo $row['featured'] ? 'yes' : 'no'; ?>">
-                                    <i class="fa-solid <?php echo $row['featured'] ? 'fa-circle-check' : 'fa-circle-xmark'; ?>"></i>
+                                <td class="status <?php echo !empty($row['featured']) ? 'yes' : 'no'; ?>">
+                                    <i class="fa-solid <?php echo !empty($row['featured']) ? 'fa-circle-check' : 'fa-circle-xmark'; ?>"></i>
                                 </td>
                                 <td class="action-buttons">
                                     <button type="button" class="icon-btn edit" aria-label="Edit brand" data-edit="brand">
                                         <i class="fa-regular fa-pen-to-square"></i>
                                     </button>
-                                    <button type="button" class="icon-btn delete" aria-label="Delete brand">
+                                    <button type="button" class="icon-btn delete" aria-label="Delete brand" data-delete-type="brand">
                                         <i class="fa-regular fa-trash-can"></i>
                                     </button>
                                 </td>
@@ -164,13 +238,16 @@ $brands = [
                 </table>
             </div>
         </section>
+
         <div class="modal-overlay" id="categoryModal" aria-hidden="true">
             <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="categoryModalTitle">
                 <button type="button" class="modal-close" aria-label="Close">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
                 <h2 id="categoryModalTitle">Add Category</h2>
-                <form class="modal-form">
+                <form class="modal-form" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="entity_action" value="save_category">
+                    <input type="hidden" name="entity_id" value="0">
                     <label class="modal-field">
                         <span>Category:</span>
                         <input type="text" name="categoryName" placeholder="">
@@ -186,7 +263,7 @@ $brands = [
                         <div class="modal-image" id="categoryPreview">
                             <i class="fa-regular fa-image"></i>
                         </div>
-                        <input type="file" id="categoryImageInput" accept="image/*" hidden>
+                        <input type="file" id="categoryImageInput" name="categoryImage" accept="image/*" hidden>
                         <button type="button" class="btn-upload" data-upload="categoryImageInput">
                             <i class="fa-solid fa-upload"></i>
                             Upload
@@ -195,7 +272,7 @@ $brands = [
                     <div class="modal-footer">
                         <span class="modal-note">Unsaved data will be deleted</span>
                         <div class="modal-actions">
-                            <button type="button" class="btn-footer save">Save</button>
+                            <button type="submit" class="btn-footer save">Save</button>
                             <button type="button" class="btn-footer discard">Discard</button>
                         </div>
                     </div>
@@ -209,7 +286,9 @@ $brands = [
                     <i class="fa-solid fa-xmark"></i>
                 </button>
                 <h2 id="brandModalTitle">Add Brand</h2>
-                <form class="modal-form">
+                <form class="modal-form" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="entity_action" value="save_brand">
+                    <input type="hidden" name="entity_id" value="0">
                     <label class="modal-field">
                         <span>Brand:</span>
                         <input type="text" name="brandName">
@@ -225,7 +304,7 @@ $brands = [
                         <div class="modal-image" id="brandPreview">
                             <i class="fa-regular fa-image"></i>
                         </div>
-                        <input type="file" id="brandImageInput" accept="image/*" hidden>
+                        <input type="file" id="brandImageInput" name="brandImage" accept="image/*" hidden>
                         <button type="button" class="btn-upload" data-upload="brandImageInput">
                             <i class="fa-solid fa-upload"></i>
                             Upload
@@ -234,7 +313,7 @@ $brands = [
                     <div class="modal-footer">
                         <span class="modal-note">Unsaved data will be deleted</span>
                         <div class="modal-actions">
-                            <button type="button" class="btn-footer save">Save</button>
+                            <button type="submit" class="btn-footer save">Save</button>
                             <button type="button" class="btn-footer discard">Discard</button>
                         </div>
                     </div>
@@ -248,10 +327,17 @@ $brands = [
                     <i class="fa-solid fa-xmark"></i>
                 </button>
                 <h2 id="subcategoryModalTitle">Add Sub-Category</h2>
-                <form class="modal-form">
-                    <label class="modal-field">
+                <form class="modal-form" method="post">
+                    <input type="hidden" name="entity_action" value="save_subcategory">
+                    <input type="hidden" name="entity_id" value="0">
+                    <label class="modal-field select">
                         <span>Category:</span>
-                        <input type="text" name="subCategoryParent">
+                        <select name="subCategoryParentId">
+                            <option value="">Select category</option>
+                            <?php foreach ($categories as $category): ?>
+                                <option value="<?php echo (int) $category['category_id']; ?>"><?php echo htmlspecialchars($category['name']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
                     </label>
                     <label class="modal-field">
                         <span>Sub-Category:</span>
@@ -267,7 +353,7 @@ $brands = [
                     <div class="modal-footer">
                         <span class="modal-note">Unsaved data will be deleted</span>
                         <div class="modal-actions">
-                            <button type="button" class="btn-footer save">Save</button>
+                            <button type="submit" class="btn-footer save">Save</button>
                             <button type="button" class="btn-footer discard">Discard</button>
                         </div>
                     </div>
@@ -276,11 +362,17 @@ $brands = [
         </div>
     </main>
 
-    </div>
-</div>
+    <form id="categoryBrandDeleteForm" method="post" hidden>
+        <input type="hidden" name="entity_action" value="">
+        <input type="hidden" name="entity_id" value="">
+    </form>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="/admin/assets/js/category-brand.js"></script>
-<script src="/admin/assets/js/admin.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        window.categoryBrandFlash = <?php echo json_encode($flash, JSON_UNESCAPED_SLASHES); ?>;
+    </script>
+    <script src="<?php echo htmlspecialchars(app_path('/admin/assets/js/category-brand.js')); ?>"></script>
+    <script src="<?php echo htmlspecialchars(app_path('/admin/assets/js/admin.js')); ?>"></script>
 </body>
 </html>
+

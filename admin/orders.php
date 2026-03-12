@@ -1,132 +1,15 @@
 <?php
-$orders = [
-    [
-        'order_no' => '#202601260001',
-        'customer' => 'ZCU202601260001',
-        'name' => 'John Doe',
-        'total' => '3,000,000',
-        'payment' => 'COD',
-        'payment_status' => 'Unpaid',
-        'order_status' => 'Pending',
-        'time' => '12.02.2025 12:00:00',
-    ],
-    [
-        'order_no' => '#202601260001',
-        'customer' => 'ZCU202601260001',
-        'name' => 'John Doe',
-        'total' => '3,000,000',
-        'payment' => 'KBZPay',
-        'payment_status' => 'Paid',
-        'order_status' => 'Cancelled',
-        'time' => '12.02.2025 12:00:00',
-    ],
-    [
-        'order_no' => '#202601260001',
-        'customer' => 'ZCU202601260001',
-        'name' => 'John Doe',
-        'total' => '3,000,000',
-        'payment' => 'COD',
-        'payment_status' => 'Unpaid',
-        'order_status' => 'Confirmed',
-        'time' => '12.02.2025 12:00:00',
-    ],
-    [
-        'order_no' => '#202601260001',
-        'customer' => 'ZCU202601260001',
-        'name' => 'John Doe',
-        'total' => '3,000,000',
-        'payment' => 'KBZ Bank',
-        'payment_status' => 'Paid',
-        'order_status' => 'Pending',
-        'time' => '12.02.2025 12:00:00',
-    ],
-    [
-        'order_no' => '#202601260001',
-        'customer' => 'ZCU202601260001',
-        'name' => 'John Doe',
-        'total' => '3,000,000',
-        'payment' => 'COD',
-        'payment_status' => 'Pending',
-        'order_status' => 'Cancelled',
-        'time' => '12.02.2025 12:00:00',
-    ],
-    [
-        'order_no' => '#202601260001',
-        'customer' => 'ZCU202601260001',
-        'name' => 'John Doe',
-        'total' => '3,000,000',
-        'payment' => 'COD',
-        'payment_status' => 'Unpaid',
-        'order_status' => 'Pending',
-        'time' => '12.02.2025 12:00:00',
-    ],
-    [
-        'order_no' => '#202601260001',
-        'customer' => 'ZCU202601260001',
-        'name' => 'John Doe',
-        'total' => '3,000,000',
-        'payment' => 'COD',
-        'payment_status' => 'Pending',
-        'order_status' => 'Cancelled',
-        'time' => '12.02.2025 12:00:00',
-    ],
-    [
-        'order_no' => '#202601260001',
-        'customer' => 'ZCU202601260001',
-        'name' => 'John Doe',
-        'total' => '3,000,000',
-        'payment' => 'COD',
-        'payment_status' => 'Unpaid',
-        'order_status' => 'Pending',
-        'time' => '12.02.2025 12:00:00',
-    ],
-    [
-        'order_no' => '#202601260001',
-        'customer' => 'ZCU202601260001',
-        'name' => 'John Doe',
-        'total' => '3,000,000',
-        'payment' => 'AYAPay',
-        'payment_status' => 'Paid',
-        'order_status' => 'Delivered',
-        'time' => '12.02.2025 12:00:00',
-    ],
-    [
-        'order_no' => '#202601260001',
-        'customer' => 'ZCU202601260001',
-        'name' => 'John Doe',
-        'total' => '3,000,000',
-        'payment' => 'COD',
-        'payment_status' => 'Pending',
-        'order_status' => 'Pending',
-        'time' => '12.02.2025 12:00:00',
-    ],
-    [
-        'order_no' => '#202601260001',
-        'customer' => 'ZCU202601260001',
-        'name' => 'John Doe',
-        'total' => '3,000,000',
-        'payment' => 'COD',
-        'payment_status' => 'Unpaid',
-        'order_status' => 'Cancelled',
-        'time' => '12.02.2025 12:00:00',
-    ],
-    [
-        'order_no' => '#202601260001',
-        'customer' => 'ZCU202601260001',
-        'name' => 'John Doe',
-        'total' => '3,000,000',
-        'payment' => 'UAB Bank',
-        'payment_status' => 'Paid',
-        'order_status' => 'Shipped',
-        'time' => '12.02.2025 12:00:00',
-    ],
-];
+require_once __DIR__ . '/../config/admin_bootstrap.php';
+require_once __DIR__ . '/../database/admin/orders.php';
+
+$searchQuery = trim((string) ($_GET['q'] ?? ''));
+$orders = admin_fetch_orders();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <?php include __DIR__ . '/head.php'; ?>
-    <link rel="stylesheet" href="/admin/assets/css/orders.css">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/admin/assets/css/orders.css')); ?>">
 </head>
 <body class="admin-page">
     <?php include __DIR__ . '/navbar.php'; ?>
@@ -135,11 +18,16 @@ $orders = [
         <header class="orders-header">
             <h1>Orders</h1>
             <div class="orders-search">
-                <div class="search-field">
-                    <input type="text" placeholder="Order ID/Customer ID">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                </div>
-                <button type="button" class="btn-search">Search</button>
+                <form class="orders-search-form admin-search-form" method="get" action="<?php echo htmlspecialchars(app_path('/admin/orders.php')); ?>">
+                    <div class="admin-search-box">
+                        <input type="text" id="ordersSearchInput" name="q" value="<?php echo htmlspecialchars($searchQuery); ?>" placeholder="Order ID/Customer ID">
+                        <button type="submit" class="search-icon" aria-label="Search">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+                    <button type="submit" class="admin-search-submit" id="ordersSearchButton">Search</button>
+                    <a href="<?php echo htmlspecialchars(app_path('/admin/orders.php')); ?>" class="admin-show-all">Show All</a>
+                </form>
                 <div class="filter-wrapper">
                     <button type="button" class="btn-filter" aria-label="Filter">
                         <i class="fa-solid fa-filter"></i>
@@ -149,20 +37,18 @@ $orders = [
                             <label for="filterPaymentStatus">Payment Status</label>
                             <select id="filterPaymentStatus">
                                 <option value="">All</option>
-                                <option value="Paid">Paid</option>
-                                <option value="Unpaid">Unpaid</option>
-                                <option value="Pending">Pending</option>
+                                <?php foreach (admin_orders_payment_status_options() as $status): ?>
+                                    <option value="<?php echo htmlspecialchars($status); ?>"><?php echo htmlspecialchars($status); ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="filter-row">
                             <label for="filterOrderStatus">Order Status</label>
                             <select id="filterOrderStatus">
                                 <option value="">All</option>
-                                <option value="Pending">Pending</option>
-                                <option value="Cancelled">Cancelled</option>
-                                <option value="Confirmed">Confirmed</option>
-                                <option value="Delivered">Delivered</option>
-                                <option value="Shipped">Shipped</option>
+                                <?php foreach (admin_orders_order_status_options() as $status): ?>
+                                    <option value="<?php echo htmlspecialchars($status); ?>"><?php echo htmlspecialchars($status); ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="filter-actions">
@@ -190,38 +76,42 @@ $orders = [
                             <th>Order Time</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="orders-body">
+                        <tr class="orders-empty-row"<?php echo $orders === [] ? '' : ' style="display:none"'; ?>>
+                            <td colspan="9">No orders found.</td>
+                        </tr>
                         <?php foreach ($orders as $order): ?>
                             <tr
                                 class="orders-row"
-                                data-order-no="<?php echo htmlspecialchars($order['order_no']); ?>"
-                                data-customer="<?php echo htmlspecialchars($order['customer']); ?>"
-                                data-name="<?php echo htmlspecialchars($order['name']); ?>"
-                                data-total="<?php echo htmlspecialchars($order['total']); ?>"
-                                data-payment="<?php echo htmlspecialchars($order['payment']); ?>"
-                                data-payment-status="<?php echo htmlspecialchars($order['payment_status']); ?>"
-                                data-order-status="<?php echo htmlspecialchars($order['order_status']); ?>"
-                                data-order-time="<?php echo htmlspecialchars($order['time']); ?>"
+                                data-order-id="<?php echo (int) $order['id']; ?>"
+                                data-order-no="<?php echo htmlspecialchars((string) $order['order_no_display']); ?>"
+                                data-customer="<?php echo htmlspecialchars((string) $order['public_user_id']); ?>"
+                                data-name="<?php echo htmlspecialchars((string) $order['customer_name']); ?>"
+                                data-total="<?php echo htmlspecialchars((string) $order['total_display']); ?>"
+                                data-payment="<?php echo htmlspecialchars((string) $order['payment_method_label']); ?>"
+                                data-payment-status="<?php echo htmlspecialchars((string) $order['payment_status_label']); ?>"
+                                data-order-status="<?php echo htmlspecialchars((string) $order['order_status_label']); ?>"
+                                data-order-time="<?php echo htmlspecialchars((string) $order['time_display']); ?>"
                             >
-                                <td class="order-link order-id-link"><?php echo htmlspecialchars($order['order_no']); ?></td>
-                                <td><?php echo htmlspecialchars($order['customer']); ?></td>
-                                <td><?php echo htmlspecialchars($order['name']); ?></td>
-                                <td><?php echo htmlspecialchars($order['total']); ?></td>
-                                <td><?php echo htmlspecialchars($order['payment']); ?></td>
+                                <td class="order-link order-id-link"><?php echo htmlspecialchars((string) $order['order_no_display']); ?></td>
+                                <td><?php echo htmlspecialchars((string) $order['public_user_id']); ?></td>
+                                <td><?php echo htmlspecialchars((string) $order['customer_name']); ?></td>
+                                <td><?php echo htmlspecialchars((string) $order['total_display']); ?></td>
+                                <td><?php echo htmlspecialchars((string) $order['payment_method_label']); ?></td>
                                 <td>
-                                    <span class="status payment <?php echo strtolower($order['payment_status']); ?>">
-                                        <?php echo htmlspecialchars($order['payment_status']); ?>
+                                    <span class="status payment <?php echo strtolower((string) $order['payment_status_label']); ?>">
+                                        <?php echo htmlspecialchars((string) $order['payment_status_label']); ?>
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="status order <?php echo strtolower($order['order_status']); ?>">
-                                        <?php echo htmlspecialchars($order['order_status']); ?>
+                                    <span class="status order <?php echo strtolower((string) $order['order_status_label']); ?>">
+                                        <?php echo htmlspecialchars((string) $order['order_status_label']); ?>
                                     </span>
                                 </td>
                                 <td class="order-actions">
                                     <i class="fa-regular fa-pen-to-square edit-status"></i>
                                 </td>
-                                <td class="order-time"><?php echo htmlspecialchars($order['time']); ?></td>
+                                <td class="order-time"><?php echo htmlspecialchars((string) $order['time_display']); ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -235,49 +125,27 @@ $orders = [
                     <i class="fa-solid fa-xmark"></i>
                 </button>
                 <h2 class="modal-title">
-                    Order No. <span id="modalOrderNo">#202601260001</span>
+                    Order No. <span id="modalOrderNo">#-</span>
                 </h2>
                 <p class="modal-subtitle">
-                    Order Date - <span id="modalOrderDate">20/12/2025</span>
+                    Order Date - <span id="modalOrderDate">-</span>
                 </p>
                 <h3 class="modal-section-title">Order Summary</h3>
 
-                <div class="summary-table">
+                <div class="summary-table" id="orderSummaryTable">
                     <div class="summary-head">
                         <span>Qty.</span>
                         <span>Product Name</span>
                         <span>Price</span>
                     </div>
-                    <div class="summary-row">
-                        <span>1</span>
-                        <span>Canon EOS R6 Mark II</span>
-                        <span>3,000,000 MMK</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>2</span>
-                        <span>Canon EOS R6 Mark II</span>
-                        <span>3,000,000 MMK</span>
-                    </div>
-                    <div class="summary-row summary-total">
-                        <span>Subtotal</span>
-                        <span>6,000,000 MMK</span>
-                    </div>
-                    <div class="summary-row summary-total">
-                        <span>Shipping Fees</span>
-                        <span>5,000 MMK</span>
-                    </div>
-                    <div class="summary-row summary-total">
-                        <span>Total</span>
-                        <span>6,005,000 MMK</span>
-                    </div>
                 </div>
 
                 <div class="shipping-info">
                     <h4>Shipping Info</h4>
-                    <p id="modalShipName">Kyaw Ko Ko</p>
-                    <p id="modalShipEmail">kyawko@gmail.com</p>
-                    <p id="modalShipPhone">09771751530</p>
-                    <p id="modalShipAddress">No. 96, Pyay Road, Hlaing Township, Yangon</p>
+                    <p id="modalShipName">-</p>
+                    <p id="modalShipEmail">-</p>
+                    <p id="modalShipPhone">-</p>
+                    <p id="modalShipAddress">-</p>
                 </div>
 
                 <div class="status-info">
@@ -287,24 +155,22 @@ $orders = [
                     </p>
                     <p>
                         <strong>Payment Status</strong>
-                        <span class="status payment paid" id="modalPaymentStatus">Paid</span>
+                        <span class="status payment unpaid" id="modalPaymentStatus">Unpaid</span>
                     </p>
                 </div>
 
                 <div class="note-section">
                     <h4>Additional Note</h4>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore</p>
+                    <p id="modalAdditionalNote">-</p>
                 </div>
 
-                <button type="button" class="btn-download">Download E-receipt</button>
+                <button type="button" class="btn-download" id="modalReceiptButton">Download E-receipt</button>
             </div>
         </div>
     </main>
 
-    </div>
-</div>
-
-<script src="/admin/assets/js/orders.js"></script>
-<script src="/admin/assets/js/admin.js"></script>
+    <script src="<?php echo htmlspecialchars(app_path('/admin/assets/js/orders.js')); ?>"></script>
+    <script src="<?php echo htmlspecialchars(app_path('/admin/assets/js/admin.js')); ?>"></script>
 </body>
 </html>
+

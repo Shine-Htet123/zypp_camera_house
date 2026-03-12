@@ -1,172 +1,53 @@
 <?php
-$categories = ['Cameras', 'Lenses', 'Accessories'];
-$brands = ['Canon', 'Sony', 'Nikon'];
+
+require_once __DIR__ . '/app/services/products.php';
+require_once __DIR__ . '/config/app.php';
+
+$currentCustomerId = products_current_customer_id();
+$availableCategories = catalog_fetch_category_options();
+$availableBrands = catalog_fetch_brand_options();
 $options = ['Best Sellers', 'New Arrivals', 'Limited-time Sales'];
 $availability = ['In Stock', 'Out of Stock'];
 
+$selectedCategory = trim((string) ($_GET['category'] ?? ''));
+$selectedBrand = trim((string) ($_GET['brand'] ?? ''));
+$selectedSubCategory = trim((string) ($_GET['sub_category'] ?? ''));
+$searchQuery = trim((string) ($_GET['q'] ?? ''));
+
 $breadcrumb = 'Shop';
-$breadcrumbSegment = '';
-if (!empty($_GET['category'])) {
-    $breadcrumbSegment = ucwords(str_replace(['-', '_'], ' ', (string) $_GET['category']));
-} elseif (!empty($_GET['brand'])) {
-    $breadcrumbSegment = ucwords(str_replace(['-', '_'], ' ', (string) $_GET['brand']));
-}
-if ($breadcrumbSegment) {
-    $breadcrumb = $breadcrumb . ' / ' . $breadcrumbSegment;
+if ($selectedSubCategory !== '') {
+    $breadcrumb .= ' / ' . $selectedSubCategory;
+} elseif ($selectedCategory !== '') {
+    $breadcrumb .= ' / ' . $selectedCategory;
+} elseif ($selectedBrand !== '') {
+    $breadcrumb .= ' / ' . $selectedBrand;
+} elseif ($searchQuery !== '') {
+    $breadcrumb .= ' / Search';
 }
 
-$products = [
-    [
-        'name' => 'Canon EOS R6',
-        'brand' => 'Canon',
-        'category' => 'Cameras',
-        'tags' => ['Best Sellers'],
-        'availability' => 'In Stock',
-        'price_value' => 9000000,
-        'price' => '9,000,000 MMK',
-        'original' => '10,000,000 MMK',
-        'discount' => 'Save 1,000,000 MMK',
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-    ],
-    [
-        'name' => 'Sony A7 IV',
-        'brand' => 'Sony',
-        'category' => 'Cameras',
-        'tags' => ['New Arrivals'],
-        'availability' => 'In Stock',
-        'price_value' => 10000000,
-        'price' => '10,000,000 MMK',
-        'original' => '11,500,000 MMK',
-        'discount' => 'Save 1,500,000 MMK',
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-    ],
-    [
-        'name' => 'Nikon Z6 II',
-        'brand' => 'Nikon',
-        'category' => 'Cameras',
-        'tags' => ['Limited-time Sales'],
-        'availability' => 'In Stock',
-        'price_value' => 8200000,
-        'price' => '8,200,000 MMK',
-        'original' => '10,000,000 MMK',
-        'discount' => 'Save 1,800,000 MMK',
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-    ],
-    [
-        'name' => 'Canon RF 24-70',
-        'brand' => 'Canon',
-        'category' => 'Lenses',
-        'tags' => ['Best Sellers'],
-        'availability' => 'In Stock',
-        'price_value' => 4600000,
-        'price' => '4,600,000 MMK',
-        'original' => '5,000,000 MMK',
-        'discount' => 'Save 400,000 MMK',
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-    ],
-    [
-        'name' => 'Sony 50mm F1.8',
-        'brand' => 'Sony',
-        'category' => 'Lenses',
-        'tags' => ['New Arrivals'],
-        'availability' => 'Out of Stock',
-        'price_value' => 1200000,
-        'price' => '1,200,000 MMK',
-        'original' => '',
-        'discount' => '',
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-    ],
-    [
-        'name' => 'Nikon 85mm F1.4',
-        'brand' => 'Nikon',
-        'category' => 'Lenses',
-        'tags' => ['Limited-time Sales'],
-        'availability' => 'In Stock',
-        'price_value' => 3800000,
-        'price' => '3,800,000 MMK',
-        'original' => '4,800,000 MMK',
-        'discount' => 'Save 1,000,000 MMK',
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-    ],
-    [
-        'name' => 'Tripod Pro',
-        'brand' => 'Canon',
-        'category' => 'Accessories',
-        'tags' => ['Best Sellers'],
-        'availability' => 'In Stock',
-        'price_value' => 600000,
-        'price' => '600,000 MMK',
-        'original' => '',
-        'discount' => '',
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-    ],
-    [
-        'name' => 'Camera Bag',
-        'brand' => 'Sony',
-        'category' => 'Accessories',
-        'tags' => ['New Arrivals'],
-        'availability' => 'In Stock',
-        'price_value' => 320000,
-        'price' => '320,000 MMK',
-        'original' => '',
-        'discount' => '',
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-    ],
-    [
-        'name' => 'Lighting Kit',
-        'brand' => 'Nikon',
-        'category' => 'Accessories',
-        'tags' => ['Limited-time Sales'],
-        'availability' => 'Out of Stock',
-        'price_value' => 2100000,
-        'price' => '2,100,000 MMK',
-        'original' => '2,600,000 MMK',
-        'discount' => 'Save 500,000 MMK',
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-    ],
-    [
-        'name' => 'Canon EOS R5',
-        'brand' => 'Canon',
-        'category' => 'Cameras',
-        'tags' => ['Best Sellers'],
-        'availability' => 'In Stock',
-        'price_value' => 11500000,
-        'price' => '11,500,000 MMK',
-        'original' => '12,500,000 MMK',
-        'discount' => 'Save 1,000,000 MMK',
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-    ],
-    [
-        'name' => 'Sony A6400',
-        'brand' => 'Sony',
-        'category' => 'Cameras',
-        'tags' => ['New Arrivals'],
-        'availability' => 'In Stock',
-        'price_value' => 5200000,
-        'price' => '5,200,000 MMK',
-        'original' => '',
-        'discount' => '',
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-    ],
-    [
-        'name' => 'Nikon D7500',
-        'brand' => 'Nikon',
-        'category' => 'Cameras',
-        'tags' => ['Limited-time Sales'],
-        'availability' => 'Out of Stock',
-        'price_value' => 6400000,
-        'price' => '6,400,000 MMK',
-        'original' => '',
-        'discount' => '',
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-    ],
-];
+$products = catalog_fetch_customer_products([
+    'category' => $selectedCategory,
+    'brand' => $selectedBrand,
+    'sub_category' => $selectedSubCategory,
+    'q' => $searchQuery,
+    'user_id' => $currentCustomerId,
+]);
+
+$productsCssPath = app_path('/assets/css/products.css');
+$productsJsPath = app_path('/assets/js/products.js');
+$productDetailsPath = app_path('/product-details.php');
+
+$maxPrice = 0;
+foreach ($products as $product) {
+    $maxPrice = max($maxPrice, (float) ($product['price_value'] ?? 0));
+}
+$maxPrice = $maxPrice > 0 ? (int) ceil($maxPrice / 100000) * 100000 : 1000000;
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <?php include __DIR__ . '/head.php'; ?>
-    <link rel="stylesheet" href="/assets/css/products.css">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars($productsCssPath); ?>">
 </head>
 <body>
     <?php include __DIR__ . '/navbar.php'; ?>
@@ -180,20 +61,30 @@ $products = [
 
                 <div class="filter-group">
                     <h3>Category</h3>
-                    <?php foreach ($categories as $category): ?>
+                    <?php foreach ($availableCategories as $category): ?>
                         <label class="filter-option">
-                            <input type="checkbox" value="<?php echo htmlspecialchars($category); ?>" data-filter-group="category">
-                            <span><?php echo htmlspecialchars($category); ?></span>
+                            <input
+                                type="checkbox"
+                                value="<?php echo htmlspecialchars($category['name']); ?>"
+                                data-filter-group="category"
+                                <?php echo $selectedCategory === $category['name'] ? 'checked' : ''; ?>
+                            >
+                            <span><?php echo htmlspecialchars($category['name']); ?></span>
                         </label>
                     <?php endforeach; ?>
                 </div>
 
                 <div class="filter-group">
                     <h3>Brand</h3>
-                    <?php foreach ($brands as $brand): ?>
+                    <?php foreach ($availableBrands as $brand): ?>
                         <label class="filter-option">
-                            <input type="checkbox" value="<?php echo htmlspecialchars($brand); ?>" data-filter-group="brand">
-                            <span><?php echo htmlspecialchars($brand); ?></span>
+                            <input
+                                type="checkbox"
+                                value="<?php echo htmlspecialchars($brand['name']); ?>"
+                                data-filter-group="brand"
+                                <?php echo $selectedBrand === $brand['name'] ? 'checked' : ''; ?>
+                            >
+                            <span><?php echo htmlspecialchars($brand['name']); ?></span>
                         </label>
                     <?php endforeach; ?>
                 </div>
@@ -211,11 +102,11 @@ $products = [
                 <div class="filter-group">
                     <h3>Price Range</h3>
                     <div class="range-row">
-                        <input type="range" id="priceRange" min="0" max="12000000" value="12000000" step="100000">
+                        <input type="range" id="priceRange" min="0" max="<?php echo $maxPrice; ?>" value="<?php echo $maxPrice; ?>" step="100000">
                     </div>
                     <div class="range-labels">
                         <span>0 MMK</span>
-                        <span id="priceMaxLabel">12,000,000 MMK</span>
+                        <span id="priceMaxLabel"><?php echo htmlspecialchars(number_format($maxPrice) . ' MMK'); ?></span>
                     </div>
                 </div>
 
@@ -254,7 +145,7 @@ $products = [
                         <?php if (!empty($product['discount'])): ?>
                             <div class="discount-pill"><?php echo htmlspecialchars($product['discount']); ?></div>
                         <?php endif; ?>
-                        <a class="btn-add" href="/product-details.php">View Detail</a>
+                        <a class="btn-add" href="<?php echo htmlspecialchars($productDetailsPath . '?id=' . (int) $product['product_id']); ?>">View Detail</a>
                     </article>
                 <?php endforeach; ?>
                 <div class="product-loading" aria-hidden="true">
@@ -268,6 +159,8 @@ $products = [
     </main>
 
     <?php include __DIR__ . '/footer.php'; ?>
-    <script src="/assets/js/products.js"></script>
+    <script src="<?php echo htmlspecialchars($productsJsPath); ?>"></script>
 </body>
 </html>
+
+

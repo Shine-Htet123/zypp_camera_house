@@ -8,24 +8,13 @@
     <?php include('navbar.php'); ?>
 
     <?php
-        $categories = ["All", "Camera", "Lenses", "Accessories"];
-        $brands = ["All", "DJI", "Sony", "Canon"];
-        $unboxingVideos = [
-            ["title" => "Unboxing Video", "category" => "Camera", "brand" => "Canon", "video" => ""],
-            ["title" => "Unboxing Video", "category" => "Camera", "brand" => "Sony", "video" => ""],
-            ["title" => "Unboxing Video", "category" => "Lenses", "brand" => "Canon", "video" => ""],
-            ["title" => "Unboxing Video", "category" => "Accessories", "brand" => "DJI", "video" => ""],
-            ["title" => "Unboxing Video", "category" => "Accessories", "brand" => "Canon", "video" => ""],
-            ["title" => "Unboxing Video", "category" => "Lenses", "brand" => "Sony", "video" => ""]
-        ];
-        $influencerVideos = [
-            ["title" => "Influencer review title", "author" => "Influencer’s Name"],
-            ["title" => "Influencer review title", "author" => "Influencer’s Name"],
-            ["title" => "Influencer review title", "author" => "Influencer’s Name"],
-            ["title" => "Influencer review title", "author" => "Influencer’s Name"],
-            ["title" => "Influencer review title", "author" => "Influencer’s Name"],
-            ["title" => "Influencer review title", "author" => "Influencer’s Name"]
-        ];
+        require_once __DIR__ . '/database/media.php';
+
+        $mediaData = media_fetch_customer_filter_options();
+        $categories = $mediaData['categories'];
+        $brands = $mediaData['brands'];
+        $unboxingVideos = $mediaData['unboxing'];
+        $influencerVideos = $mediaData['influencer'];
     ?>
 
     <main class="media-page">
@@ -35,7 +24,7 @@
         </div>
 
         <div class="media-banner" id="media-banner">
-            Unbox the hype — watch creators try our products!
+            Unbox the hype - watch creators try our products!
         </div>
 
         <section class="media-panel active" id="unboxing-panel">
@@ -86,7 +75,12 @@
                         data-brand="<?php echo htmlspecialchars($video['brand']); ?>"
                         data-video="<?php echo htmlspecialchars($video['video'] ?? ''); ?>"
                     >
-                        <div class="video-thumb">
+                        <div
+                            class="video-thumb <?php echo !empty($video['thumbnail']) ? 'has-image' : ''; ?>"
+                            <?php if (!empty($video['thumbnail'])): ?>
+                                style="background-image:url('<?php echo htmlspecialchars($video['thumbnail']); ?>')"
+                            <?php endif; ?>
+                        >
                             <div class="play"><i class="fa-solid fa-play"></i></div>
                         </div>
                         <div class="video-meta">
@@ -101,14 +95,17 @@
             <div class="media-grid" id="influencer-grid">
                 <?php foreach ($influencerVideos as $video): ?>
                     <div class="video-card" data-video="<?php echo htmlspecialchars($video['video'] ?? ''); ?>">
-                        <div class="video-thumb">
+                        <div
+                            class="video-thumb <?php echo !empty($video['thumbnail']) ? 'has-image' : ''; ?>"
+                            <?php if (!empty($video['thumbnail'])): ?>
+                                style="background-image:url('<?php echo htmlspecialchars($video['thumbnail']); ?>')"
+                            <?php endif; ?>
+                        >
                             <div class="play"><i class="fa-solid fa-play"></i></div>
                         </div>
                         <div class="video-meta">
                             <h4><?php echo htmlspecialchars($video['title']); ?></h4>
-                            <?php
-                                $influencerName = $video['influencer'] ?? $video['author'] ?? '';
-                            ?>
+                            <?php $influencerName = $video['influencer'] ?? $video['author'] ?? ''; ?>
                             <?php if ($influencerName !== ''): ?>
                                 <span>By <?php echo htmlspecialchars($influencerName); ?></span>
                             <?php endif; ?>
@@ -123,7 +120,7 @@
         <div class="video-modal-content" role="dialog" aria-modal="true" aria-labelledby="video-modal-title">
             <div class="video-modal-header">
                 <h3 class="video-modal-title" id="video-modal-title">Video</h3>
-                <button class="video-modal-close" type="button" aria-label="Close">×</button>
+                <button class="video-modal-close" type="button" aria-label="Close">&times;</button>
             </div>
             <div class="video-modal-body" id="video-modal-body"></div>
         </div>

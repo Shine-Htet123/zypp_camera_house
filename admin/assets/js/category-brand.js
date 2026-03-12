@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     category: {
       overlay: document.getElementById('categoryModal'),
       titleId: 'categoryModalTitle',
+      entityAction: 'save_category',
       nameInput: 'categoryName',
       featuredSelect: 'categoryFeatured',
       imageInput: 'categoryImageInput',
@@ -11,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     brand: {
       overlay: document.getElementById('brandModal'),
       titleId: 'brandModalTitle',
+      entityAction: 'save_brand',
       nameInput: 'brandName',
       featuredSelect: 'brandFeatured',
       imageInput: 'brandImageInput',
@@ -19,50 +21,70 @@ document.addEventListener('DOMContentLoaded', () => {
     subcategory: {
       overlay: document.getElementById('subcategoryModal'),
       titleId: 'subcategoryModalTitle',
-      parentInput: 'subCategoryParent',
+      entityAction: 'save_subcategory',
+      parentInput: 'subCategoryParentId',
       nameInput: 'subCategoryName',
       featuredSelect: 'subCategoryFeatured',
     },
   };
 
+  const deleteForm = document.getElementById('categoryBrandDeleteForm');
+
   const openModal = (type, values = {}) => {
     const config = modals[type];
     if (!config?.overlay) return;
+
     const overlay = config.overlay;
     const title = overlay.querySelector(`#${config.titleId}`);
+    const form = overlay.querySelector('form');
     const closeBtn = overlay.querySelector('.modal-close');
     const discardBtn = overlay.querySelector('.btn-footer.discard');
-    const actions = overlay.querySelector('.modal-actions');
+
     overlay.classList.add('open');
     overlay.setAttribute('aria-hidden', 'false');
-    if (title && values.title) title.textContent = values.title;
+
+    if (title) title.textContent = values.title || title.textContent;
+    if (form) {
+      const actionInput = form.querySelector('input[name="entity_action"]');
+      const idInput = form.querySelector('input[name="entity_id"]');
+      if (actionInput) actionInput.value = config.entityAction;
+      if (idInput) idInput.value = values.id || '0';
+    }
+
     if (config.nameInput) {
-      const input = overlay.querySelector(`input[name="${config.nameInput}"]`);
+      const input = overlay.querySelector(`[name="${config.nameInput}"]`);
       if (input) input.value = values.name || '';
     }
+
     if (config.parentInput) {
-      const input = overlay.querySelector(`input[name="${config.parentInput}"]`);
-      if (input) input.value = values.parent || '';
+      const input = overlay.querySelector(`[name="${config.parentInput}"]`);
+      if (input) input.value = values.parentId || '';
     }
+
     if (config.featuredSelect) {
-      const select = overlay.querySelector(`select[name="${config.featuredSelect}"]`);
+      const select = overlay.querySelector(`[name="${config.featuredSelect}"]`);
       if (select) select.value = values.featured || 'no';
     }
+
     if (closeBtn) closeBtn.style.display = 'inline-flex';
-    if (discardBtn) {
-      discardBtn.style.display = values.showDiscard === false ? 'none' : 'inline-flex';
-    }
-    actions?.classList.toggle('single', values.showDiscard === false);
+    if (discardBtn) discardBtn.style.display = 'inline-flex';
+
     if (config.imagePreview) {
       const preview = overlay.querySelector(`#${config.imagePreview}`);
       if (preview) {
-        preview.classList.remove('has-image');
-        preview.innerHTML = '<i class="fa-regular fa-image"></i>';
+        if (values.image) {
+          preview.innerHTML = `<img src="${values.image}" alt="Preview" style="width:100%;height:100%;object-fit:contain;">`;
+          preview.classList.add('has-image');
+        } else {
+          preview.classList.remove('has-image');
+          preview.innerHTML = '<i class="fa-regular fa-image"></i>';
+        }
       }
     }
+
     if (config.imageInput) {
-      const input = overlay.querySelector(`#${config.imageInput}`);
-      if (input) input.value = '';
+      const fileInput = overlay.querySelector(`#${config.imageInput}`);
+      if (fileInput) fileInput.value = '';
     }
   };
 
@@ -79,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (type === 'category') {
         openModal('category', { title: 'Add Category', featured: 'no' });
       } else if (type === 'brand') {
-        openModal('brand', { title: 'Add Brand', featured: 'yes', showDiscard: true });
+        openModal('brand', { title: 'Add Brand', featured: 'no' });
       } else if (type === 'subcategory') {
         openModal('subcategory', { title: 'Add Sub-Category', featured: 'no' });
       }
@@ -87,26 +109,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const editBtn = event.target.closest('.icon-btn.edit');
-    if (editBtn && editBtn.dataset.edit === 'category') {
+    if (editBtn) {
       const row = editBtn.closest('.data-row');
-      const name = row?.dataset.name || '';
-      const featured = row?.querySelector('.status.yes') ? 'yes' : 'no';
-      openModal('category', { title: 'Edit Category', name, featured });
-      return;
-    }
-    if (editBtn && editBtn.dataset.edit === 'brand') {
-      const row = editBtn.closest('.data-row');
-      const name = row?.dataset.name || '';
-      const featured = row?.querySelector('.status.yes') ? 'yes' : 'no';
-      openModal('brand', { title: 'Edit Brand', name, featured, showDiscard: true });
-      return;
-    }
-    if (editBtn && editBtn.dataset.edit === 'subcategory') {
-      const row = editBtn.closest('.data-row');
-      const name = row?.dataset.name || '';
-      const parent = row?.querySelector('span:nth-child(3)')?.textContent?.trim() || '';
-      const featured = row?.querySelector('.status.yes') ? 'yes' : 'no';
-      openModal('subcategory', { title: 'Edit Sub-Category', name, parent, featured });
+      if (!row) return;
+
+      const values = {
+        id: row.dataset.id || '0',
+        name: row.dataset.name || '',
+        featured: row.dataset.featured || 'no',
+        parentId: row.dataset.parentId || '',
+        image: row.querySelector('.table-image')?.getAttribute('src') || '',
+      };
+
+      if (editBtn.dataset.edit === 'category') {
+        openModal('category', { ...values, title: 'Edit Category' });
+      } else if (editBtn.dataset.edit === 'brand') {
+        openModal('brand', { ...values, title: 'Edit Brand' });
+      } else if (editBtn.dataset.edit === 'subcategory') {
+        openModal('subcategory', { ...values, title: 'Edit Sub-Category' });
+      }
       return;
     }
 
@@ -119,16 +140,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const deleteBtn = event.target.closest('.action-buttons .icon-btn.delete');
-    if (deleteBtn) {
+    if (deleteBtn && deleteForm) {
       const row = deleteBtn.closest('.data-row');
       if (!row) return;
-      const type = row.dataset.type || 'Item';
-      const name = row.dataset.name || '';
+
+      const type = deleteBtn.dataset.deleteType || '';
+      const id = row.dataset.id || '';
+      const name = row.dataset.name || 'this item';
+      const actionInput = deleteForm.querySelector('input[name="entity_action"]');
+      const idInput = deleteForm.querySelector('input[name="entity_id"]');
+
+      if (!actionInput || !idInput || !type || !id) return;
+
+      const submitDelete = () => {
+        actionInput.value = `delete_${type}`;
+        idInput.value = id;
+        deleteForm.submit();
+      };
 
       if (window.Swal) {
         Swal.fire({
-          title: `Delete this ${type.toLowerCase()}?`,
-          text: name ? `“${name}” will be removed permanently.` : 'This action cannot be undone.',
+          title: `Delete this ${type.replace('subcategory', 'sub-category')}?`,
+          text: `"${name}" will be removed permanently.`,
           icon: 'warning',
           showCancelButton: true,
           confirmButtonColor: '#d33',
@@ -137,24 +170,25 @@ document.addEventListener('DOMContentLoaded', () => {
           cancelButtonText: 'Cancel',
         }).then((result) => {
           if (result.isConfirmed) {
-            row.remove();
-            Swal.fire('Deleted', `${type} has been removed.`, 'success');
+            submitDelete();
           }
         });
-      } else if (window.confirm('Delete this item?')) {
-        row.remove();
+      } else {
+        submitDelete();
       }
-      return;
     }
   });
 
   Object.values(modals).forEach((config) => {
     const overlay = config.overlay;
     if (!overlay) return;
+
     const closeBtn = overlay.querySelector('.modal-close');
     const discardBtn = overlay.querySelector('.btn-footer.discard');
+
     closeBtn?.addEventListener('click', () => closeModal(overlay));
     discardBtn?.addEventListener('click', () => closeModal(overlay));
+
     overlay.addEventListener('click', (event) => {
       if (event.target === overlay) closeModal(overlay);
     });
@@ -166,16 +200,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const file = input.files && input.files[0];
         if (!file || !preview) return;
         const url = URL.createObjectURL(file);
-        preview.innerHTML = '';
+        preview.innerHTML = `<img src="${url}" alt="Preview" style="width:100%;height:100%;object-fit:contain;">`;
         preview.classList.add('has-image');
-        const img = document.createElement('img');
-        img.src = url;
-        img.alt = 'Preview';
-        img.style.width = '100%';
-        img.style.height = '100%';
-        img.style.objectFit = 'contain';
-        preview.appendChild(img);
       });
     }
   });
+
+  if (window.categoryBrandFlash && window.Swal) {
+    Swal.fire({
+      icon: window.categoryBrandFlash.type === 'error' ? 'error' : 'success',
+      text: window.categoryBrandFlash.message || '',
+      timer: 2200,
+      showConfirmButton: false,
+    });
+  }
 });

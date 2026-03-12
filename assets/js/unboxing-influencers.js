@@ -52,12 +52,50 @@ const getEmbedMarkup = (url) => {
         `;
     }
 
-    const isIframe = /(youtube\.com|youtu\.be|vimeo\.com|embed)/i.test(url);
+    const normalizeEmbedUrl = (rawUrl) => {
+        try {
+            const parsed = new URL(rawUrl, window.location.origin);
+            const host = parsed.hostname.replace(/^www\./i, "").toLowerCase();
+
+            if (host === "youtu.be") {
+                const videoId = parsed.pathname.replace(/^\/+/, "").split("/")[0];
+                return videoId ? `https://www.youtube.com/embed/${videoId}` : rawUrl;
+            }
+
+            if (host === "youtube.com" || host === "m.youtube.com") {
+                if (parsed.pathname === "/watch") {
+                    const videoId = parsed.searchParams.get("v");
+                    return videoId ? `https://www.youtube.com/embed/${videoId}` : rawUrl;
+                }
+
+                if (parsed.pathname.startsWith("/shorts/")) {
+                    const videoId = parsed.pathname.split("/")[2] || "";
+                    return videoId ? `https://www.youtube.com/embed/${videoId}` : rawUrl;
+                }
+
+                if (parsed.pathname.startsWith("/embed/")) {
+                    return rawUrl;
+                }
+            }
+
+            if (host === "vimeo.com") {
+                const videoId = parsed.pathname.replace(/^\/+/, "").split("/")[0];
+                return videoId ? `https://player.vimeo.com/video/${videoId}` : rawUrl;
+            }
+
+            return rawUrl;
+        } catch (error) {
+            return rawUrl;
+        }
+    };
+
+    const embedUrl = normalizeEmbedUrl(url);
+    const isIframe = /(youtube\.com|youtu\.be|vimeo\.com|player\.vimeo\.com|embed)/i.test(embedUrl);
     if (isIframe) {
-        return `<iframe src="${url}" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+        return `<iframe src="${embedUrl}" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
     }
 
-    return `<video src="${url}" controls preload="metadata"></video>`;
+    return `<video src="${embedUrl}" controls preload="metadata"></video>`;
 };
 
 const openVideoModal = (card) => {

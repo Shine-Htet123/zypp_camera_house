@@ -1,21 +1,78 @@
 document.addEventListener('DOMContentLoaded', () => {
   const productForm = document.querySelector('.product-form');
   const formFooter = document.querySelector('.form-footer');
-  let formDirty = false;
   const specInput = document.getElementById('specInput');
   const specAdd = document.getElementById('specAdd');
-  const specList = document.querySelector('.specs-edit .spec-list');
+  const specList = document.getElementById('editSpecList');
+  const colorInput = document.getElementById('colorInput');
+  const colorAdd = document.getElementById('colorAdd');
+  const colorList = document.getElementById('colorList');
+  const sizeInput = document.getElementById('sizeInput');
+  const sizeAdd = document.getElementById('sizeAdd');
+  const sizeList = document.getElementById('sizeList');
   const imageGrid = document.getElementById('editImageGrid');
   const uploadInput = document.getElementById('imageUploadInput');
   const uploadTile = document.getElementById('imageUploadTile');
   const discardBtn = document.querySelector('.btn-footer.discard');
+  const primaryImageKey = document.getElementById('primaryImageKey');
+  const deletedImageInputs = document.getElementById('deletedImageInputs');
+  const categorySelect = productForm?.querySelector('select[name="category"]');
+  const subCategorySelect = productForm?.querySelector('select[name="subcategory"]');
   const maxImages = 5;
-  let activeTile = imageGrid?.querySelector('.image-tile.active') || null;
+  let formDirty = false;
+  let newImageFiles = new DataTransfer();
+  let activeImageKey = '';
+
+  const showWarning = (message) => {
+    if (window.Swal) {
+      Swal.fire({
+        icon: 'warning',
+        text: message,
+        confirmButtonColor: '#3b2615',
+      });
+      return;
+    }
+    alert(message);
+  };
+
+  const validateForm = () => {
+    const name = productForm?.querySelector('input[name="name"]')?.value.trim() || '';
+    const description = productForm?.querySelector('textarea[name="description"]')?.value.trim() || '';
+    const brand = productForm?.querySelector('select[name="brand"]')?.value || '';
+    const category = productForm?.querySelector('select[name="category"]')?.value || '';
+    const price = productForm?.querySelector('input[name="price"]')?.value.trim() || '';
+    const stock = productForm?.querySelector('input[name="stock"]')?.value.trim() || '';
+
+    if (!name) return 'Product name is required.';
+    if (!brand) return 'Please select a brand.';
+    if (!price) return 'Product price is required.';
+    if (Number.isNaN(Number(price)) || Number(price) < 0) return 'Product price must be a valid non-negative number.';
+    if (!description) return 'Product description is required.';
+    if (!stock) return 'Product stock is required.';
+    if (!Number.isInteger(Number(stock)) || Number(stock) < 0) return 'Product stock must be a valid non-negative integer.';
+    if (!category) return 'Please select a category.';
+
+    return '';
+  };
 
   const setDirty = () => {
     if (formDirty) return;
     formDirty = true;
     formFooter?.classList.add('is-visible');
+  };
+
+  const syncSubCategories = () => {
+    if (!categorySelect || !subCategorySelect) return;
+    const categoryId = categorySelect.value;
+    const options = Array.from(subCategorySelect.options);
+    options.forEach((option, index) => {
+      if (index === 0) return;
+      const visible = !categoryId || option.dataset.categoryId === categoryId;
+      option.hidden = !visible;
+    });
+    if (subCategorySelect.selectedOptions[0] && subCategorySelect.selectedOptions[0].hidden) {
+      subCategorySelect.value = '';
+    }
   };
 
   if (productForm) {
@@ -24,42 +81,45 @@ document.addEventListener('DOMContentLoaded', () => {
       setDirty();
     });
     productForm.addEventListener('change', setDirty);
-  }
-
-  const addSpec = () => {
-    const value = (specInput?.value || '').trim();
-    if (!value || !specList) return;
-    const li = document.createElement('li');
-    const specId = `spec-${Date.now()}`;
-    li.className = 'spec-item';
-    li.dataset.specId = specId;
-    li.innerHTML = `
-      <span class="spec-dot"></span>
-      <span class="spec-text">${value}</span>
-      <span class="spec-actions">
-        <button type="button" class="icon-btn edit" aria-label="Edit spec"><i class="fa-regular fa-pen-to-square"></i></button>
-        <button type="button" class="icon-btn delete" aria-label="Delete spec"><i class="fa-regular fa-trash-can"></i></button>
-      </span>
-    `;
-    specList.appendChild(li);
-    specInput.value = '';
-    setDirty();
-  };
-
-  if (specAdd && specInput) {
-    specAdd.addEventListener('click', addSpec);
-    specInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        addSpec();
-      }
+    productForm.addEventListener('submit', (event) => {
+      const message = validateForm();
+      if (!message) return;
+      event.preventDefault();
+      showWarning(message);
     });
   }
+
+  const buildListItem = (value, inputName, label) => {
+    const li = document.createElement('li');
+    li.className = 'spec-item';
+    li.innerHTML = `
+      <span class="spec-dot"></span>
+      <span class="spec-text"></span>
+      <input type="hidden" name="${inputName}">
+      <span class="spec-actions">
+        <button type="button" class="icon-btn edit" aria-label="Edit ${label}"><i class="fa-regular fa-pen-to-square"></i></button>
+        <button type="button" class="icon-btn delete" aria-label="Delete ${label}"><i class="fa-regular fa-trash-can"></i></button>
+      </span>
+    `;
+    li.querySelector('.spec-text').textContent = value;
+    li.querySelector(`input[name="${inputName}"]`).value = value;
+    return li;
+  };
+
+  const addListValue = (input, list, inputName, label) => {
+    const value = (input?.value || '').trim();
+    if (!value || !list) return;
+    list.appendChild(buildListItem(value, inputName, label));
+    input.value = '';
+    setDirty();
+  };
 
   const startInlineEdit = (item) => {
     if (!item || item.classList.contains('editing')) return;
     const text = item.querySelector('.spec-text');
-    if (!text) return;
+    const hidden = item.querySelector('input[type="hidden"]');
+    if (!text || !hidden) return;
+
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'spec-edit-input';
@@ -75,6 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
           item.remove();
         } else {
           text.textContent = next;
+          hidden.value = next;
         }
       }
       item.classList.remove('editing');
@@ -96,139 +157,200 @@ document.addEventListener('DOMContentLoaded', () => {
     input.addEventListener('input', setDirty);
   };
 
-  if (specList) {
-    specList.querySelectorAll('.spec-item').forEach((item, index) => {
-      if (!item.dataset.specId) {
-        item.dataset.specId = `spec-${index}`;
+  const syncFilesToInput = () => {
+    if (uploadInput) uploadInput.files = newImageFiles.files;
+  };
+
+  const existingTiles = () => Array.from(imageGrid?.querySelectorAll('.image-tile[data-image-key^="existing:"]') || []);
+  const newTiles = () => Array.from(imageGrid?.querySelectorAll('.image-tile[data-image-key^="new:"]') || []);
+
+  const updateUploadTileVisibility = () => {
+    if (!uploadTile || !imageGrid) return;
+    const total = imageGrid.querySelectorAll('.image-tile:not(.upload-tile)').length;
+    uploadTile.style.display = total >= maxImages ? 'none' : 'grid';
+  };
+
+  const setActiveImage = (key) => {
+    activeImageKey = key;
+    imageGrid?.querySelectorAll('.image-tile').forEach((tile) => {
+      if (tile.classList.contains('upload-tile')) return;
+      tile.classList.toggle('active', tile.dataset.imageKey === key);
+    });
+  };
+
+  const setPrimary = (key) => {
+    if (primaryImageKey) primaryImageKey.value = key;
+    imageGrid?.querySelectorAll('.image-tile').forEach((tile) => {
+      const radio = tile.querySelector('.primary-radio input');
+      if (radio) radio.checked = !tile.classList.contains('upload-tile') && tile.dataset.imageKey === key;
+    });
+  };
+
+  const markDeletedExistingImage = (imageId) => {
+    if (!deletedImageInputs || !imageId) return;
+    if (deletedImageInputs.querySelector(`input[value="${imageId}"]`)) return;
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'deleted_image_ids[]';
+    input.value = String(imageId);
+    deletedImageInputs.appendChild(input);
+  };
+
+  const rebuildNewTileIndexes = () => {
+    newTiles().forEach((tile, index) => {
+      tile.dataset.newIndex = String(index);
+      tile.dataset.imageKey = `new:${index}`;
+    });
+  };
+
+  const appendNewTile = (file, index) => {
+    const tile = document.createElement('div');
+    tile.className = 'image-tile';
+    tile.dataset.newIndex = String(index);
+    tile.dataset.imageKey = `new:${index}`;
+    tile.innerHTML = `
+      <img alt="Product image">
+      <div class="image-tools">
+        <label class="primary-radio" title="Set primary">
+          <input type="radio" name="primary_image_marker">
+          <span></span>
+        </label>
+        <button type="button" class="icon-btn delete" title="Delete">
+          <i class="fa-regular fa-trash-can"></i>
+        </button>
+      </div>
+    `;
+    tile.querySelector('img').src = URL.createObjectURL(file);
+    imageGrid.insertBefore(tile, uploadTile);
+  };
+
+  const refreshNewTiles = () => {
+    newTiles().forEach((tile) => tile.remove());
+    Array.from(newImageFiles.files).forEach((file, index) => appendNewTile(file, index));
+    rebuildNewTileIndexes();
+    updateUploadTileVisibility();
+    if (activeImageKey === '' && imageGrid) {
+      const firstTile = imageGrid.querySelector('.image-tile:not(.upload-tile)');
+      if (firstTile) setActiveImage(firstTile.dataset.imageKey || '');
+    }
+  };
+
+  [
+    { input: specInput, button: specAdd, list: specList, name: 'spec_names[]', label: 'specification' },
+    { input: colorInput, button: colorAdd, list: colorList, name: 'color_names[]', label: 'color' },
+    { input: sizeInput, button: sizeAdd, list: sizeList, name: 'size_names[]', label: 'size' },
+  ].forEach(({ input, button, list, name, label }) => {
+    button?.addEventListener('click', () => addListValue(input, list, name, label));
+    input?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addListValue(input, list, name, label);
       }
     });
 
-    specList.addEventListener('click', (e) => {
-      const delBtn = e.target.closest('.icon-btn.delete');
-      if (delBtn) {
-        const item = delBtn.closest('.spec-item');
-        item?.remove();
+    list?.addEventListener('click', (e) => {
+      const deleteBtn = e.target.closest('.icon-btn.delete');
+      if (deleteBtn) {
+        deleteBtn.closest('.spec-item')?.remove();
         setDirty();
         return;
       }
 
       const editBtn = e.target.closest('.icon-btn.edit');
       if (editBtn) {
-        const item = editBtn.closest('.spec-item');
-        startInlineEdit(item);
+        startInlineEdit(editBtn.closest('.spec-item'));
       }
     });
-  }
+  });
 
-  const setActiveTile = (tile) => {
-    imageGrid?.querySelectorAll('.image-tile').forEach((t) => t.classList.remove('active'));
-    if (tile) {
-      tile.classList.add('active');
-    }
-    activeTile = tile;
-  };
+  uploadTile?.addEventListener('click', () => uploadInput?.click());
 
-  const ensurePrimarySingle = (tile) => {
-    if (!tile) return;
-    const radio = tile.querySelector('input[type="radio"]');
-    if (radio) {
-      imageGrid.querySelectorAll('input[type="radio"]').forEach((r) => (r.checked = false));
-      radio.checked = true;
-    }
-  };
-
-  if (imageGrid) {
-    imageGrid.addEventListener('click', (e) => {
-      const tile = e.target.closest('.image-tile');
-      if (!tile) return;
-      if (tile.classList.contains('upload-tile')) {
-        setActiveTile(null);
-        if (uploadInput) uploadInput.click();
-        return;
+  uploadInput?.addEventListener('change', () => {
+    Array.from(uploadInput.files || []).forEach((file) => {
+      const totalCount = existingTiles().length + newImageFiles.files.length;
+      if (totalCount < maxImages) {
+        newImageFiles.items.add(file);
       }
+    });
+    syncFilesToInput();
+    refreshNewTiles();
+    if ((primaryImageKey?.value || '') === '' && newImageFiles.files.length > 0 && existingTiles().length === 0) {
+      setPrimary('new:0');
+    }
+    setDirty();
+  });
 
-      if (e.target.closest('.icon-btn.delete')) {
+  imageGrid?.addEventListener('click', (e) => {
+    const tile = e.target.closest('.image-tile');
+    if (!tile || tile.classList.contains('upload-tile')) return;
+    const key = tile.dataset.imageKey || '';
+
+    if (e.target.closest('.icon-btn.delete')) {
+      if (key.startsWith('existing:')) {
+        const imageId = Number(tile.dataset.imageId || '0');
+        markDeletedExistingImage(imageId);
         tile.remove();
-        const first = imageGrid.querySelector('.image-tile:not(.upload-tile)');
-        setActiveTile(first);
-        ensurePrimarySingle(first);
-        updateUploadTileVisibility();
-        setDirty();
-        return;
+      } else if (key.startsWith('new:')) {
+        const removedIndex = Number(tile.dataset.newIndex || '0');
+        const next = new DataTransfer();
+        Array.from(newImageFiles.files).forEach((file, index) => {
+          if (index !== removedIndex) next.items.add(file);
+        });
+        newImageFiles = next;
+        syncFilesToInput();
+        refreshNewTiles();
       }
 
-      if (e.target.closest('.icon-btn.reupload')) {
-        setActiveTile(tile);
-        if (uploadInput) uploadInput.click();
-        setDirty();
-        return;
-      }
-
-      if (e.target.closest('.primary-radio')) {
-        ensurePrimarySingle(tile);
-        setDirty();
-        return;
-      }
-
-      setActiveTile(tile);
-      setDirty();
-    });
-  }
-
-  const updateUploadTileVisibility = () => {
-    if (!uploadTile || !imageGrid) return;
-    const tiles = imageGrid.querySelectorAll('.image-tile:not(.upload-tile)');
-    if (tiles.length >= maxImages) {
-      uploadTile.classList.add('hidden');
-    } else {
-      uploadTile.classList.remove('hidden');
-    }
-  };
-
-  if (uploadInput) {
-    uploadInput.addEventListener('change', () => {
-      const file = uploadInput.files && uploadInput.files[0];
-      if (!file) return;
-      if (activeTile) {
-        const img = activeTile.querySelector('img');
-        if (!img) return;
-        img.src = URL.createObjectURL(file);
+      const firstTile = imageGrid.querySelector('.image-tile:not(.upload-tile)');
+      if (firstTile) {
+        const nextKey = firstTile.dataset.imageKey || '';
+        setActiveImage(nextKey);
+        setPrimary(nextKey);
       } else {
-        const tile = document.createElement('div');
-        tile.className = 'image-tile active';
-        tile.innerHTML = `
-          <img alt="Product image">
-          <div class="image-tools">
-            <button type="button" class="icon-btn reupload" title="Reupload">
-              <i class="fa-solid fa-rotate-right"></i>
-            </button>
-            <label class="primary-radio" title="Set primary">
-              <input type="radio" name="primary_image">
-              <span></span>
-            </label>
-            <button type="button" class="icon-btn delete" title="Delete">
-              <i class="fa-regular fa-trash-can"></i>
-            </button>
-          </div>
-        `;
-        const img = tile.querySelector('img');
-        img.src = URL.createObjectURL(file);
-        imageGrid.insertBefore(tile, uploadTile);
-        setActiveTile(tile);
-        ensurePrimarySingle(tile);
+        if (primaryImageKey) primaryImageKey.value = '';
+        activeImageKey = '';
       }
       updateUploadTileVisibility();
-      uploadInput.value = '';
       setDirty();
-    });
-  }
+      return;
+    }
 
+    if (e.target.closest('.icon-btn.reupload')) {
+      uploadInput?.click();
+      return;
+    }
+
+    if (e.target.closest('.primary-radio')) {
+      setPrimary(key);
+      setActiveImage(key);
+      setDirty();
+      return;
+    }
+
+    setActiveImage(key);
+    setDirty();
+  });
+
+  categorySelect?.addEventListener('change', syncSubCategories);
+  syncSubCategories();
   updateUploadTileVisibility();
 
-  if (discardBtn) {
-    discardBtn.addEventListener('click', () => {
-      window.location.reload();
+  if (!primaryImageKey?.value) {
+    const firstTile = imageGrid?.querySelector('.image-tile:not(.upload-tile)');
+    if (firstTile) setPrimary(firstTile.dataset.imageKey || '');
+  }
+  setActiveImage(primaryImageKey?.value || imageGrid?.querySelector('.image-tile:not(.upload-tile)')?.dataset.imageKey || '');
+
+  discardBtn?.addEventListener('click', () => {
+    window.location.reload();
+  });
+
+  if (window.adminProductEditFlash && window.Swal) {
+    Swal.fire({
+      icon: window.adminProductEditFlash.type === 'error' ? 'error' : 'success',
+      text: window.adminProductEditFlash.message || '',
+      timer: 2200,
+      showConfirmButton: false,
     });
   }
-
 });

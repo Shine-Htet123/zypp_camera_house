@@ -1,35 +1,69 @@
 <?php
-session_start();
+require_once __DIR__ . '/app/services/checkout.php';
 
-function format_mmk($value) {
-    return number_format((int) $value);
+customer_auth_require_login('/payment.php');
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = trim((string) ($_POST['action'] ?? ''));
+
+    try {
+        if ($action === 'submit_payment_proof') {
+            $confirmation = checkout_finalize_order($_FILES['payment_proof'] ?? null);
+            customer_auth_json([
+                'success' => true,
+                'message' => 'Payment proof uploaded successfully.',
+                'payload' => [
+                    'order_public_id' => (string) $confirmation['public_order_id'],
+                    'created_at' => (string) $confirmation['created_at'],
+                ],
+            ]);
+        }
+
+        if ($action === 'place_cod_order') {
+            $confirmation = checkout_finalize_order(null);
+            customer_auth_json([
+                'success' => true,
+                'message' => 'Order placed successfully.',
+                'payload' => [
+                    'order_public_id' => (string) $confirmation['public_order_id'],
+                    'created_at' => (string) $confirmation['created_at'],
+                ],
+            ]);
+        }
+
+        throw new InvalidArgumentException('Invalid payment request.');
+    } catch (Throwable $exception) {
+        if (customer_auth_is_json_request()) {
+            customer_auth_json([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
+
+        checkout_flash_set($exception->getMessage(), 'error');
+        customer_auth_redirect('/payment.php');
+    }
 }
 
-$orderItems = [
-    [
-        'name' => 'Canon EOS R6 Mark II',
-        'quantity' => 1,
-        'price' => 3000000,
-    ],
-    [
-        'name' => 'Canon EOS R6 Mark II',
-        'quantity' => 1,
-        'price' => 3000000,
-    ],
-];
-
-$subtotal = array_sum(array_map(static fn($item) => $item['price'] * $item['quantity'], $orderItems));
-$discount = 60000;
-$grandTotal = $subtotal - $discount;
-$postedDeliveryMethod = $_POST['delivery_method'] ?? '';
-$paymentQrCardImage = '/storage/uploads/contents/logo.png';
-
-if ($postedDeliveryMethod !== '') {
-    $_SESSION['checkout_delivery_method'] = $postedDeliveryMethod;
+try {
+    $paymentView = checkout_build_payment_view_model();
+} catch (Throwable $exception) {
+    checkout_flash_set($exception->getMessage(), 'error');
+    customer_auth_redirect('/delivery.php');
 }
 
-$selectedDeliveryMethod = $_SESSION['checkout_delivery_method'] ?? '';
-$hasFreeDelivery = $selectedDeliveryMethod === 'royal' && $subtotal >= 1000000;
+$paymentFlash = checkout_flash_consume();
+$draft = $paymentView['draft'];
+$orderItems = $paymentView['items'];
+$subtotal = $paymentView['subtotal'];
+$discount = $paymentView['total_discount'];
+$grandTotal = $paymentView['grand_total'];
+$hasFreeDelivery = $paymentView['has_free_delivery'];
+$requiresPaymentProof = $paymentView['requires_payment_proof'];
+$paymentQrCardImage = app_path('/storage/uploads/contents/logo.png');
+$displayOrderNo = '#Pending';
+$displayOrderDate = date('d/m/Y');
+$displayOrderTime = date('H:i:s');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -56,9 +90,9 @@ $hasFreeDelivery = $selectedDeliveryMethod === 'royal' && $subtotal >= 1000000;
         <section class="payment-card" data-payment-card>
             <header class="payment-header">
                 <h2>ZYPP Camera House</h2>
-                <p><strong>Order No.</strong> <span>#202601260001</span></p>
-                <p><strong>Order Date -</strong> <span>20/12/2025</span></p>
-                <p><strong>Order Time -</strong> <span class="muted">12:00:00</span></p>
+                <p><strong>Order No.</strong> <span data-order-public-id><?php echo htmlspecialchars($displayOrderNo); ?></span></p>
+                <p><strong>Order Date -</strong> <span data-order-date><?php echo htmlspecialchars($displayOrderDate); ?></span></p>
+                <p><strong>Order Time -</strong> <span class="muted" data-order-time><?php echo htmlspecialchars($displayOrderTime); ?></span></p>
             </header>
 
             <h3 class="summary-title">Order Summary</h3>
@@ -74,23 +108,23 @@ $hasFreeDelivery = $selectedDeliveryMethod === 'royal' && $subtotal >= 1000000;
                 <?php foreach ($orderItems as $index => $item): ?>
                     <div class="payment-row">
                         <span class="cell no"><?php echo $index + 1; ?></span>
-                        <span class="cell item"><?php echo htmlspecialchars($item['name']); ?></span>
+                        <span class="cell item"><?php echo htmlspecialchars((string) $item['name']); ?></span>
                         <span class="cell qty"><?php echo (int) $item['quantity']; ?></span>
-                        <span class="cell price"><?php echo format_mmk($item['price']); ?> MMK</span>
+                        <span class="cell price"><?php echo checkout_format_mmk((float) $item['line_subtotal']); ?> MMK</span>
                     </div>
                 <?php endforeach; ?>
 
                 <div class="payment-total-row">
                     <span class="cell total-label">Subtotal</span>
-                    <span class="cell total-value"><?php echo format_mmk($subtotal); ?> MMK</span>
+                    <span class="cell total-value"><?php echo checkout_format_mmk($subtotal); ?> MMK</span>
                 </div>
                 <div class="payment-total-row discount">
                     <span class="cell total-label">Total Discount</span>
-                    <span class="cell total-value">- <?php echo format_mmk($discount); ?> MMK</span>
+                    <span class="cell total-value">- <?php echo checkout_format_mmk($discount); ?> MMK</span>
                 </div>
                 <div class="payment-total-row">
                     <span class="cell total-label">Grand Total</span>
-                    <span class="cell total-value"><?php echo format_mmk($grandTotal); ?> MMK</span>
+                    <span class="cell total-value"><?php echo checkout_format_mmk($grandTotal); ?> MMK</span>
                 </div>
             </div>
 
@@ -101,21 +135,42 @@ $hasFreeDelivery = $selectedDeliveryMethod === 'royal' && $subtotal >= 1000000;
             <div class="payment-details" data-payment-details>
                 <div class="detail-group">
                     <h4>Delivery Information</h4>
-                    <p>Kyaw Ko Ko</p>
-                    <p>kyawkokko@gmail.com</p>
-                    <p>09771751530</p>
-                    <p>No. 96, Pyay Road, Hlaing Township, Yangon</p>
+                    <p><?php echo htmlspecialchars($draft['first_name'] . ' ' . $draft['last_name']); ?></p>
+                    <p><?php echo htmlspecialchars((string) $draft['email']); ?></p>
+                    <p><?php echo htmlspecialchars((string) $draft['phone']); ?></p>
+                    <?php if ($draft['delivery_type'] === 'pickup'): ?>
+                        <p>Pick up at store</p>
+                    <?php else: ?>
+                        <p>
+                            <?php
+                            echo htmlspecialchars(
+                                implode(', ', array_filter([
+                                    (string) ($draft['address'] ?? ''),
+                                    (string) ($draft['township'] ?? ''),
+                                    (string) ($draft['city'] ?? ''),
+                                ]))
+                            );
+                            ?>
+                        </p>
+                    <?php endif; ?>
                 </div>
 
                 <div class="detail-group">
                     <h4>Additional Note</h4>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore</p>
+                    <p><?php echo htmlspecialchars((string) ($draft['additional_note'] !== '' ? $draft['additional_note'] : '-')); ?></p>
                 </div>
             </div>
 
-            <div class="payment-actions" data-payment-actions>
-                <a class="back-link" href="/delivery.php">Back</a>
-                <button type="button" class="pay-btn" data-open-payment-modal>Pay Now</button>
+            <div class="payment-actions" data-payment-actions data-payment-mode="<?php echo $requiresPaymentProof ? 'proof' : 'cod'; ?>">
+                <a class="back-link" href="<?php echo htmlspecialchars(app_path('/delivery.php')); ?>">Back</a>
+                <button
+                    type="button"
+                    class="pay-btn"
+                    data-open-payment-modal
+                    data-cod-mode="<?php echo $requiresPaymentProof ? '0' : '1'; ?>"
+                >
+                    <?php echo $requiresPaymentProof ? 'Pay Now' : 'Confirm Order'; ?>
+                </button>
             </div>
 
             <div class="payment-confirmed" data-payment-confirmed hidden>
@@ -127,8 +182,8 @@ $hasFreeDelivery = $selectedDeliveryMethod === 'royal' && $subtotal >= 1000000;
                     your order is confirmed.
                 </div>
                 <div class="payment-confirmed-actions">
-                    <a class="pay-btn receipt-btn" href="/check-order.php">Download E-receipt</a>
-                    <a class="continue-shopping-link" href="/products.php">Continue Shopping</a>
+                    <a class="pay-btn receipt-btn" href="<?php echo htmlspecialchars(app_path('/check-order.php')); ?>" data-receipt-link>Download E-receipt</a>
+                    <a class="continue-shopping-link" href="<?php echo htmlspecialchars(app_path('/products.php')); ?>">Continue Shopping</a>
                 </div>
             </div>
         </section>
@@ -144,7 +199,7 @@ $hasFreeDelivery = $selectedDeliveryMethod === 'royal' && $subtotal >= 1000000;
             <h2 id="paymentModalTitle" class="payment-modal-title">Pay Here</h2>
 
             <div class="payment-qr-card">
-                <img src="<?php echo htmlspecialchars($paymentQrCardImage); ?>" alt="KBZPay payment card">
+                <img src="<?php echo htmlspecialchars($paymentQrCardImage); ?>" alt="Payment card">
             </div>
 
             <div class="payment-account-meta">
@@ -161,9 +216,8 @@ $hasFreeDelivery = $selectedDeliveryMethod === 'royal' && $subtotal >= 1000000;
             <div class="payment-upload-section">
                 <h3>Note</h3>
                 <p>
-                    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut
-                    labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
-                    eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                    Please transfer the exact amount and upload your payment proof.
+                    Our team will verify the payment before confirming your order.
                 </p>
                 <p class="payment-phone"><strong>Phone Number:</strong> 09123456789</p>
 
@@ -191,7 +245,7 @@ $hasFreeDelivery = $selectedDeliveryMethod === 'royal' && $subtotal >= 1000000;
             <div class="payment-modal-view payment-modal-success" data-payment-view="success" hidden>
                 <div class="payment-success-illustration" aria-hidden="true">
                     <video autoplay muted loop playsinline>
-                        <source src="/storage/uploads/contents/video/sandy-loading.mp4" type="video/mp4">
+                        <source src="<?php echo htmlspecialchars(app_path('/storage/uploads/contents/video/sandy-loading.mp4')); ?>" type="video/mp4">
                     </video>
                 </div>
                 <h2 id="paymentSuccessTitle">Upload successful!</h2>
@@ -206,6 +260,9 @@ $hasFreeDelivery = $selectedDeliveryMethod === 'royal' && $subtotal >= 1000000;
     </div>
 
     <?php include './footer.php'; ?>
-    <script src="./assets/js/payment.js"></script>
+    <?php if ($paymentFlash): ?>
+        <script>window.__paymentFlash = <?php echo json_encode($paymentFlash, JSON_UNESCAPED_SLASHES); ?>;</script>
+    <?php endif; ?>
+    <script src="<?php echo htmlspecialchars(app_path('/assets/js/payment.js')); ?>"></script>
 </body>
 </html>

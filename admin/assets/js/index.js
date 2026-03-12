@@ -1,6 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const dashboardData = window.adminDashboardData || {};
   const filterInput = document.querySelector('.kpi-filter-input');
   const filterText = document.querySelector('.kpi-filter-text');
+  const updateDashboardUrl = (updates) => {
+    const nextUrl = new URL(window.location.href);
+    Object.entries(updates).forEach(([key, value]) => {
+      if (!value) {
+        nextUrl.searchParams.delete(key);
+      } else {
+        nextUrl.searchParams.set(key, value);
+      }
+    });
+    window.location.href = nextUrl.toString();
+  };
 
   if (filterInput && filterText) {
     const formatMonthYear = (value) => {
@@ -30,7 +42,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateText();
     filterInput.addEventListener('input', updateText);
-    filterInput.addEventListener('change', updateText);
+    filterInput.addEventListener('change', () => {
+      updateText();
+      updateDashboardUrl({ sales_month: filterInput.value || dashboardData.selectedMonth || '' });
+    });
   }
 
   const filterPill = document.querySelector('.kpi-filter-pill');
@@ -48,8 +63,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabs = document.querySelectorAll('.range-tab');
   tabs.forEach((tab) => {
     tab.addEventListener('click', () => {
-      tabs.forEach((item) => item.classList.remove('active'));
-      tab.classList.add('active');
+      const rangeValue = tab.dataset.rangeValue || dashboardData.selectedRange || '1y';
+      updateDashboardUrl({
+        sales_month: filterInput?.value || dashboardData.selectedMonth || '',
+        sales_range: rangeValue,
+      });
     });
   });
 
@@ -73,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
       series: [
         {
           name: 'Sales',
-          data: [22, 27, 24, 30, 28, 33, 31, 36, 34, 39, 37, 42],
+          data: dashboardData.salesChart?.series || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         },
       ],
       colors: [primaryColor],
@@ -93,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       dataLabels: { enabled: false },
       xaxis: {
-        categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        categories: dashboardData.salesChart?.categories || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
         labels: {
           style: { colors: '#9a9a9a', fontSize: '10px' },
         },
@@ -125,14 +143,14 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       series: [
         {
-          name: 'Sales',
+          name: 'Units Sold',
           type: 'column',
-          data: [18, 32, 45, 52, 48, 60, 55],
+          data: dashboardData.trendingChart?.sold_qty || [0],
         },
         {
-          name: 'Target',
+          name: 'Orders',
           type: 'line',
-          data: [22, 35, 40, 58, 52, 63, 59],
+          data: dashboardData.trendingChart?.order_count || [0],
         },
       ],
       stroke: {
@@ -148,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
       colors: [primaryColor, primaryDarkColor],
       dataLabels: { enabled: false },
       xaxis: {
-        categories: ['2012', '2013', '2014', '2015', '2016', '2017', '2018'],
+        categories: dashboardData.trendingChart?.categories || ['No Data'],
         labels: {
           style: { colors: '#9a9a9a', fontSize: '10px' },
         },
@@ -181,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
       series: [
         {
           name: 'Orders',
-          data: [1200, 1020, 940, 780, 620, 520],
+          data: dashboardData.bestSellersChart?.sold_qty || [0],
         },
       ],
       plotOptions: {
@@ -194,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
       colors: [primaryColor],
       dataLabels: { enabled: false },
       xaxis: {
-        categories: ['Category 10', 'Category 9', 'Category 8', 'Category 7', 'Category 6', 'Category 5'],
+        categories: dashboardData.bestSellersChart?.categories || ['No Data'],
         labels: {
           style: { colors: '#9a9a9a', fontSize: '10px' },
         },

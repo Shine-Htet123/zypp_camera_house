@@ -1,67 +1,56 @@
 <?php
-function format_mmk($value) {
-    return number_format((int) $value);
-}
+require_once __DIR__ . '/app/services/cart.php';
 
-function get_discount_label($value, $type) {
-    $unit = $type === 'fixed' ? 'MMK' : '%';
-    return sprintf('- %s %s each', format_mmk($value), $unit);
-}
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = trim((string) ($_POST['action'] ?? ''));
 
-function calculate_line_subtotal($price, $quantity) {
-    return (int) $price * (int) $quantity;
-}
+    try {
+        if ($action === 'update_item') {
+            $payload = customer_cart_update($_POST);
+        } elseif ($action === 'remove_item') {
+            $payload = customer_cart_remove($_POST);
+        } elseif ($action === 'save_note') {
+            $payload = customer_cart_save_note($_POST);
+        } else {
+            throw new InvalidArgumentException('Invalid cart request.');
+        }
 
-function calculate_line_discount($price, $quantity, $discountValue, $discountType) {
-    $subtotal = calculate_line_subtotal($price, $quantity);
+        if (customer_auth_is_json_request()) {
+            customer_auth_json([
+                'success' => true,
+                'message' => 'Cart updated.',
+                'payload' => $payload,
+            ]);
+        }
 
-    if ($discountType === 'fixed') {
-        return min((int) $discountValue * (int) $quantity, $subtotal);
+        customer_cart_set_flash('Cart updated.', 'success');
+        customer_auth_redirect('/cart.php');
+    } catch (Throwable $exception) {
+        if (customer_auth_is_json_request()) {
+            $status = str_contains(strtolower($exception->getMessage()), 'log in') ? 401 : 422;
+            customer_auth_json([
+                'success' => false,
+                'message' => $exception->getMessage(),
+                'login_required' => $status === 401,
+            ], $status);
+        }
+
+        customer_cart_set_flash($exception->getMessage(), 'error');
+        customer_auth_redirect('/cart.php');
     }
-
-    return (int) round($subtotal * ((int) $discountValue / 100));
 }
 
-$cartItems = [
-    [
-        'id' => 101,
-        'name' => 'Canon EOS R6 Mark II',
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-        'quantity' => 10,
-        'stock' => 10,
-        'unit_price' => 3000000,
-        'discount_value' => 10,
-        'discount_type' => 'percentage',
-    ],
-    [
-        'id' => 102,
-        'name' => 'Canon EOS R6 Mark II',
-        'image' => '/storage/uploads/products/placeholder-camera.png',
-        'quantity' => 10,
-        'stock' => 12,
-        'unit_price' => 3000000,
-        'discount_value' => 100000,
-        'discount_type' => 'fixed',
-    ],
-];
-
-$subtotal = 0;
-$totalDiscount = 0;
-
-foreach ($cartItems as &$item) {
-    $item['line_subtotal'] = calculate_line_subtotal($item['unit_price'], $item['quantity']);
-    $item['line_discount'] = calculate_line_discount($item['unit_price'], $item['quantity'], $item['discount_value'], $item['discount_type']);
-    $item['show_low_stock'] = $item['stock'] > 0 && $item['stock'] <= 10;
-    $subtotal += $item['line_subtotal'];
-    $totalDiscount += $item['line_discount'];
-}
-unset($item);
+$cartData = customer_cart_fetch_view_model();
+$cartItems = $cartData['items'];
+$subtotal = $cartData['subtotal'];
+$totalDiscount = $cartData['total_discount'];
+$cartFlash = customer_cart_consume_flash();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <?php include __DIR__ . '/head.php'; ?>
-    <link rel="stylesheet" href="/assets/css/cart.css">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/assets/css/cart.css')); ?>">
 </head>
 <body>
     <?php include __DIR__ . '/navbar.php'; ?>
@@ -80,6 +69,11 @@ unset($item);
         <h2 class="cart-title">Cart Summary</h2>
 
         <form class="summary-card" action="/cart.php" method="post">
+            <?php if ($cartData['requires_login']): ?>
+                <div class="cart-empty-message">Please log in to view your cart.</div>
+            <?php elseif ($cartItems === []): ?>
+                <div class="cart-empty-message">Your cart is empty.</div>
+            <?php else: ?>
             <div class="summary-table">
                 <div class="summary-row summary-head">
                     <span class="head-cell">Items</span>
@@ -94,13 +88,13 @@ unset($item);
                     <div
                         class="summary-row cart-row"
                         data-cart-row
-                        data-product-id="<?php echo (int) $item['id']; ?>"
+                        data-product-id="<?php echo (int) $item['product_id']; ?>"
                         data-stock="<?php echo (int) $item['stock']; ?>"
                         data-unit-price="<?php echo (int) $item['unit_price']; ?>"
                         data-discount-value="<?php echo (int) $item['discount_value']; ?>"
                         data-discount-type="<?php echo htmlspecialchars($item['discount_type']); ?>"
                     >
-                        <input type="hidden" name="cart[<?php echo (int) $item['id']; ?>][product_id]" value="<?php echo (int) $item['id']; ?>">
+                        <input type="hidden" name="cart[<?php echo (int) $item['product_id']; ?>][product_id]" value="<?php echo (int) $item['product_id']; ?>">
                         <div class="item-cell summary-cell">
                             <img src="<?php echo htmlspecialchars($item['image']); ?>" alt="<?php echo htmlspecialchars($item['name']); ?>">
                             <div class="item-info">
@@ -113,7 +107,7 @@ unset($item);
                                 <input
                                     type="number"
                                     class="qty-value"
-                                    name="cart[<?php echo (int) $item['id']; ?>][quantity]"
+                                    name="cart[<?php echo (int) $item['product_id']; ?>][quantity]"
                                     value="<?php echo (int) $item['quantity']; ?>"
                                     min="1"
                                     max="<?php echo (int) $item['stock']; ?>"
@@ -127,13 +121,13 @@ unset($item);
                             </span>
                         </div>
                         <span class="cell summary-cell">
-                            <span data-price-value><?php echo format_mmk($item['unit_price']); ?></span> MMK
+                            <span data-price-value><?php echo customer_cart_format_mmk($item['unit_price']); ?></span> MMK
                         </span>
                         <span class="cell summary-cell">
-                            - <span data-discount-value><?php echo format_mmk($item['discount_value']); ?></span> <span data-discount-unit><?php echo $item['discount_type'] === 'fixed' ? 'MMK' : '%'; ?></span> each
+                            - <span data-discount-value><?php echo customer_cart_format_mmk($item['discount_value']); ?></span> <span data-discount-unit><?php echo $item['discount_type'] === 'fixed' ? 'MMK' : '%'; ?></span> each
                         </span>
                         <span class="cell summary-cell">
-                            <span data-line-subtotal><?php echo format_mmk($item['line_subtotal']); ?></span> MMK
+                            <span data-line-subtotal><?php echo customer_cart_format_mmk($item['line_subtotal']); ?></span> MMK
                         </span>
                         <div class="action-cell summary-cell">
                             <button type="button" class="delete-btn" aria-label="Remove" data-remove-row>
@@ -149,26 +143,34 @@ unset($item);
             <div class="summary-totals">
                 <div class="total-row">
                     <span>Subtotal:</span>
-                    <strong><span data-cart-subtotal><?php echo format_mmk($subtotal); ?></span> MMK</strong>
+                    <strong><span data-cart-subtotal><?php echo customer_cart_format_mmk($subtotal); ?></span> MMK</strong>
                 </div>
                 <div class="total-row discount">
                     <span>Total Discount:</span>
-                    <strong>- <span data-cart-discount><?php echo format_mmk($totalDiscount); ?></span> MMK</strong>
+                    <strong>- <span data-cart-discount><?php echo customer_cart_format_mmk($totalDiscount); ?></span> MMK</strong>
                 </div>
             </div>
 
             <div class="note-row">
                 <span class="note-label">Additional Note:</span>
-                <textarea name="additional_note" placeholder="Add a note for your order (e.g. delivery instructions, product preferences, or special requests)"></textarea>
+                <textarea name="additional_note" data-cart-note placeholder="Add a note for your order (e.g. delivery instructions, product preferences, or special requests)"><?php echo htmlspecialchars($cartData['additional_note']); ?></textarea>
             </div>
+            <?php endif; ?>
         </form>
 
-        <div class="checkout-actions">
-            <a class="btn-checkout" href="/delivery.php">Proceed to Checkout</a>
-        </div>
+        <?php if (!$cartData['requires_login'] && $cartItems !== []): ?>
+            <div class="checkout-actions">
+                    <a class="btn-checkout" href="<?php echo htmlspecialchars(app_path('/delivery.php')); ?>">Proceed to Checkout</a>
+            </div>
+        <?php endif; ?>
     </main>
 
     <?php include __DIR__ . '/footer.php'; ?>
-    <script src="/assets/js/cart.js"></script>
+    <?php if (is_array($cartFlash) && !empty($cartFlash['message'])): ?>
+        <script>
+            window.__cartFlash = <?php echo json_encode($cartFlash, JSON_UNESCAPED_SLASHES); ?>;
+        </script>
+    <?php endif; ?>
+    <script src="<?php echo htmlspecialchars(app_path('/assets/js/cart.js')); ?>"></script>
 </body>
 </html>

@@ -1,45 +1,15 @@
 <?php
-$proofs = [
-    [
-        'no' => 1,
-        'payment_id' => 'PAY202601260001',
-        'order_id' => '#202601260001',
-        'customer_id' => 'ZCU202601260001',
-        'amount' => '30,000,000 MMK',
-        'status' => 'Unpaid',
-        'method' => 'KBZPay',
-        'proof' => '/storage/uploads/contents/logo.png',
-        'order_date' => '20/12/2025',
-    ],
-    [
-        'no' => 2,
-        'payment_id' => 'PAY202601260001',
-        'order_id' => '#202601260001',
-        'customer_id' => 'ZCU202601260001',
-        'amount' => '30,000,000 MMK',
-        'status' => 'Paid',
-        'method' => 'KBZPay',
-        'proof' => '/storage/uploads/contents/logo.png',
-        'order_date' => '20/12/2025',
-    ],
-    [
-        'no' => 3,
-        'payment_id' => 'PAY202601260001',
-        'order_id' => '#202601260001',
-        'customer_id' => 'ZCU202601260001',
-        'amount' => '30,000,000 MMK',
-        'status' => 'Pending',
-        'method' => 'KBZPay',
-        'proof' => '/storage/uploads/contents/logo.png',
-        'order_date' => '20/12/2025',
-    ],
-];
+require_once __DIR__ . '/../config/admin_bootstrap.php';
+require_once __DIR__ . '/../database/admin/orders.php';
+
+$searchQuery = trim((string) ($_GET['q'] ?? ''));
+$proofs = admin_fetch_payment_proofs();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <?php include __DIR__ . '/head.php'; ?>
-    <link rel="stylesheet" href="/admin/assets/css/payment-proof-uploads.css">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/admin/assets/css/payment-proof-uploads.css')); ?>">
 </head>
 <body class="admin-page">
     <?php include __DIR__ . '/navbar.php'; ?>
@@ -49,11 +19,16 @@ $proofs = [
             <h1>Payment Proof Uploads</h1>
             <div class="proof-actions">
                 <div class="proof-search">
-                    <div class="search-field">
-                        <input type="text" placeholder="Customer ID/Order ID/Payment ID">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </div>
-                    <button type="button" class="btn-search">Search</button>
+                    <form class="proof-search-form admin-search-form" method="get" action="<?php echo htmlspecialchars(app_path('/admin/payment-proof-uploads.php')); ?>">
+                        <div class="admin-search-box">
+                            <input type="text" id="proofSearchInput" name="q" value="<?php echo htmlspecialchars($searchQuery); ?>" placeholder="Customer ID/Order ID/Payment ID">
+                            <button type="submit" class="search-icon" aria-label="Search">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                        <button type="submit" class="admin-search-submit" id="proofSearchButton">Search</button>
+                        <a href="<?php echo htmlspecialchars(app_path('/admin/payment-proof-uploads.php')); ?>" class="admin-show-all">Show All</a>
+                    </form>
                     <div class="filter-wrapper">
                         <button type="button" class="btn-filter" aria-label="Filter">
                             <i class="fa-solid fa-filter"></i>
@@ -63,19 +38,25 @@ $proofs = [
                                 <label for="filterProofStatus">Status</label>
                                 <select id="filterProofStatus">
                                     <option value="">All</option>
-                                    <option value="Paid">Paid</option>
-                                    <option value="Unpaid">Unpaid</option>
-                                    <option value="Pending">Pending</option>
+                                    <?php foreach (admin_orders_payment_status_options() as $status): ?>
+                                        <option value="<?php echo htmlspecialchars($status); ?>"><?php echo htmlspecialchars($status); ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="filter-row">
                                 <label for="filterProofMethod">Method</label>
                                 <select id="filterProofMethod">
                                     <option value="">All</option>
-                                    <option value="KBZPay">KBZPay</option>
-                                    <option value="KBZ Bank">KBZ Bank</option>
-                                    <option value="AYA Pay">AYA Pay</option>
-                                    <option value="COD">COD</option>
+                                    <?php
+                                    $methods = array_values(array_unique(array_map(
+                                        static fn (array $proof): string => (string) $proof['payment_method'],
+                                        $proofs
+                                    )));
+                                    sort($methods);
+                                    foreach ($methods as $method):
+                                    ?>
+                                        <option value="<?php echo htmlspecialchars($method); ?>"><?php echo htmlspecialchars($method); ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="filter-actions">
@@ -86,9 +67,9 @@ $proofs = [
                     </div>
                 </div>
                 <div class="proof-bulk-actions">
-                    <button type="button" class="btn-approve">Approve</button>
-                    <button type="button" class="btn-reject">Reject</button>
-                    <button type="button" class="btn-request">Request Re-Upload</button>
+                    <button type="button" class="btn-approve" disabled>Approve</button>
+                    <button type="button" class="btn-reject" disabled>Reject</button>
+                    <button type="button" class="btn-request" disabled>Request Re-Upload</button>
                 </div>
             </div>
         </header>
@@ -113,29 +94,35 @@ $proofs = [
                         </tr>
                     </thead>
                     <tbody>
+                        <tr class="proof-empty-row"<?php echo $proofs === [] ? '' : ' style="display:none"'; ?>>
+                            <td colspan="9">No payment proofs found.</td>
+                        </tr>
                         <?php foreach ($proofs as $proof): ?>
                             <tr
                                 class="proof-row"
-                                data-order-no="<?php echo htmlspecialchars($proof['order_id']); ?>"
-                                data-order-date="<?php echo htmlspecialchars($proof['order_date']); ?>"
-                                data-payment-status="<?php echo htmlspecialchars($proof['status']); ?>"
-                                data-order-status="Pending"
+                                data-order-id="<?php echo (int) $proof['order_id']; ?>"
+                                data-order-no="<?php echo htmlspecialchars((string) $proof['order_no_display']); ?>"
+                                data-order-date="<?php echo htmlspecialchars((string) $proof['order_date_display']); ?>"
+                                data-payment-status="<?php echo htmlspecialchars((string) $proof['status_label']); ?>"
+                                data-order-status="<?php echo htmlspecialchars((string) $proof['order_status_label']); ?>"
+                                data-payment-method="<?php echo htmlspecialchars((string) $proof['payment_method']); ?>"
+                                data-payment-id="<?php echo (int) $proof['payment_id']; ?>"
                             >
-                                <td><input type="checkbox" class="proof-check"></td>
-                                <td><?php echo htmlspecialchars($proof['no']); ?></td>
-                                <td class="payment-id-cell"><?php echo htmlspecialchars($proof['payment_id']); ?></td>
-                                <td class="order-link order-id-link"><?php echo htmlspecialchars($proof['order_id']); ?></td>
-                                <td><?php echo htmlspecialchars($proof['customer_id']); ?></td>
-                                <td><?php echo htmlspecialchars($proof['amount']); ?></td>
+                                <td><input type="checkbox" class="proof-check" value="<?php echo (int) $proof['payment_id']; ?>"></td>
+                                <td><?php echo (int) $proof['no']; ?></td>
+                                <td class="payment-id-cell"><?php echo htmlspecialchars((string) $proof['payment_id_display']); ?></td>
+                                <td class="order-link order-id-link"><?php echo htmlspecialchars((string) $proof['order_no_display']); ?></td>
+                                <td><?php echo htmlspecialchars((string) $proof['public_user_id']); ?></td>
+                                <td><?php echo htmlspecialchars((string) $proof['amount_display']); ?></td>
                                 <td>
-                                    <span class="status <?php echo strtolower($proof['status']); ?>">
-                                        <?php echo htmlspecialchars($proof['status']); ?>
+                                    <span class="status <?php echo strtolower((string) $proof['status_label']); ?>">
+                                        <?php echo htmlspecialchars((string) $proof['status_label']); ?>
                                     </span>
                                 </td>
-                                <td><?php echo htmlspecialchars($proof['method']); ?></td>
+                                <td><?php echo htmlspecialchars((string) $proof['payment_method']); ?></td>
                                 <td>
-                                    <button type="button" class="proof-thumb" data-proof-src="<?php echo htmlspecialchars($proof['proof']); ?>">
-                                        <img src="<?php echo htmlspecialchars($proof['proof']); ?>" alt="Payment proof thumbnail">
+                                    <button type="button" class="proof-thumb" data-proof-src="<?php echo htmlspecialchars((string) $proof['payment_proof_file']); ?>">
+                                        <img src="<?php echo htmlspecialchars((string) $proof['payment_proof_file']); ?>" alt="Payment proof thumbnail">
                                     </button>
                                 </td>
                             </tr>
@@ -152,49 +139,27 @@ $proofs = [
                 <i class="fa-solid fa-xmark"></i>
             </button>
             <h2 class="modal-title">
-                Order No. <span id="modalOrderNo">#202601260001</span>
+                Order No. <span id="modalOrderNo">#-</span>
             </h2>
             <p class="modal-subtitle">
-                Order Date - <span id="modalOrderDate">20/12/2025</span>
+                Order Date - <span id="modalOrderDate">-</span>
             </p>
             <h3 class="modal-section-title">Order Summary</h3>
 
-            <div class="summary-table">
+            <div class="summary-table" id="proofOrderSummaryTable">
                 <div class="summary-head">
                     <span>Qty.</span>
                     <span>Product Name</span>
                     <span>Price</span>
                 </div>
-                <div class="summary-row">
-                    <span>1</span>
-                    <span>Canon EOS R6 Mark II</span>
-                    <span>3,000,000 MMK</span>
-                </div>
-                <div class="summary-row">
-                    <span>2</span>
-                    <span>Canon EOS R6 Mark II</span>
-                    <span>3,000,000 MMK</span>
-                </div>
-                <div class="summary-row summary-total">
-                    <span>Subtotal</span>
-                    <span>6,000,000 MMK</span>
-                </div>
-                <div class="summary-row summary-total">
-                    <span>Shipping Fees</span>
-                    <span>5,000 MMK</span>
-                </div>
-                <div class="summary-row summary-total">
-                    <span>Total</span>
-                    <span>6,005,000 MMK</span>
-                </div>
             </div>
 
             <div class="shipping-info">
                 <h4>Shipping Info</h4>
-                <p>Kyaw Ko Ko</p>
-                <p>kyawko@gmail.com</p>
-                <p>09771751530</p>
-                <p>No. 96, Pyay Road, Hlaing Township, Yangon</p>
+                <p id="modalShipName">-</p>
+                <p id="modalShipEmail">-</p>
+                <p id="modalShipPhone">-</p>
+                <p id="modalShipAddress">-</p>
             </div>
 
             <div class="status-info">
@@ -210,10 +175,10 @@ $proofs = [
 
             <div class="note-section">
                 <h4>Additional Note</h4>
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore</p>
+                <p id="modalAdditionalNote">-</p>
             </div>
 
-            <button type="button" class="btn-download">Download E-receipt</button>
+            <button type="button" class="btn-download" id="modalReceiptButton">Download E-receipt</button>
         </div>
     </div>
 
@@ -224,7 +189,7 @@ $proofs = [
             </button>
             <h2 class="modal-title">Payment Proof</h2>
             <p class="modal-subtitle">
-                Payment ID - <span id="modalPaymentId">PAY202601260001</span>
+                Payment ID - <span id="modalPaymentId">-</span>
             </p>
             <div class="proof-preview">
                 <img id="proofImage" src="" alt="Payment proof">
@@ -241,7 +206,8 @@ $proofs = [
         </div>
     </div>
 
-    <script src="/admin/assets/js/payment-proof-uploads.js"></script>
-    <script src="/admin/assets/js/admin.js"></script>
+    <script src="<?php echo htmlspecialchars(app_path('/admin/assets/js/payment-proof-uploads.js')); ?>"></script>
+    <script src="<?php echo htmlspecialchars(app_path('/admin/assets/js/admin.js')); ?>"></script>
 </body>
 </html>
+

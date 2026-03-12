@@ -9,26 +9,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const primaryDarkColor =
     rootStyles.getPropertyValue('--bg-primary-dark').trim() || '#2f5fb8';
 
+  const chartData = window.wholesaleSurveyChartData || {};
+  const categories = Array.isArray(chartData.categories) ? chartData.categories : [];
+  const seriesData = Array.isArray(chartData.series) ? chartData.series : [];
+
   const options = {
     chart: {
       height: 220,
-      type: 'line',
+      type: 'bar',
       toolbar: { show: false },
     },
     series: [
       {
         name: 'Responses',
         type: 'column',
-        data: [18, 42, 55, 68, 60, 72, 64],
-      },
-      {
-        name: 'Target',
-        type: 'line',
-        data: [22, 45, 50, 70, 65, 75, 70],
+        data: seriesData,
       },
     ],
     stroke: {
-      width: [0, 3],
+      width: 0,
       curve: 'smooth',
     },
     plotOptions: {
@@ -37,10 +36,10 @@ document.addEventListener('DOMContentLoaded', () => {
         borderRadius: 6,
       },
     },
-    colors: [primaryColor, primaryDarkColor],
+    colors: [primaryColor],
     dataLabels: { enabled: false },
     xaxis: {
-      categories: ['2012', '2013', '2014', '2015', '2016', '2017', '2018'],
+      categories,
       labels: {
         style: { colors: '#9a9a9a', fontSize: '10px' },
       },
@@ -57,6 +56,12 @@ document.addEventListener('DOMContentLoaded', () => {
       strokeDashArray: 4,
     },
     legend: { show: false },
+    noData: {
+      text: 'No survey data yet.',
+      style: {
+        color: '#9a9a9a',
+      },
+    },
   };
 
   new ApexCharts(chartEl, options).render();

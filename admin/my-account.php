@@ -1,30 +1,107 @@
 <?php
-$adminProfile = [
-    'full_name' => 'John Doe',
-    'role' => 'Super-admin',
-    'phone' => '09123456789',
-    'email' => 'example@email.com',
-    'address' => 'No. 96, Pyay Road',
-    'township' => 'Kamaryut',
-    'city' => 'Yangon',
-    'invited_date' => '12.02.2025',
-    'invited_time' => '10:00:00',
-    'avatar' => '',
-];
+require_once __DIR__ . '/../config/admin_bootstrap.php';
+
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
+require_once __DIR__ . '/../database/admin/my_account.php';
+
+$isAjax = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        $action = trim((string) ($_POST['account_action'] ?? ''));
+        if ($action === 'profile_save') {
+            $profile = admin_update_profile($_POST);
+
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Profile information updated.',
+                    'profile' => $profile,
+                ], JSON_UNESCAPED_SLASHES);
+                exit;
+            }
+        } elseif ($action === 'security_save') {
+            $profile = admin_update_security_contacts($_POST);
+            $passwordChanged = trim((string) ($_POST['new_password'] ?? '')) !== '';
+            $successMessage = $passwordChanged
+                ? 'Security information and password updated.'
+                : 'Recovery information updated.';
+
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => true,
+                    'message' => $successMessage,
+                    'profile' => $profile,
+                ], JSON_UNESCAPED_SLASHES);
+                exit;
+            }
+        } elseif ($action === 'avatar_upload') {
+            $profile = admin_update_avatar($_FILES['avatar'] ?? []);
+
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Profile picture updated.',
+                    'profile' => $profile,
+                ], JSON_UNESCAPED_SLASHES);
+                exit;
+            }
+        } else {
+            throw new InvalidArgumentException('Invalid request.');
+        }
+
+        header('Location: ' . app_path('/admin/my-account.php'));
+        exit;
+    } catch (Throwable $exception) {
+        if ($isAjax) {
+            http_response_code(422);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], JSON_UNESCAPED_SLASHES);
+            exit;
+        }
+
+        $_SESSION['admin_my_account_flash'] = [
+            'type' => 'error',
+            'message' => $exception->getMessage(),
+        ];
+        header('Location: ' . app_path('/admin/my-account.php'));
+        exit;
+    }
+}
+
+$adminProfile = admin_fetch_current_profile();
+admin_my_account_sync_session($adminProfile);
+
+$flash = $_SESSION['admin_my_account_flash'] ?? null;
+unset($_SESSION['admin_my_account_flash']);
+
+$createdAt = strtotime((string) $adminProfile['created_at']);
+$invitedDate = $createdAt ? date('d.m.Y', $createdAt) : '-';
+$invitedTime = $createdAt ? date('H:i:s', $createdAt) : '-';
+$lastPasswordChangedAt = !empty($adminProfile['last_password_changed_at']) ? strtotime((string) $adminProfile['last_password_changed_at']) : false;
 
 $securityProfile = [
     'password_mask' => '************',
-    'recovery_email' => $adminProfile['email'],
-    'recovery_phone' => $adminProfile['phone'],
-    'last_changed_date' => '05.03.2026',
-    'last_changed_time' => '11:30:00',
+    'recovery_email' => $adminProfile['recovery_email'],
+    'recovery_phone' => $adminProfile['recovery_phone'],
+    'last_changed_date' => $lastPasswordChangedAt ? date('d.m.Y', $lastPasswordChangedAt) : '-',
+    'last_changed_time' => $lastPasswordChangedAt ? date('H:i:s', $lastPasswordChangedAt) : '-',
 ];
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <?php include __DIR__ . '/head.php'; ?>
-    <link rel="stylesheet" href="/admin/assets/css/my-account.css">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/admin/assets/css/my-account.css')); ?>">
 </head>
 <body class="admin-page">
     <?php include __DIR__ . '/navbar.php'; ?>
@@ -37,10 +114,12 @@ $securityProfile = [
         <section class="account-hero">
             <label class="account-avatar avatar-upload-trigger" for="avatarInput" aria-label="Upload profile picture">
                 <img class="avatar-image" src="<?php echo htmlspecialchars($adminProfile['avatar']); ?>" alt="Admin Profile" <?php echo empty($adminProfile['avatar']) ? 'hidden' : ''; ?>>
-                <?php if (!empty($adminProfile['avatar'])): ?>
-                    <?php /* Image rendered above for JS preview */ ?>
-                <?php else: ?>
+                <?php if (empty($adminProfile['avatar'])): ?>
                     <div class="avatar-placeholder">
+                        <i class="fa-regular fa-user"></i>
+                    </div>
+                <?php else: ?>
+                    <div class="avatar-placeholder" style="display:none;">
                         <i class="fa-regular fa-user"></i>
                     </div>
                 <?php endif; ?>
@@ -91,8 +170,8 @@ $securityProfile = [
                 <div class="profile-row">
                     <span class="label">Invited Since:</span>
                     <span class="value">
-                        <?php echo htmlspecialchars($adminProfile['invited_date']); ?>
-                        <span class="time"><?php echo htmlspecialchars($adminProfile['invited_time']); ?></span>
+                        <?php echo htmlspecialchars($invitedDate); ?>
+                        <span class="time"><?php echo htmlspecialchars($invitedTime); ?></span>
                     </span>
                 </div>
             </div>
@@ -138,7 +217,8 @@ $securityProfile = [
             <h2 id="profileModalTitle">Edit Profile Information</h2>
             <p class="modal-subtitle">Update your account details.</p>
 
-            <form class="profile-form" id="profileForm" action="#" method="post">
+            <form class="profile-form" id="profileForm" action="<?php echo htmlspecialchars(app_path('/admin/my-account.php')); ?>" method="post">
+                <input type="hidden" name="account_action" value="profile_save">
                 <div class="profile-field">
                     <label for="profileFullName">Full Name</label>
                     <input type="text" id="profileFullName" name="full_name" value="<?php echo htmlspecialchars($adminProfile['full_name']); ?>">
@@ -184,9 +264,10 @@ $securityProfile = [
                 <i class="fa-solid fa-xmark"></i>
             </button>
             <h2 id="securityModalTitle">Edit Security Information</h2>
-            <p class="modal-subtitle">Update your password recovery details and password information.</p>
+            <p class="modal-subtitle">Update your password recovery details and change your password securely.</p>
 
-            <form class="security-form" id="securityForm" action="#" method="post">
+            <form class="security-form" id="securityForm" action="<?php echo htmlspecialchars(app_path('/admin/my-account.php')); ?>" method="post">
+                <input type="hidden" name="account_action" value="security_save">
                 <div class="security-field">
                     <label for="securityRecoveryEmail">Recovery Email</label>
                     <input type="email" id="securityRecoveryEmail" name="recovery_email" value="<?php echo htmlspecialchars($securityProfile['recovery_email']); ?>">
@@ -233,10 +314,11 @@ $securityProfile = [
         </div>
     </div>
 
-    </div>
-</div>
-
-<script src="/admin/assets/js/my-account.js"></script>
-<script src="/admin/assets/js/admin.js"></script>
+    <script>
+        window.adminMyAccountFlash = <?php echo json_encode($flash, JSON_UNESCAPED_SLASHES); ?>;
+    </script>
+    <script src="<?php echo htmlspecialchars(app_path('/admin/assets/js/my-account.js')); ?>"></script>
+    <script src="<?php echo htmlspecialchars(app_path('/admin/assets/js/admin.js')); ?>"></script>
 </body>
 </html>
+

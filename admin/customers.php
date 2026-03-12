@@ -1,78 +1,50 @@
 <?php
-$customers = [
-    [
-        'id' => 'ZCU202601260001',
-        'name' => 'John Doe',
-        'email' => 'example@email.com',
-        'phone' => '09123456789',
-        'township' => 'North Oakkalapa',
-        'city' => 'Yangon',
-        'member_level' => 'Standard Customer',
-        'status' => 'Suspended',
-        'joined' => '12.02.2025 12:00:00',
-    ],
-    [
-        'id' => 'ZCU202601260001',
-        'name' => 'John Doe',
-        'email' => 'example@email.com',
-        'phone' => '09123456789',
-        'township' => 'North Oakkalapa',
-        'city' => 'Yangon',
-        'member_level' => 'ZYPP Active Vlogger',
-        'status' => 'Online',
-        'joined' => '12.02.2025 12:00:00',
-    ],
-    [
-        'id' => 'ZCU202601260001',
-        'name' => 'John Doe',
-        'email' => 'example@email.com',
-        'phone' => '09123456789',
-        'township' => 'North Oakkalapa',
-        'city' => 'Yangon',
-        'member_level' => 'ZYPP Pro Vlogger',
-        'status' => 'Online',
-        'joined' => '12.02.2025 12:00:00',
-    ],
-    [
-        'id' => 'ZCU202601260001',
-        'name' => 'John Doe',
-        'email' => 'example@email.com',
-        'phone' => '09123456789',
-        'township' => 'North Oakkalapa',
-        'city' => 'Yangon',
-        'member_level' => 'ZYPP Master Vlogger',
-        'status' => 'Suspended',
-        'joined' => '12.02.2025 12:00:00',
-    ],
-    [
-        'id' => 'ZCU202601260001',
-        'name' => 'John Doe',
-        'email' => 'example@email.com',
-        'phone' => '09123456789',
-        'township' => 'North Oakkalapa',
-        'city' => 'Yangon',
-        'member_level' => 'ZYPP Active Vlogger',
-        'status' => 'Online',
-        'joined' => '12.02.2025 12:00:00',
-    ],
-    [
-        'id' => 'ZCU202601260001',
-        'name' => 'John Doe',
-        'email' => 'example@email.com',
-        'phone' => '09123456789',
-        'township' => 'North Oakkalapa',
-        'city' => 'Yangon',
-        'member_level' => 'ZYPP Pro Vlogger',
-        'status' => 'Offline',
-        'joined' => '12.02.2025 12:00:00',
-    ],
-];
+require_once __DIR__ . '/../config/admin_bootstrap.php';
+
+require_once __DIR__ . '/../database/user/customers.php';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'update_status') {
+    header('Content-Type: application/json');
+
+    try {
+        echo json_encode(
+            update_customer_status_by_public_id(
+                (string) ($_POST['customer_id'] ?? ''),
+                (string) ($_POST['status'] ?? '')
+            )
+        );
+    } catch (Throwable $exception) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => $exception->getMessage(),
+        ]);
+    }
+
+    exit;
+}
+
+$customers = [];
+$memberLevels = [];
+$databaseError = null;
+$searchQuery = trim((string) ($_GET['q'] ?? ''));
+
+try {
+    $customerData = fetch_admin_customers();
+    $customers = $customerData['customers'];
+    $memberLevels = array_fill_keys($customerData['member_level_options'], true);
+} catch (Throwable $exception) {
+    $databaseError = $exception->getMessage();
+}
+
+$memberLevelOptions = array_keys($memberLevels);
+sort($memberLevelOptions, SORT_NATURAL | SORT_FLAG_CASE);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <?php include __DIR__ . '/head.php'; ?>
-    <link rel="stylesheet" href="/admin/assets/css/customers.css">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/admin/assets/css/customers.css')); ?>">
 </head>
 <body class="admin-page">
     <?php include __DIR__ . '/navbar.php'; ?>
@@ -80,12 +52,17 @@ $customers = [
     <main class="admin-content customers-page">
         <header class="customers-header">
             <h1>Customers</h1>
-            <div class="customers-search">
-                <div class="search-field">
-                    <input type="text" placeholder="Customer ID/Customer Name/Email">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                </div>
-                <button type="button" class="btn-search">Search</button>
+                <div class="customers-search">
+                    <form class="customers-search-form admin-search-form" method="get" action="<?php echo htmlspecialchars(app_path('/admin/customers.php')); ?>">
+                        <div class="admin-search-box">
+                            <input type="text" name="q" value="<?php echo htmlspecialchars($searchQuery); ?>" placeholder="Customer ID/Customer Name/Email">
+                            <button type="submit" class="search-icon" aria-label="Search">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                        <button type="submit" class="admin-search-submit">Search</button>
+                        <a href="<?php echo htmlspecialchars(app_path('/admin/customers.php')); ?>" class="admin-show-all">Show All</a>
+                    </form>
                 <div class="filter-wrapper">
                     <button type="button" class="btn-filter" aria-label="Filter">
                         <i class="fa-solid fa-filter"></i>
@@ -95,9 +72,11 @@ $customers = [
                             <label for="filterMemberLevel">Member Level</label>
                             <select id="filterMemberLevel">
                                 <option value="">All</option>
-                                <option value="Gold">Gold</option>
-                                <option value="Platinum">Platinum</option>
-                                <option value="Diamond">Diamond</option>
+                                <?php foreach ($memberLevelOptions as $memberLevelOption): ?>
+                                    <option value="<?php echo htmlspecialchars($memberLevelOption); ?>">
+                                        <?php echo htmlspecialchars($memberLevelOption); ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="filter-row">
@@ -106,7 +85,7 @@ $customers = [
                                 <option value="">All</option>
                                 <option value="Active">Active</option>
                                 <option value="Suspended">Suspended</option>
-                                <option value="Cancelled">Cancelled</option>
+                                <option value="Banned">Banned</option>
                             </select>
                         </div>
                         <div class="filter-actions">
@@ -118,7 +97,7 @@ $customers = [
             </div>
         </header>
 
-        <section class="customers-table">
+        <section class="customers-table" data-update-url="<?php echo htmlspecialchars(app_path('/admin/customers.php')); ?>">
             <div class="customers-scroll table-scroll">
                 <table class="admin-table customers-table-grid">
                     <thead>
@@ -136,6 +115,19 @@ $customers = [
                         </tr>
                     </thead>
                     <tbody>
+                        <?php if ($databaseError !== null): ?>
+                            <tr>
+                                <td colspan="10" class="customers-empty-state">
+                                    Failed to load customers. <?php echo htmlspecialchars($databaseError); ?>
+                                </td>
+                            </tr>
+                        <?php elseif (empty($customers)): ?>
+                            <tr>
+                                <td colspan="10" class="customers-empty-state">
+                                    No customers found.
+                                </td>
+                            </tr>
+                        <?php else: ?>
                         <?php foreach ($customers as $customer): ?>
                             <tr
                                 class="customers-row"
@@ -173,14 +165,18 @@ $customers = [
                                 <td class="customer-joined"><?php echo htmlspecialchars($customer['joined']); ?></td>
                             </tr>
                         <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
         </section>
     </main>
 
-    <script src="/admin/assets/js/customers.js"></script>
-    <script src="/admin/assets/js/admin.js"></script>
+    <script src="<?php echo htmlspecialchars(app_path('/admin/assets/js/customers.js')); ?>"></script>
+    <script src="<?php echo htmlspecialchars(app_path('/admin/assets/js/admin.js')); ?>"></script>
 </body>
 </html>
+
+
+
 

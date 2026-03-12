@@ -3,6 +3,9 @@ const panes = document.querySelectorAll('.apply-pane');
 const footerBar = document.querySelector('.apply-footer');
 const footerSave = footerBar?.querySelector('.btn-save');
 const footerDiscard = footerBar?.querySelector('.btn-discard');
+const form = document.querySelector('.apply-targets form');
+const productSearchInput = document.querySelector('[data-product-search]');
+const productSearchButton = document.querySelector('.apply-search .btn-search');
 let baseline = [];
 
 const updateSelectAllState = (pane) => {
@@ -40,6 +43,16 @@ const restoreState = () => {
     });
     panes.forEach((pane) => updateSelectAllState(pane));
     document.querySelectorAll('.group-row').forEach((row) => updateGroupState(row));
+};
+
+const applyProductSearch = () => {
+    const pane = document.getElementById('apply-product');
+    if (!pane) return;
+    const query = (productSearchInput?.value || '').trim().toLowerCase();
+    pane.querySelectorAll('.apply-card[data-search]').forEach((card) => {
+        const haystack = card.dataset.search || '';
+        card.style.display = query === '' || haystack.includes(query) ? '' : 'none';
+    });
 };
 
 tabs.forEach((tab) => {
@@ -108,7 +121,7 @@ panes.forEach((pane) => updateSelectAllState(pane));
 document.querySelectorAll('.group-row').forEach((row) => updateGroupState(row));
 captureState();
 
-footerSave?.addEventListener('click', () => {
+form?.addEventListener('submit', () => {
     captureState();
     setFooterVisible(false);
 });
@@ -116,3 +129,20 @@ footerDiscard?.addEventListener('click', () => {
     restoreState();
     setFooterVisible(false);
 });
+
+productSearchButton?.addEventListener('click', applyProductSearch);
+productSearchInput?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        applyProductSearch();
+    }
+});
+
+if (window.adminApplyDiscountsFlash && window.Swal) {
+    Swal.fire({
+        icon: window.adminApplyDiscountsFlash.type === 'error' ? 'error' : 'success',
+        text: window.adminApplyDiscountsFlash.message || '',
+        timer: 2200,
+        showConfirmButton: false,
+    });
+}

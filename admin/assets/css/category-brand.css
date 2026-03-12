@@ -89,6 +89,18 @@
     text-align: center;
 }
 
+.image-cell {
+    text-align: center;
+}
+
+.table-image {
+    width: 70px;
+    height: 70px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+
 .status {
     font-size: 1.2rem;
 }
@@ -104,6 +116,14 @@
 .action-buttons {
     display: inline-flex;
     gap: 10px;
+    justify-content: center;
+    align-items: center;
+}
+
+.data-table td.action-buttons {
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
 }
 
 .action-buttons .icon-btn {

@@ -294,8 +294,28 @@
     color: var(--color-danger);
 }
 
+.status.low-stock {
+    color: var(--color-warning);
+}
+
 .status.pending {
     color: var(--color-warning);
+}
+
+.status.cancelled {
+    color: #c0392b;
+}
+
+.status.confirmed {
+    color: #1e88e5;
+}
+
+.status.delivered {
+    color: #2e7d32;
+}
+
+.status.shipped {
+    color: #616161;
 }
 
 .time {
@@ -312,6 +332,12 @@
 
 .card-link:hover {
     color: var(--brand-primary);
+}
+
+.stock-empty-row td {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 18px 12px;
 }
 
 @media (max-width: 1200px) {

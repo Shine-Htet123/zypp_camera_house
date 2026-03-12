@@ -79,6 +79,10 @@
     grid-template-columns: repeat(2, 1fr);
 }
 
+.field.is-hidden {
+    display: none;
+}
+
 .field input,
 .field select {
     width: 100%;

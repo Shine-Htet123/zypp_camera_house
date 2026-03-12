@@ -1,15 +1,27 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const rows = document.querySelectorAll('.customers-row');
-  const customersBody = document.querySelector('.customers-table') || document;
+  const rows = Array.from(document.querySelectorAll('.customers-row'));
+  const customersTable = document.querySelector('.customers-table');
+  const customersBody = customersTable || document;
+  const searchForm = document.querySelector('.customers-search-form');
   const filterButton = document.querySelector('.btn-filter');
   const filterDropdown = document.getElementById('customersFilterDropdown');
   const filterMemberSelect = document.getElementById('filterMemberLevel');
   const filterStatusSelect = document.getElementById('filterCustomerStatus');
   const filterResetButton = document.querySelector('.btn-filter-clear');
+  const filterApplyButton = document.querySelector('.btn-filter-apply');
+  const searchInput = document.querySelector('.admin-search-box input');
+  const searchButton = document.querySelector('.admin-search-submit');
+  const showAllButton = document.querySelector('.admin-show-all');
+  const updateUrl = customersTable?.dataset.updateUrl || window.location.pathname;
+  const filters = {
+    query: '',
+    memberLevel: '',
+    status: '',
+  };
 
   const clearStatusClasses = (el) => {
     if (!el) return;
-    el.classList.remove('online', 'suspended', 'offline');
+    el.classList.remove('active', 'suspended', 'banned');
   };
 
   const applyStatusToRow = (row, status) => {
@@ -38,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const createStatusSelect = (current) => {
     const select = document.createElement('select');
     select.className = 'status-select';
-    ['Online', 'Suspended', 'Offline'].forEach((value) => {
+    ['Active', 'Suspended', 'Banned'].forEach((value) => {
       const opt = document.createElement('option');
       opt.value = value;
       opt.textContent = value;
@@ -48,6 +60,52 @@ document.addEventListener('DOMContentLoaded', () => {
       select.appendChild(opt);
     });
     return select;
+  };
+
+  const filterRows = () => {
+    rows.forEach((row) => {
+      const haystack = [
+        row.dataset.id,
+        row.dataset.name,
+        row.dataset.email,
+      ]
+        .join(' ')
+        .toLowerCase();
+
+      const matchesQuery =
+        filters.query === '' || haystack.includes(filters.query);
+      const matchesMemberLevel =
+        filters.memberLevel === '' ||
+        (row.dataset.memberLevel || '').toLowerCase() === filters.memberLevel;
+      const matchesStatus =
+        filters.status === '' ||
+        (row.dataset.status || '').toLowerCase() === filters.status;
+
+      row.hidden = !(matchesQuery && matchesMemberLevel && matchesStatus);
+    });
+  };
+
+  const updateCustomerStatus = async (customerId, status) => {
+    const formData = new FormData();
+    formData.append('action', 'update_status');
+    formData.append('customer_id', customerId);
+    formData.append('status', status.toLowerCase());
+
+    const response = await fetch(updateUrl, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    });
+
+    const payload = await response.json();
+
+    if (!response.ok || !payload.success) {
+      throw new Error(payload.message || 'Unable to update status.');
+    }
+
+    return payload;
   };
 
   let currentlyEditingRow = null;
@@ -105,15 +163,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const newStatus = statusSelect.value;
 
-      const proceed = (confirmed) => {
-        if (confirmed) {
-          applyStatusToRow(row, newStatus);
-          row.dataset.status = newStatus;
-        } else {
+      const proceed = async (confirmed) => {
+        if (!confirmed) {
           applyStatusToRow(row, originalStatus);
+          row.classList.remove('editing');
+          currentlyEditingRow = null;
+          return;
         }
-        row.classList.remove('editing');
-        currentlyEditingRow = null;
+
+        try {
+          const payload = await updateCustomerStatus(row.dataset.id, newStatus);
+          applyStatusToRow(row, payload.status_label);
+          row.dataset.status = payload.status_label;
+          row.classList.remove('editing');
+          currentlyEditingRow = null;
+          filterRows();
+        } catch (error) {
+          applyStatusToRow(row, originalStatus);
+          row.classList.remove('editing');
+          currentlyEditingRow = null;
+
+          if (typeof Swal !== 'undefined') {
+            Swal.fire({
+              title: 'Update failed',
+              text: error.message,
+              icon: 'error',
+              confirmButtonText: 'OK',
+            });
+          }
+        }
       };
 
       if (typeof Swal !== 'undefined') {
@@ -174,8 +252,56 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   filterResetButton?.addEventListener('click', () => {
+    if (searchInput) searchInput.value = '';
     if (filterMemberSelect) filterMemberSelect.value = '';
     if (filterStatusSelect) filterStatusSelect.value = '';
+    filters.query = '';
+    filters.memberLevel = '';
+    filters.status = '';
+    filterRows();
   });
+
+  filterApplyButton?.addEventListener('click', () => {
+    filters.memberLevel = (filterMemberSelect?.value || '').trim().toLowerCase();
+    filters.status = (filterStatusSelect?.value || '').trim().toLowerCase();
+    filterRows();
+    filterDropdown?.classList.remove('open');
+    filterDropdown?.setAttribute('aria-hidden', 'true');
+  });
+
+  const applySearch = () => {
+    filters.query = (searchInput?.value || '').trim().toLowerCase();
+    filterRows();
+  };
+
+  searchForm?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    applySearch();
+  });
+
+  searchButton?.addEventListener('click', (event) => {
+    event.preventDefault();
+    applySearch();
+  });
+
+  showAllButton?.addEventListener('click', (event) => {
+    event.preventDefault();
+    if (searchInput) searchInput.value = '';
+    if (filterMemberSelect) filterMemberSelect.value = '';
+    if (filterStatusSelect) filterStatusSelect.value = '';
+    filters.query = '';
+    filters.memberLevel = '';
+    filters.status = '';
+    filterRows();
+  });
+
+  searchInput?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      applySearch();
+    }
+  });
+
+  applySearch();
 });
 

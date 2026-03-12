@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <?php include __DIR__ . '/head.php'; ?>
-    <link rel="stylesheet" href="/assets/css/wholesale.css">
-    <script src="/assets/js/wholesale.js" defer></script>
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/assets/css/wholesale.css')); ?>">
+    <script src="<?php echo htmlspecialchars(app_path('/assets/js/wholesale.js')); ?>" defer></script>
 </head>
 <body>
     <?php include __DIR__ . '/navbar.php'; ?>
@@ -67,6 +67,7 @@
                 <div class="wholesale-actions">
                     <button type="submit" class="submit-btn">Submit Inquiry</button>
                 </div>
+                <p class="wholesale-form-error" data-wholesale-error hidden></p>
             </form>
         </section>
     </main>
@@ -77,7 +78,7 @@
             <h2 id="wholesale-modal-title">Thank you for completing the inquiry</h2>
             <p>Your inquiry has been received.</p>
             <p>Our team will contact you soon.</p>
-            <a href="/" class="wholesale-modal__home">Back to Home</a>
+            <a href="<?php echo htmlspecialchars(app_path('/')); ?>" class="wholesale-modal__home">Back to Home</a>
         </div>
     </div>
 

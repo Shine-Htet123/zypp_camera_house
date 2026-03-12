@@ -174,8 +174,9 @@
     border-radius: 10px;
     padding: 8px 12px 12px;
     box-shadow: var(--box-shadow-normal);
-    max-width: 1200px;
-    width: 100%;
+    width: max-content;
+    max-width: 100%;
+    align-self: flex-start;
 }
 
 .proof-scroll {
@@ -183,6 +184,8 @@
     max-height: 360px;
     scrollbar-gutter: stable both-edges;
     -webkit-overflow-scrolling: touch;
+    width: max-content;
+    max-width: 100%;
 }
 
 .proof-table-grid {
@@ -241,6 +244,12 @@
 
 .status.pending {
     color: #f39c12;
+}
+
+.proof-empty-row td {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 28px 12px;
 }
 
 .proof-thumb {

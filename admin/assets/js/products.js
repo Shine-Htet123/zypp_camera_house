@@ -1,6 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const searchForm = document.querySelector('.products-search-form');
   const searchInput = document.getElementById('productSearch');
   const searchBtn = document.getElementById('productSearchBtn');
+  const searchTrigger = document.getElementById('productSearchTrigger');
+  const showAllButton = document.querySelector('.admin-show-all');
   const cards = Array.from(document.querySelectorAll('.product-card'));
   const filterToggle = document.getElementById('filterToggle');
   const filterDropdown = document.getElementById('filterDropdown');
@@ -9,21 +12,45 @@ document.addEventListener('DOMContentLoaded', () => {
   const pageNumbers = Array.from(document.querySelectorAll('.page-number'));
   const prevBtn = document.querySelector('.pager-btn.prev');
   const nextBtn = document.querySelector('.pager-btn.next');
+  const deleteForm = document.getElementById('productDeleteForm');
   const pageSize = 9;
   let currentPage = 1;
+  let totalPages = Math.max(1, Math.ceil(cards.length / pageSize));
+
+  const getVisibleCards = () => cards.filter((card) => card.dataset.filtered !== 'false');
 
   const filterCards = () => {
     const term = (searchInput?.value || '').trim().toLowerCase();
+    const selectedCategories = Array.from(document.querySelectorAll('input[name="cat[]"]:checked')).map((input) => input.value.toLowerCase());
+    const selectedBrands = Array.from(document.querySelectorAll('input[name="brand[]"]:checked')).map((input) => input.value.toLowerCase());
+    const selectedStock = Array.from(document.querySelectorAll('input[name="stock[]"]:checked')).map((input) => input.value.toLowerCase());
+
     cards.forEach((card) => {
       const name = card.querySelector('.product-name')?.textContent.toLowerCase() || '';
       const brand = card.querySelector('.product-brand')?.textContent.toLowerCase() || '';
-      const match = !term || name.includes(term) || brand.includes(term);
-      card.style.display = match ? 'flex' : 'none';
+      const category = (card.dataset.category || '').toLowerCase();
+      const stock = Number(card.dataset.stock || '0');
+      const matchTerm = !term || name.includes(term) || brand.includes(term);
+      const matchCategory = selectedCategories.length === 0 || selectedCategories.includes(category);
+      const matchBrand = selectedBrands.length === 0 || selectedBrands.includes(brand);
+      const stockLabel = stock <= 0 ? 'out' : stock <= 10 ? 'low' : 'in';
+      const matchStock = selectedStock.length === 0 || selectedStock.includes(stockLabel);
+
+      card.dataset.filtered = matchTerm && matchCategory && matchBrand && matchStock ? 'true' : 'false';
     });
+    renderPage(1);
   };
 
+  searchForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    filterCards();
+  });
+
   if (searchBtn && searchInput) {
-    searchBtn.addEventListener('click', filterCards);
+    searchBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      filterCards();
+    });
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -31,18 +58,33 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+  searchTrigger?.addEventListener('click', (e) => {
+    e.preventDefault();
+    filterCards();
+  });
 
-  const totalPages = Math.max(1, Math.ceil(cards.length / pageSize));
+  showAllButton?.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (searchInput) searchInput.value = '';
+    filterForm?.reset();
+    filterCards();
+  });
 
   const renderPage = (page) => {
+    const visibleCards = getVisibleCards();
+    totalPages = Math.max(1, Math.ceil(visibleCards.length / pageSize));
     currentPage = Math.min(Math.max(1, page), totalPages);
     const start = (currentPage - 1) * pageSize;
     const end = start + pageSize;
-    cards.forEach((card, idx) => {
+    cards.forEach((card) => {
+      card.style.display = 'none';
+    });
+    visibleCards.forEach((card, idx) => {
       card.style.display = idx >= start && idx < end ? 'flex' : 'none';
     });
     pageNumbers.forEach((btn, idx) => {
       const pageNum = idx + 1;
+      btn.style.display = pageNum <= totalPages ? 'inline-flex' : 'none';
       btn.classList.toggle('active', pageNum === currentPage);
     });
   };
@@ -59,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
     nextBtn.addEventListener('click', () => renderPage(currentPage + 1));
   }
 
-  renderPage(1);
+  filterCards();
 
   const closeFilter = () => {
     if (filterDropdown) filterDropdown.classList.remove('open');
@@ -75,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (filterForm) {
     filterForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      // Placeholder: integrate with backend/filter logic later
+      filterCards();
       closeFilter();
     });
   }
@@ -83,6 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (filterClear && filterForm) {
     filterClear.addEventListener('click', () => {
       filterForm.reset();
+      filterCards();
     });
   }
 
@@ -97,9 +140,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const deleteButtons = document.querySelectorAll('.icon-btn.delete');
   deleteButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
-      const card = btn.closest('.product-card');
-      const productId = btn.dataset.productId || 'unknown';
-      if (!card) return;
+      const productId = btn.dataset.productId || '0';
+      if (!deleteForm || !productId) return;
 
       Swal.fire({
         title: 'Delete this product?',
@@ -112,15 +154,19 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelButtonText: 'Cancel',
       }).then((result) => {
         if (result.isConfirmed) {
-          // Placeholder for backend delete. Replace with real fetch:
-          // fetch(`/admin/api/products/${productId}`, { method: 'DELETE' })
-          //   .then((res) => { if (!res.ok) throw new Error(); })
-          //   .then(() => { card.remove(); renderPage(currentPage); });
-          card.remove();
-          renderPage(currentPage);
-          Swal.fire('Deleted', 'The product has been removed.', 'success');
+          deleteForm.querySelector('input[name="product_id"]').value = productId;
+          deleteForm.submit();
         }
       });
     });
   });
+
+  if (window.adminProductsFlash && window.Swal) {
+    Swal.fire({
+      icon: window.adminProductsFlash.type === 'error' ? 'error' : 'success',
+      text: window.adminProductsFlash.message || '',
+      timer: 2200,
+      showConfirmButton: false,
+    });
+  }
 });

@@ -1,9 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const myAccountUrl = window.appPath ? window.appPath('/admin/my-account.php') : '/admin/my-account.php';
   const avatarInput = document.querySelector('.avatar-input');
   const avatarImg = document.querySelector('.avatar-image');
   const avatarPlaceholder = document.querySelector('.avatar-placeholder');
-  const initialAvatar = avatarImg && !avatarImg.hasAttribute('hidden') ? avatarImg.getAttribute('src') : '';
-  let currentAvatarUrl = initialAvatar;
+  const navbarAvatarImg = document.querySelector('.admin-user .avatar img');
+  const navbarAvatarFallback = document.querySelector('.admin-user .avatar-fallback');
+  const navbarName = document.querySelector('.admin-user .name');
+  const navbarRole = document.querySelector('.admin-user .role');
 
   const profileModal = document.querySelector('#profileModal');
   const profileForm = document.querySelector('#profileForm');
@@ -30,6 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const passwordToggleButtons = document.querySelectorAll('[data-password-toggle]');
   const securityState = {};
 
+  const initialAvatar = avatarImg && !avatarImg.hasAttribute('hidden') ? avatarImg.getAttribute('src') : '';
+  let currentAvatarUrl = initialAvatar;
+
   profileDisplays.forEach((node) => {
     profileState[node.dataset.profileDisplay] = node.textContent.trim();
   });
@@ -38,28 +44,54 @@ document.addEventListener('DOMContentLoaded', () => {
     securityState[node.dataset.securityDisplay] = node.textContent.trim();
   });
 
-  const restoreAvatar = () => {
+  const setNavbarIdentity = (profile) => {
+    if (!profile) return;
+    if (navbarName && profile.full_name) {
+      navbarName.textContent = profile.full_name;
+    }
+    if (navbarRole && profile.role) {
+      navbarRole.textContent = profile.role;
+    }
+    if (profile.avatar !== undefined) {
+      if (navbarAvatarImg) {
+        if (profile.avatar) {
+          navbarAvatarImg.src = profile.avatar;
+          navbarAvatarImg.hidden = false;
+        } else {
+          navbarAvatarImg.hidden = true;
+        }
+      }
+      if (navbarAvatarFallback) {
+        navbarAvatarFallback.style.display = profile.avatar ? 'none' : 'grid';
+      }
+    }
+  };
+
+  const setPageAvatar = (avatar) => {
     if (avatarImg) {
-      if (initialAvatar) {
-        avatarImg.src = initialAvatar;
+      if (avatar) {
+        avatarImg.src = avatar;
         avatarImg.hidden = false;
       } else {
         avatarImg.hidden = true;
       }
     }
     if (avatarPlaceholder) {
-      avatarPlaceholder.style.display = initialAvatar ? 'none' : 'grid';
+      avatarPlaceholder.style.display = avatar ? 'none' : 'grid';
     }
-    if (currentAvatarUrl && currentAvatarUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(currentAvatarUrl);
-    }
-    currentAvatarUrl = initialAvatar;
+    currentAvatarUrl = avatar || '';
   };
 
   const setProfileFeedback = (message, type = '') => {
     if (!profileFeedback) return;
     profileFeedback.textContent = message;
     profileFeedback.classList.toggle('success', type === 'success');
+  };
+
+  const setSecurityFeedback = (message, type = '') => {
+    if (!securityFeedback) return;
+    securityFeedback.textContent = message;
+    securityFeedback.classList.toggle('success', type === 'success');
   };
 
   const syncProfileForm = () => {
@@ -70,6 +102,24 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
     setProfileFeedback('');
+  };
+
+  const syncSecurityForm = () => {
+    if (securityEmailInput) securityEmailInput.value = securityState.recovery_email || '';
+    if (securityPhoneInput) securityPhoneInput.value = securityState.recovery_phone || '';
+    if (currentPasswordInput) currentPasswordInput.value = '';
+    if (newPasswordInput) newPasswordInput.value = '';
+    if (confirmPasswordInput) confirmPasswordInput.value = '';
+    passwordToggleButtons.forEach((button) => {
+      const targetId = button.dataset.passwordToggle;
+      const target = targetId ? document.getElementById(targetId) : null;
+      if (target) target.type = 'password';
+      button.setAttribute('aria-pressed', 'false');
+      button.setAttribute('aria-label', 'Show password');
+      const icon = button.querySelector('i');
+      if (icon) icon.className = 'fa-regular fa-eye';
+    });
+    setSecurityFeedback('');
   };
 
   const openProfileModal = () => {
@@ -88,42 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
     syncProfileForm();
   };
 
-  const updateProfileDisplay = (key, value) => {
-    const target = document.querySelector(`[data-profile-display="${key}"]`);
-    if (target) {
-      target.textContent = value;
-    }
-    profileState[key] = value;
-  };
-
-  const setSecurityFeedback = (message, type = '') => {
-    if (!securityFeedback) return;
-    securityFeedback.textContent = message;
-    securityFeedback.classList.toggle('success', type === 'success');
-  };
-
-  const syncSecurityForm = () => {
-    if (securityEmailInput) securityEmailInput.value = securityState.recovery_email || '';
-    if (securityPhoneInput) securityPhoneInput.value = securityState.recovery_phone || '';
-    if (currentPasswordInput) currentPasswordInput.value = '';
-    if (newPasswordInput) newPasswordInput.value = '';
-    if (confirmPasswordInput) confirmPasswordInput.value = '';
-    passwordToggleButtons.forEach((button) => {
-      const targetId = button.dataset.passwordToggle;
-      const target = targetId ? document.getElementById(targetId) : null;
-      if (target) {
-        target.type = 'password';
-      }
-      button.setAttribute('aria-pressed', 'false');
-      button.setAttribute('aria-label', 'Show password');
-      const icon = button.querySelector('i');
-      if (icon) {
-        icon.className = 'fa-regular fa-eye';
-      }
-    });
-    setSecurityFeedback('');
-  };
-
   const openSecurityModal = () => {
     if (!securityModal) return;
     syncSecurityForm();
@@ -140,6 +154,14 @@ document.addEventListener('DOMContentLoaded', () => {
     syncSecurityForm();
   };
 
+  const updateProfileDisplay = (key, value) => {
+    const target = document.querySelector(`[data-profile-display="${key}"]`);
+    if (target) {
+      target.textContent = value;
+    }
+    profileState[key] = value;
+  };
+
   const updateSecurityDisplay = (key, value) => {
     const target = document.querySelector(`[data-security-display="${key}"]`);
     if (target) {
@@ -148,69 +170,78 @@ document.addEventListener('DOMContentLoaded', () => {
     securityState[key] = value;
   };
 
-  if (avatarInput) {
-    avatarInput.addEventListener('change', (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-      const url = URL.createObjectURL(file);
-      currentAvatarUrl = url;
-      if (avatarImg) {
-        avatarImg.src = url;
-        avatarImg.hidden = false;
+  const jsonRequest = async (formData) => {
+    const response = await fetch(myAccountUrl, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
       }
-      if (avatarPlaceholder) {
-        avatarPlaceholder.style.display = 'none';
+    });
+
+    const payload = await response.json().catch(() => ({
+      success: false,
+      message: 'Unexpected server response.',
+    }));
+
+    if (!response.ok || !payload.success) {
+      throw new Error(payload.message || 'Request failed.');
+    }
+
+    return payload;
+  };
+
+  if (avatarInput) {
+    avatarInput.addEventListener('change', async (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const previewUrl = URL.createObjectURL(file);
+      setPageAvatar(previewUrl);
+
+      const formData = new FormData();
+      formData.append('account_action', 'avatar_upload');
+      formData.append('avatar', file);
+
+      try {
+        const payload = await jsonRequest(formData);
+        setPageAvatar(payload.profile.avatar || '');
+        setNavbarIdentity(payload.profile);
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'success',
+            text: payload.message || 'Profile picture updated.',
+            timer: 1800,
+            showConfirmButton: false,
+          });
+        }
+      } catch (error) {
+        setPageAvatar(initialAvatar);
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'error',
+            text: error.message,
+          });
+        }
+      } finally {
+        avatarInput.value = '';
       }
     });
   }
 
-  profileOpenButtons.forEach((button) => {
-    button.addEventListener('click', openProfileModal);
+  profileOpenButtons.forEach((button) => button.addEventListener('click', openProfileModal));
+  securityOpenButtons.forEach((button) => button.addEventListener('click', openSecurityModal));
+  profileCloseButton?.addEventListener('click', closeProfileModal);
+  securityCloseButton?.addEventListener('click', closeSecurityModal);
+  profileCancelButton?.addEventListener('click', closeProfileModal);
+  securityCancelButton?.addEventListener('click', closeSecurityModal);
+
+  profileModal?.addEventListener('click', (event) => {
+    if (event.target === profileModal) closeProfileModal();
   });
 
-  if (profileCloseButton) {
-    profileCloseButton.addEventListener('click', closeProfileModal);
-  }
-
-  if (profileCancelButton) {
-    profileCancelButton.addEventListener('click', closeProfileModal);
-  }
-
-  if (profileModal) {
-    profileModal.addEventListener('click', (event) => {
-      if (event.target === profileModal) {
-        closeProfileModal();
-      }
-    });
-  }
-
-  if (profileForm) {
-    profileForm.addEventListener('submit', (event) => {
-      event.preventDefault();
-
-      const nextState = {};
-      profileInputs.forEach((input) => {
-        nextState[input.name] = input.value.trim();
-      });
-
-      if (!nextState.full_name || !nextState.phone || !nextState.email) {
-        setProfileFeedback('Full name, phone, and email are required.');
-        return;
-      }
-
-      Object.entries(nextState).forEach(([key, value]) => {
-        updateProfileDisplay(key, value);
-      });
-
-      setProfileFeedback('Profile information updated.', 'success');
-      window.setTimeout(() => {
-        closeProfileModal();
-      }, 500);
-    });
-  }
-
-  securityOpenButtons.forEach((button) => {
-    button.addEventListener('click', openSecurityModal);
+  securityModal?.addEventListener('click', (event) => {
+    if (event.target === securityModal) closeSecurityModal();
   });
 
   passwordToggleButtons.forEach((button) => {
@@ -231,77 +262,69 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  if (securityCloseButton) {
-    securityCloseButton.addEventListener('click', closeSecurityModal);
-  }
+  profileForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    setProfileFeedback('');
 
-  if (securityCancelButton) {
-    securityCancelButton.addEventListener('click', closeSecurityModal);
-  }
+    const formData = new FormData(profileForm);
 
-  if (securityModal) {
-    securityModal.addEventListener('click', (event) => {
-      if (event.target === securityModal) {
-        closeSecurityModal();
-      }
-    });
-  }
+    try {
+      const payload = await jsonRequest(formData);
+      const profile = payload.profile || {};
+      updateProfileDisplay('full_name', profile.full_name || '');
+      updateProfileDisplay('phone', profile.phone || '');
+      updateProfileDisplay('email', profile.email || '');
+      updateProfileDisplay('address', profile.address || '');
+      updateProfileDisplay('township', profile.township || '');
+      updateProfileDisplay('city', profile.city || '');
+      setNavbarIdentity(profile);
+      setProfileFeedback(payload.message || 'Profile information updated.', 'success');
+      window.setTimeout(() => {
+        closeProfileModal();
+      }, 450);
+    } catch (error) {
+      setProfileFeedback(error.message);
+    }
+  });
 
-  if (securityForm) {
-    securityForm.addEventListener('submit', (event) => {
-      event.preventDefault();
+  securityForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    setSecurityFeedback('');
 
-      const recoveryEmail = securityEmailInput ? securityEmailInput.value.trim() : '';
-      const recoveryPhone = securityPhoneInput ? securityPhoneInput.value.trim() : '';
-      const currentPassword = currentPasswordInput ? currentPasswordInput.value.trim() : '';
-      const newPassword = newPasswordInput ? newPasswordInput.value.trim() : '';
-      const confirmPassword = confirmPasswordInput ? confirmPasswordInput.value.trim() : '';
+    const formData = new FormData(securityForm);
 
-      if (!recoveryEmail || !recoveryPhone) {
-        setSecurityFeedback('Recovery email and phone are required.');
-        return;
-      }
-
-      const isPasswordUpdate = currentPassword || newPassword || confirmPassword;
-      if (isPasswordUpdate) {
-        if (!currentPassword || !newPassword || !confirmPassword) {
-          setSecurityFeedback('Fill in all password fields to update your password.');
-          return;
-        }
-
-        if (newPassword !== confirmPassword) {
-          setSecurityFeedback('New password and confirm password do not match.');
-          return;
-        }
-      }
-
-      updateSecurityDisplay('recovery_email', recoveryEmail);
-      updateSecurityDisplay('recovery_phone', recoveryPhone);
-
-      if (isPasswordUpdate) {
-        const now = new Date();
-        const dateText = now.toLocaleDateString('en-GB').replace(/\//g, '.');
-        const timeText = now.toLocaleTimeString('en-GB', { hour12: false });
-        updateSecurityDisplay('password_mask', '************');
-        updateSecurityDisplay('last_changed_date', dateText);
-        updateSecurityDisplay('last_changed_time', timeText);
-      }
-
-      setSecurityFeedback('Security information updated.', 'success');
+    try {
+      const payload = await jsonRequest(formData);
+      const profile = payload.profile || {};
+      updateSecurityDisplay('recovery_email', profile.recovery_email || '');
+      updateSecurityDisplay('recovery_phone', profile.recovery_phone || '');
+      updateSecurityDisplay('last_changed_date', profile.last_password_changed_at ? new Date(profile.last_password_changed_at).toLocaleDateString('en-GB').replace(/\//g, '.') : (securityState.last_changed_date || '-'));
+      updateSecurityDisplay('last_changed_time', profile.last_password_changed_at ? new Date(profile.last_password_changed_at).toLocaleTimeString('en-GB', { hour12: false }) : (securityState.last_changed_time || '-'));
+      setSecurityFeedback(payload.message || 'Recovery information updated.', 'success');
       window.setTimeout(() => {
         closeSecurityModal();
-      }, 500);
-    });
-  }
+      }, 450);
+    } catch (error) {
+      setSecurityFeedback(error.message);
+    }
+  });
 
   document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && profileModal && profileModal.classList.contains('open')) {
+    if (event.key === 'Escape' && profileModal?.classList.contains('open')) {
       closeProfileModal();
       return;
     }
-
-    if (event.key === 'Escape' && securityModal && securityModal.classList.contains('open')) {
+    if (event.key === 'Escape' && securityModal?.classList.contains('open')) {
       closeSecurityModal();
     }
   });
+
+  if (window.adminMyAccountFlash && window.Swal && window.adminMyAccountFlash.message) {
+    Swal.fire({
+      icon: window.adminMyAccountFlash.type === 'error' ? 'error' : 'success',
+      text: window.adminMyAccountFlash.message,
+      timer: 2200,
+      showConfirmButton: false,
+    });
+  }
 });

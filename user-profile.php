@@ -1,3 +1,27 @@
+<?php
+require_once __DIR__ . '/app/services/customer_auth.php';
+require_once __DIR__ . '/database/user/membership.php';
+require_once __DIR__ . '/database/user/profile.php';
+require_once __DIR__ . '/database/user/orders.php';
+customer_auth_require_login('/user-profile.php');
+
+$currentCustomer = customer_auth_current_user();
+$profileFlash = customer_profile_consume_flash();
+$membershipSummary = is_array($currentCustomer) ? membership_fetch_user_summary((int) $currentCustomer['id']) : null;
+$addressCards = is_array($currentCustomer) ? profile_fetch_user_addresses((int) $currentCustomer['id']) : [];
+$orderRows = is_array($currentCustomer) ? customer_fetch_user_orders((int) $currentCustomer['id']) : [];
+$displayName = trim((string) ($currentCustomer['name'] ?? ''));
+$displayEmail = trim((string) ($currentCustomer['email'] ?? ''));
+$displayPublicUserId = trim((string) ($currentCustomer['public_user_id'] ?? ''));
+$referralToken = trim((string) ($currentCustomer['referral_token'] ?? ''));
+$referralLink = $referralToken !== '' ? app_url('/register.php?ref=' . rawurlencode($referralToken)) : '';
+$socialProviders = [
+    'google' => [
+        'label' => 'Google',
+        'column' => 'google_provider_id',
+    ],
+];
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,7 +41,7 @@
                     <a href="#membership">Membership</a>
                     <a href="#settings">Settings</a>
                 </nav>
-                <button class="logout-btn" type="button">Log Out</button>
+                <a class="logout-btn" href="<?php echo htmlspecialchars(app_path('/auth/logout.php?redirect_to=/')); ?>">Log Out</a>
             </aside>
 
             <section class="profile-content">
@@ -28,301 +52,102 @@
 
                     <div class="profile-view">
                         <div class="profile-cards">
-                            <div class="profile-card is-default" data-address-card>
-                                <span class="card-badge">Default</span>
-                                <div class="profile-list profile-card-view">
-                                    <div class="profile-row">
-                                        <span class="label">Full Name:</span>
-                                        <span class="value">Kyaw Ko Ko</span>
+                            <?php
+                            $renderAddressCards = $addressCards;
+                            if (!$renderAddressCards) {
+                                $renderAddressCards = [[
+                                    'street' => '',
+                                    'township' => '',
+                                    'city' => '',
+                                    'phone' => '',
+                                    'postal_code' => '',
+                                    'is_default' => 1,
+                                ]];
+                            }
+                            ?>
+                            <?php foreach ($renderAddressCards as $addressCard): ?>
+                                <?php
+                                $addressId = isset($addressCard['address_id']) ? (int) $addressCard['address_id'] : 0;
+                                $street = trim((string) ($addressCard['street'] ?? ''));
+                                $township = trim((string) ($addressCard['township'] ?? ''));
+                                $city = trim((string) ($addressCard['city'] ?? ''));
+                                $phone = trim((string) ($addressCard['phone'] ?? ''));
+                                $isDefaultAddress = (int) ($addressCard['is_default'] ?? 0) === 1;
+                                ?>
+                                <div class="profile-card<?php echo $isDefaultAddress ? ' is-default' : ''; ?>" data-address-card data-address-id="<?php echo $addressId > 0 ? $addressId : ''; ?>">
+                                    <span class="card-badge">Default</span>
+                                    <div class="profile-list profile-card-view">
+                                        <div class="profile-row">
+                                            <span class="label">Full Name:</span>
+                                            <span class="value" data-view-field="full_name"><?php echo htmlspecialchars($displayName); ?></span>
+                                        </div>
+                                        <div class="profile-row">
+                                            <span class="label">Phone:</span>
+                                            <span class="value" data-view-field="phone"><?php echo htmlspecialchars($phone); ?></span>
+                                        </div>
+                                        <div class="profile-row">
+                                            <span class="label">Email:</span>
+                                            <span class="value email" data-view-field="email"><?php echo htmlspecialchars($displayEmail); ?></span>
+                                        </div>
+                                        <div class="profile-row">
+                                            <span class="label">Address:</span>
+                                            <span class="value" data-view-field="address"><?php echo htmlspecialchars($street); ?></span>
+                                        </div>
+                                        <div class="profile-row">
+                                            <span class="label">Township:</span>
+                                            <span class="value" data-view-field="township"><?php echo htmlspecialchars($township); ?></span>
+                                        </div>
+                                        <div class="profile-row">
+                                            <span class="label">City:</span>
+                                            <span class="value" data-view-field="city"><?php echo htmlspecialchars($city); ?></span>
+                                        </div>
                                     </div>
-                                    <div class="profile-row">
-                                        <span class="label">Phone:</span>
-                                        <span class="value">09123456789</span>
-                                    </div>
-                                    <div class="profile-row">
-                                        <span class="label">Email:</span>
-                                        <span class="value email">kyawkokko123@gmail.com</span>
-                                    </div>
-                                    <div class="profile-row">
-                                        <span class="label">Address:</span>
-                                        <span class="value">No. 96, Pyay Road</span>
-                                    </div>
-                                    <div class="profile-row">
-                                        <span class="label">Township:</span>
-                                        <span class="value">Kamaryut</span>
-                                    </div>
-                                    <div class="profile-row">
-                                        <span class="label">City:</span>
-                                        <span class="value">Yangon</span>
+                                    <form class="profile-card-form">
+                                        <div class="form-row">
+                                            <div class="field">
+                                                <label>Full Name</label>
+                                                <input type="text" name="full_name" value="<?php echo htmlspecialchars($displayName); ?>">
+                                            </div>
+                                            <div class="field">
+                                                <label>Phone</label>
+                                                <input type="text" name="phone" value="<?php echo htmlspecialchars($phone); ?>">
+                                            </div>
+                                            <div class="field">
+                                                <label>Email</label>
+                                                <input type="email" name="email" value="<?php echo htmlspecialchars($displayEmail); ?>">
+                                            </div>
+                                            <div class="field">
+                                                <label>Address</label>
+                                                <input type="text" name="address" value="<?php echo htmlspecialchars($street); ?>">
+                                            </div>
+                                            <div class="field">
+                                                <label>Township</label>
+                                                <input type="text" name="township" value="<?php echo htmlspecialchars($township); ?>">
+                                            </div>
+                                            <div class="field">
+                                                <label>City</label>
+                                                <input type="text" name="city" value="<?php echo htmlspecialchars($city); ?>">
+                                            </div>
+                                        </div>
+                                        <div class="card-form-actions">
+                                            <button type="button" class="cancel-btn">Cancel</button>
+                                            <button type="button" class="save-btn">Save</button>
+                                        </div>
+                                    </form>
+                                    <div class="card-actions">
+                                        <button type="button" class="card-action-btn edit" aria-label="Edit address">
+                                            <i class="fa-regular fa-pen-to-square"></i>
+                                        </button>
+                                        <button type="button" class="card-action-btn delete" aria-label="Delete address">
+                                            <i class="fa-regular fa-trash-can"></i>
+                                        </button>
+                                        <button type="button" class="card-action-btn set-default">
+                                            <i class="fa-regular fa-star"></i>
+                                            <span><?php echo $isDefaultAddress ? 'Default' : 'Set Default'; ?></span>
+                                        </button>
                                     </div>
                                 </div>
-                                <form class="profile-card-form">
-                                    <div class="form-row">
-                                        <div class="field">
-                                            <label>Full Name</label>
-                                            <input type="text" name="full_name" value="Kyaw Ko Ko">
-                                        </div>
-                                        <div class="field">
-                                            <label>Phone</label>
-                                            <input type="text" name="phone" value="09123456789">
-                                        </div>
-                                        <div class="field">
-                                            <label>Email</label>
-                                            <input type="email" name="email" value="kyawkokko123@gmail.com">
-                                        </div>
-                                        <div class="field">
-                                            <label>Address</label>
-                                            <input type="text" name="address" value="No. 96, Pyay Road">
-                                        </div>
-                                        <div class="field">
-                                            <label>Township</label>
-                                            <input type="text" name="township" value="Kamaryut">
-                                        </div>
-                                        <div class="field">
-                                            <label>City</label>
-                                            <input type="text" name="city" value="Yangon">
-                                        </div>
-                                    </div>
-                                    <div class="card-form-actions">
-                                        <button type="button" class="cancel-btn">Cancel</button>
-                                        <button type="button" class="save-btn">Save</button>
-                                    </div>
-                                </form>
-                                <div class="card-actions">
-                                    <button type="button" class="card-action-btn edit" aria-label="Edit address">
-                                        <i class="fa-regular fa-pen-to-square"></i>
-                                    </button>
-                                    <button type="button" class="card-action-btn delete" aria-label="Delete address">
-                                        <i class="fa-regular fa-trash-can"></i>
-                                    </button>
-                                    <button type="button" class="card-action-btn set-default">
-                                        <i class="fa-regular fa-star"></i>
-                                        <span>Default</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="profile-card" data-address-card>
-                                <span class="card-badge">Default</span>
-                                <div class="profile-list profile-card-view">
-                                    <div class="profile-row">
-                                        <span class="label">Full Name:</span>
-                                        <span class="value">Kyaw Ko Ko</span>
-                                    </div>
-                                    <div class="profile-row">
-                                        <span class="label">Phone:</span>
-                                        <span class="value">09123456789</span>
-                                    </div>
-                                    <div class="profile-row">
-                                        <span class="label">Email:</span>
-                                        <span class="value email">kyawkokko123@gmail.com</span>
-                                    </div>
-                                    <div class="profile-row">
-                                        <span class="label">Address:</span>
-                                        <span class="value">No. 96, Pyay Road</span>
-                                    </div>
-                                    <div class="profile-row">
-                                        <span class="label">Township:</span>
-                                        <span class="value">Kamaryut</span>
-                                    </div>
-                                    <div class="profile-row">
-                                        <span class="label">City:</span>
-                                        <span class="value">Yangon</span>
-                                    </div>
-                                </div>
-                                <form class="profile-card-form">
-                                    <div class="form-row">
-                                        <div class="field">
-                                            <label>Full Name</label>
-                                            <input type="text" name="full_name" value="Kyaw Ko Ko">
-                                        </div>
-                                        <div class="field">
-                                            <label>Phone</label>
-                                            <input type="text" name="phone" value="09123456789">
-                                        </div>
-                                        <div class="field">
-                                            <label>Email</label>
-                                            <input type="email" name="email" value="kyawkokko123@gmail.com">
-                                        </div>
-                                        <div class="field">
-                                            <label>Address</label>
-                                            <input type="text" name="address" value="No. 96, Pyay Road">
-                                        </div>
-                                        <div class="field">
-                                            <label>Township</label>
-                                            <input type="text" name="township" value="Kamaryut">
-                                        </div>
-                                        <div class="field">
-                                            <label>City</label>
-                                            <input type="text" name="city" value="Yangon">
-                                        </div>
-                                    </div>
-                                    <div class="card-form-actions">
-                                        <button type="button" class="cancel-btn">Cancel</button>
-                                        <button type="button" class="save-btn">Save</button>
-                                    </div>
-                                </form>
-                                <div class="card-actions">
-                                    <button type="button" class="card-action-btn edit" aria-label="Edit address">
-                                        <i class="fa-regular fa-pen-to-square"></i>
-                                    </button>
-                                    <button type="button" class="card-action-btn delete" aria-label="Delete address">
-                                        <i class="fa-regular fa-trash-can"></i>
-                                    </button>
-                                    <button type="button" class="card-action-btn set-default">
-                                        <i class="fa-regular fa-star"></i>
-                                        <span>Set Default</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="profile-card" data-address-card>
-                                <span class="card-badge">Default</span>
-                                <div class="profile-list profile-card-view">
-                                    <div class="profile-row">
-                                        <span class="label">Full Name:</span>
-                                        <span class="value">Kyaw Ko Ko</span>
-                                    </div>
-                                    <div class="profile-row">
-                                        <span class="label">Phone:</span>
-                                        <span class="value">09123456789</span>
-                                    </div>
-                                    <div class="profile-row">
-                                        <span class="label">Email:</span>
-                                        <span class="value email">kyawkokko123@gmail.com</span>
-                                    </div>
-                                    <div class="profile-row">
-                                        <span class="label">Address:</span>
-                                        <span class="value">No. 96, Pyay Road</span>
-                                    </div>
-                                    <div class="profile-row">
-                                        <span class="label">Township:</span>
-                                        <span class="value">Kamaryut</span>
-                                    </div>
-                                    <div class="profile-row">
-                                        <span class="label">City:</span>
-                                        <span class="value">Yangon</span>
-                                    </div>
-                                </div>
-                                <form class="profile-card-form">
-                                    <div class="form-row">
-                                        <div class="field">
-                                            <label>Full Name</label>
-                                            <input type="text" name="full_name" value="Kyaw Ko Ko">
-                                        </div>
-                                        <div class="field">
-                                            <label>Phone</label>
-                                            <input type="text" name="phone" value="09123456789">
-                                        </div>
-                                        <div class="field">
-                                            <label>Email</label>
-                                            <input type="email" name="email" value="kyawkokko123@gmail.com">
-                                        </div>
-                                        <div class="field">
-                                            <label>Address</label>
-                                            <input type="text" name="address" value="No. 96, Pyay Road">
-                                        </div>
-                                        <div class="field">
-                                            <label>Township</label>
-                                            <input type="text" name="township" value="Kamaryut">
-                                        </div>
-                                        <div class="field">
-                                            <label>City</label>
-                                            <input type="text" name="city" value="Yangon">
-                                        </div>
-                                    </div>
-                                    <div class="card-form-actions">
-                                        <button type="button" class="cancel-btn">Cancel</button>
-                                        <button type="button" class="save-btn">Save</button>
-                                    </div>
-                                </form>
-                                <div class="card-actions">
-                                    <button type="button" class="card-action-btn edit" aria-label="Edit address">
-                                        <i class="fa-regular fa-pen-to-square"></i>
-                                    </button>
-                                    <button type="button" class="card-action-btn delete" aria-label="Delete address">
-                                        <i class="fa-regular fa-trash-can"></i>
-                                    </button>
-                                    <button type="button" class="card-action-btn set-default">
-                                        <i class="fa-regular fa-star"></i>
-                                        <span>Set Default</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="profile-card" data-address-card>
-                                <span class="card-badge">Default</span>
-                                <div class="profile-list profile-card-view">
-                                    <div class="profile-row">
-                                        <span class="label">Full Name:</span>
-                                        <span class="value">Kyaw Ko Ko</span>
-                                    </div>
-                                    <div class="profile-row">
-                                        <span class="label">Phone:</span>
-                                        <span class="value">09123456789</span>
-                                    </div>
-                                    <div class="profile-row">
-                                        <span class="label">Email:</span>
-                                        <span class="value email">kyawkokko123@gmail.com</span>
-                                    </div>
-                                    <div class="profile-row">
-                                        <span class="label">Address:</span>
-                                        <span class="value">No. 96, Pyay Road</span>
-                                    </div>
-                                    <div class="profile-row">
-                                        <span class="label">Township:</span>
-                                        <span class="value">Kamaryut</span>
-                                    </div>
-                                    <div class="profile-row">
-                                        <span class="label">City:</span>
-                                        <span class="value">Yangon</span>
-                                    </div>
-                                </div>
-                                <form class="profile-card-form">
-                                    <div class="form-row">
-                                        <div class="field">
-                                            <label>Full Name</label>
-                                            <input type="text" name="full_name" value="Kyaw Ko Ko">
-                                        </div>
-                                        <div class="field">
-                                            <label>Phone</label>
-                                            <input type="text" name="phone" value="09123456789">
-                                        </div>
-                                        <div class="field">
-                                            <label>Email</label>
-                                            <input type="email" name="email" value="kyawkokko123@gmail.com">
-                                        </div>
-                                        <div class="field">
-                                            <label>Address</label>
-                                            <input type="text" name="address" value="No. 96, Pyay Road">
-                                        </div>
-                                        <div class="field">
-                                            <label>Township</label>
-                                            <input type="text" name="township" value="Kamaryut">
-                                        </div>
-                                        <div class="field">
-                                            <label>City</label>
-                                            <input type="text" name="city" value="Yangon">
-                                        </div>
-                                    </div>
-                                    <div class="card-form-actions">
-                                        <button type="button" class="cancel-btn">Cancel</button>
-                                        <button type="button" class="save-btn">Save</button>
-                                    </div>
-                                </form>
-                                <div class="card-actions">
-                                    <button type="button" class="card-action-btn edit" aria-label="Edit address">
-                                        <i class="fa-regular fa-pen-to-square"></i>
-                                    </button>
-                                    <button type="button" class="card-action-btn delete" aria-label="Delete address">
-                                        <i class="fa-regular fa-trash-can"></i>
-                                    </button>
-                                    <button type="button" class="card-action-btn set-default">
-                                        <i class="fa-regular fa-star"></i>
-                                        <span>Set Default</span>
-                                    </button>
-                                </div>
-                            </div>
+                            <?php endforeach; ?>
                         </div>
                     </div>
                 </div>
@@ -340,48 +165,23 @@
                                     <span>Total</span>
                                 </div>
                                 <div class="orders-body">
-                                    <a class="table-row" href="/check-order">
-                                        <span>#20260126001</span>
-                                        <span>14 December 2025</span>
-                                        <span class="status delivered">Delivered</span>
-                                        <span>Paid</span>
-                                        <span>3,000,000 MMK</span>
-                                    </a>
-                                    <a class="table-row" href="/check-order">
-                                        <span>#20260126002</span>
-                                        <span>14 December 2025</span>
-                                        <span class="status cancelled">Cancelled</span>
-                                        <span>Paid</span>
-                                        <span>3,000,000 MMK</span>
-                                    </a>
-                                    <a class="table-row" href="/check-order">
-                                        <span>#20260126003</span>
-                                        <span>14 December 2025</span>
-                                        <span class="status pending">Pending</span>
-                                        <span>Paid</span>
-                                        <span>3,000,000 MMK</span>
-                                    </a>
-                                    <a class="table-row" href="/check-order">
-                                        <span>#20260126004</span>
-                                        <span>14 December 2025</span>
-                                        <span class="status delivered">Delivered</span>
-                                        <span>Paid</span>
-                                        <span>3,000,000 MMK</span>
-                                    </a>
-                                    <a class="table-row" href="/check-order">
-                                        <span>#20260126005</span>
-                                        <span>14 December 2025</span>
-                                        <span class="status pending">Pending</span>
-                                        <span>Paid</span>
-                                        <span>3,000,000 MMK</span>
-                                    </a>
-                                    <a class="table-row" href="/check-order">
-                                        <span>#20260126006</span>
-                                        <span>14 December 2025</span>
-                                        <span class="status cancelled">Cancelled</span>
-                                        <span>Paid</span>
-                                        <span>3,000,000 MMK</span>
-                                    </a>
+                                    <?php if ($orderRows === []): ?>
+                                        <div class="orders-empty">No orders found yet.</div>
+                                    <?php else: ?>
+                                        <?php foreach ($orderRows as $orderRow): ?>
+                                            <a class="table-row" href="<?php echo htmlspecialchars((string) $orderRow['detail_url']); ?>">
+                                                <span><?php echo htmlspecialchars((string) $orderRow['order_no_display']); ?></span>
+                                                <span><?php echo htmlspecialchars((string) $orderRow['date_display']); ?></span>
+                                                <span class="status <?php echo htmlspecialchars((string) $orderRow['order_status_class']); ?>">
+                                                    <?php echo htmlspecialchars((string) $orderRow['order_status_label']); ?>
+                                                </span>
+                                                <span class="status <?php echo htmlspecialchars((string) $orderRow['payment_status_class']); ?>">
+                                                    <?php echo htmlspecialchars((string) $orderRow['payment_status_label']); ?>
+                                                </span>
+                                                <span><?php echo htmlspecialchars((string) $orderRow['total_display']); ?></span>
+                                            </a>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
@@ -478,15 +278,22 @@
                             <img src="./assets/images/logo.png" alt="Logo or Mascort">
                         </div>
                         <div class="membership-text">
-                            <h4>ZYPP Pro Creator</h4>
+                            <h4><?php echo htmlspecialchars((string) ($membershipSummary['current_title'] ?? 'Standard Customer')); ?></h4>
                             <div class="membership-progress">
                                 <div class="progress-bar">
-                                    <span class="progress-fill" style="width: 38%;"></span>
+                                    <span class="progress-fill" style="width: <?php echo (int) ($membershipSummary['progress_percent'] ?? 0); ?>%;"></span>
                                 </div>
                             </div>
-                            <p class="required-amount">Upgrade to <strong class="next-level">ZYPP Master Creator</strong> by purchasing more items worth 5,000,000 MMK.</p>
-                            <p class="membership-meta">You joined since <strong>01.01.2026</strong></p>
-                            <p class="membership-meta">You’ve spent <strong>5,000,000 MMK</strong>.</p>
+                            <?php if (!empty($membershipSummary['next_title']) && (float) ($membershipSummary['required_amount'] ?? 0) > 0): ?>
+                                <p class="required-amount">
+                                    Upgrade to <strong class="next-level"><?php echo htmlspecialchars((string) $membershipSummary['next_title']); ?></strong>
+                                    by purchasing more items worth <?php echo htmlspecialchars(number_format((float) $membershipSummary['required_amount'])); ?> MMK.
+                                </p>
+                            <?php else: ?>
+                                <p class="required-amount">You are currently at the highest membership tier.</p>
+                            <?php endif; ?>
+                            <p class="membership-meta">You joined since <strong><?php echo htmlspecialchars((string) ($membershipSummary['joined_since'] ?? '')); ?></strong></p>
+                            <p class="membership-meta">You’ve spent <strong><?php echo htmlspecialchars(number_format((float) ($membershipSummary['total_spent'] ?? 0))); ?> MMK</strong>.</p>
                             <button type="button" class="membership-btn">View ZYPP Benefits</button>
                         </div>
                     </div>
@@ -505,10 +312,78 @@
                         <a href="#" class="settings-link modal-trigger" data-modal-target="forgot-password-modal">Forgot Password</a>
                         <a href="#" class="settings-link danger modal-trigger" data-modal-target="delete-account-modal">Delete this Account</a>
                     </div>
+                    <div class="social-connect-section referral-section">
+                        <div class="social-connect-header">
+                            <h3>Your Referral Link</h3>
+                            <p>Share this link so new users can register with your referral code.</p>
+                        </div>
+                        <div class="social-connect-card referral-card">
+                            <div class="social-connect-copy">
+                                <h4>Referral Link</h4>
+                                <p class="referral-link-text" data-referral-link-text>
+                                    <?php echo htmlspecialchars($referralLink !== '' ? $referralLink : 'Referral link is not available yet.'); ?>
+                                </p>
+                            </div>
+                            <?php if ($referralLink !== ''): ?>
+                                <button
+                                    type="button"
+                                    class="social-connect-btn referral-copy-btn"
+                                    data-copy-referral
+                                    data-copy-value="<?php echo htmlspecialchars($referralLink); ?>"
+                                >
+                                    Copy Link
+                                </button>
+                            <?php else: ?>
+                                <span class="social-connect-state unavailable">Unavailable</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <div class="social-connect-section">
+                        <div class="social-connect-header">
+                            <h3>Connected Sign-In Methods</h3>
+                            <p>Connect your social accounts to use quick sign-in safely.</p>
+                        </div>
+                        <?php if ($profileFlash): ?>
+                            <div class="social-connect-flash <?php echo htmlspecialchars($profileFlash['type'] ?? 'info'); ?>">
+                                <?php echo htmlspecialchars($profileFlash['message'] ?? ''); ?>
+                            </div>
+                        <?php endif; ?>
+                        <div class="social-connect-list">
+                            <?php foreach ($socialProviders as $providerKey => $providerData): ?>
+                                <?php
+                                $providerColumn = $providerData['column'];
+                                $isAvailable = is_array($currentCustomer) && array_key_exists($providerColumn, $currentCustomer);
+                                $isConnected = $isAvailable && !empty($currentCustomer[$providerColumn]);
+                                $connectUrl = '/auth/oauth_start.php?provider=' . rawurlencode($providerKey) . '&redirect_to=' . rawurlencode('/user-profile.php#settings') . '&mode=connect';
+                                ?>
+                                <div class="social-connect-card<?php echo $isConnected ? ' is-connected' : ''; ?>">
+                                    <div class="social-connect-copy">
+                                        <h4><?php echo htmlspecialchars($providerData['label']); ?></h4>
+                                        <p>
+                                            <?php if (!$isAvailable): ?>
+                                                Social linking is unavailable until the provider columns are added to the `users` table.
+                                            <?php elseif ($isConnected): ?>
+                                                Connected to your account.
+                                            <?php else: ?>
+                                                Not connected yet.
+                                            <?php endif; ?>
+                                        </p>
+                                    </div>
+                                    <?php if (!$isAvailable): ?>
+                                        <span class="social-connect-state unavailable">Unavailable</span>
+                                    <?php elseif ($isConnected): ?>
+                                        <span class="social-connect-state connected">Connected</span>
+                                    <?php else: ?>
+                                        <a class="social-connect-btn" href="<?php echo htmlspecialchars($connectUrl); ?>">Connect</a>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mobile-logout">
-                    <button class="logout-btn">Log Out</button>
+                    <a class="logout-btn" href="<?php echo htmlspecialchars(app_path('/auth/logout.php?redirect_to=/')); ?>">Log Out</a>
                 </div>
             </section>
         </div>

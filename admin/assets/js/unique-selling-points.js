@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   const modal = document.getElementById('uspModal');
+  const modalForm = modal?.querySelector('.modal-form');
   const modalTitle = modal?.querySelector('#uspModalTitle');
   const closeBtn = modal?.querySelector('.modal-close');
   const discardBtn = modal?.querySelector('.btn-footer.discard');
@@ -8,16 +9,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const iconPreview = modal?.querySelector('#uspIconPreview');
   const titleInput = modal?.querySelector('input[name="uspTitle"]');
   const descInput = modal?.querySelector('textarea[name="uspDescription"]');
+  const entityIdInput = modal?.querySelector('input[name="entity_id"]');
 
   const openModal = (mode, row) => {
     if (!modal) return;
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
     if (modalTitle) modalTitle.textContent = mode === 'edit' ? 'Edit' : 'Add';
-    if (titleInput) titleInput.value = row?.querySelector('.usp-title')?.textContent?.trim() || '';
-    if (descInput) descInput.value = row?.querySelector('.usp-desc')?.textContent?.trim() || '';
+    if (entityIdInput) entityIdInput.value = row?.dataset.id || '0';
+    if (titleInput) titleInput.value = row?.dataset.title || '';
+    if (descInput) descInput.value = row?.dataset.description || '';
     if (iconPreview) {
-      iconPreview.innerHTML = '<span class="icon-placeholder"></span>';
+      const iconUrl = row?.dataset.icon || '';
+      iconPreview.innerHTML = iconUrl
+        ? `<img src="${iconUrl}" alt="Icon preview" style="width:100%;height:100%;object-fit:contain;">`
+        : '<span class="icon-placeholder"></span>';
     }
     if (uploadInput) uploadInput.value = '';
   };
@@ -32,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const newBtn = event.target.closest('.btn-new');
     if (newBtn) {
       openModal('add');
+      if (entityIdInput) entityIdInput.value = '0';
       return;
     }
 
@@ -58,12 +65,11 @@ document.addEventListener('DOMContentLoaded', () => {
           cancelButtonText: 'Cancel',
         }).then((result) => {
           if (result.isConfirmed) {
-            row.remove();
-            Swal.fire('Deleted', 'The point has been removed.', 'success');
+            row.querySelector('.usp-delete-form')?.submit();
           }
         });
       } else if (window.confirm('Delete this item?')) {
-        row.remove();
+        row.querySelector('.usp-delete-form')?.submit();
       }
       return;
     }
@@ -88,4 +94,13 @@ document.addEventListener('DOMContentLoaded', () => {
   modal?.addEventListener('click', (event) => {
     if (event.target === modal) closeModal();
   });
+
+  if (window.adminUspFlash && window.Swal) {
+    Swal.fire({
+      icon: window.adminUspFlash.type === 'error' ? 'error' : 'success',
+      text: window.adminUspFlash.message || '',
+      timer: 2200,
+      showConfirmButton: false,
+    });
+  }
 });

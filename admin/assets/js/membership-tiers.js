@@ -1,11 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
   const container = document.querySelector('.membership-left');
   const template = document.getElementById('tierEditTemplate');
+  const createCard = document.querySelector('.membership-right .tier-form-card');
+  const createForm = createCard?.querySelector('form.tier-form');
+  const createSubmit = createCard?.querySelector('[data-create-submit]');
+  const createReset = createCard?.querySelector('.btn-reset');
   let activeEditCard = null;
 
   const formatNumber = (value) => {
-    if (!value) return '';
-    const numeric = String(value).replace(/[^\d]/g, '');
+    if (!value && value !== 0) return '';
+    const numeric = String(value).replace(/[^\d.]/g, '');
     if (!numeric) return '';
     return Number(numeric).toLocaleString('en-US');
   };
@@ -14,6 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const minText = formatNumber(min);
     const maxText = formatNumber(max);
     if (minText && maxText) {
+      if (Number(String(min).replace(/[^\d.]/g, '')) <= 0) {
+        return `<${maxText} MMK`;
+      }
       return `${minText} MMK - ${maxText} MMK`;
     }
     if (!minText && maxText) {
@@ -27,9 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.querySelectorAll('.tier-card').forEach((card) => {
     const rangeEl = card.querySelector('p');
-    if (!rangeEl) return;
     const computed = buildRange(card.dataset.tierMin, card.dataset.tierMax);
-    if (computed) {
+    if (rangeEl && computed) {
       rangeEl.textContent = computed;
     }
   });
@@ -40,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!targetId) return;
     const unitEl = document.getElementById(targetId);
     if (!unitEl) return;
-    unitEl.textContent = select.value === 'Fixed' ? 'MMK' : '%';
+    unitEl.textContent = String(select.value).toLowerCase() === 'fixed' ? 'MMK' : '%';
   };
 
   document.querySelectorAll('[data-unit-target]').forEach((select) => {
@@ -48,55 +54,34 @@ document.addEventListener('DOMContentLoaded', () => {
     select.addEventListener('change', () => syncUnit(select));
   });
 
-  const restoreCard = (card, updatedData) => {
+  const restoreCard = (card) => {
     if (!card) return;
     const original = card.dataset.originalMarkup;
     if (!original) return;
     card.innerHTML = original;
-    card.classList.remove('editing');
-    card.classList.remove('exiting');
+    card.classList.remove('editing', 'exiting');
     delete card.dataset.originalMarkup;
-
-    if (updatedData) {
-      card.dataset.tierTitle = updatedData.title;
-      card.dataset.tierMin = updatedData.min;
-      card.dataset.tierMax = updatedData.max;
-      card.dataset.tierRefType = updatedData.refType;
-      card.dataset.tierRefValue = updatedData.refValue;
-    }
+    activeEditCard = null;
   };
 
   const openEdit = (card) => {
     if (!card || !template) return;
     if (activeEditCard && activeEditCard !== card) {
       restoreCard(activeEditCard);
-      activeEditCard = null;
     }
 
     if (card.classList.contains('editing')) return;
 
-    const title = card.dataset.tierTitle || '';
-    const min = card.dataset.tierMin || '';
-    const max = card.dataset.tierMax || '';
-    const refType = card.dataset.tierRefType || 'Percentage';
-    const refValue = card.dataset.tierRefValue || '';
+    const clone = template.content.cloneNode(true);
+    clone.querySelector('.edit-id').value = card.dataset.tierId || '0';
+    clone.querySelector('.edit-name').value = card.dataset.tierTitle || '';
+    clone.querySelector('.edit-min').value = formatNumber(card.dataset.tierMin || '');
+    clone.querySelector('.edit-max').value = card.dataset.tierMax ? formatNumber(card.dataset.tierMax) : '';
+    clone.querySelector('.edit-ref-type').value = String(card.dataset.tierRefType || '').toLowerCase();
+    clone.querySelector('.edit-ref-value').value = card.dataset.tierRefValue || '';
 
     card.dataset.originalMarkup = card.innerHTML;
     card.classList.add('editing');
-
-    const clone = template.content.cloneNode(true);
-    const nameInput = clone.querySelector('.edit-name');
-    const minInput = clone.querySelector('.edit-min');
-    const maxInput = clone.querySelector('.edit-max');
-    const refTypeSelect = clone.querySelector('.edit-ref-type');
-    const refValueInput = clone.querySelector('.edit-ref-value');
-
-    if (nameInput) nameInput.value = title;
-    if (minInput) minInput.value = formatNumber(min);
-    if (maxInput) maxInput.value = max ? formatNumber(max) : '';
-    if (refTypeSelect) refTypeSelect.value = refType;
-    if (refValueInput) refValueInput.value = refValue;
-
     card.innerHTML = '';
     card.appendChild(clone);
     activeEditCard = card;
@@ -112,11 +97,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const editBtn = event.target.closest('.edit-tier');
     const deleteBtn = event.target.closest('.delete-tier');
     const cancelBtn = event.target.closest('.btn-cancel');
-    const confirmBtn = event.target.closest('.btn-confirm');
 
     if (editBtn) {
-      const card = editBtn.closest('.tier-card');
-      openEdit(card);
+      openEdit(editBtn.closest('.tier-card'));
       return;
     }
 
@@ -129,6 +112,10 @@ document.addEventListener('DOMContentLoaded', () => {
         showCancelButton: true,
         confirmButtonText: 'Delete',
         cancelButtonText: 'Cancel',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          deleteBtn.closest('.tier-card')?.querySelector('.tier-delete-form')?.submit();
+        }
       });
       return;
     }
@@ -137,42 +124,26 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = cancelBtn.closest('.tier-card');
       if (card) {
         card.classList.add('exiting');
-        window.setTimeout(() => {
-          restoreCard(card);
-          activeEditCard = null;
-        }, 200);
-      }
-      return;
-    }
-
-    if (confirmBtn) {
-      const card = confirmBtn.closest('.tier-card');
-      const nameInput = card?.querySelector('.edit-name');
-      const minInput = card?.querySelector('.edit-min');
-      const maxInput = card?.querySelector('.edit-max');
-      const refTypeSelect = card?.querySelector('.edit-ref-type');
-      const refValueInput = card?.querySelector('.edit-ref-value');
-
-      const updated = {
-        title: nameInput?.value.trim() || '',
-        min: minInput?.value.trim() || '',
-        max: maxInput?.value.trim() || '',
-        refType: refTypeSelect?.value || 'Percentage',
-        refValue: refValueInput?.value.trim() || '',
-      };
-
-      if (card) {
-        card.classList.add('exiting');
-        window.setTimeout(() => {
-          restoreCard(card, updated);
-          const titleEl = card.querySelector('h3');
-          const rangeEl = card.querySelector('p');
-          if (titleEl) titleEl.textContent = updated.title;
-          if (rangeEl) rangeEl.textContent = buildRange(updated.min, updated.max);
-          activeEditCard = null;
-          document.querySelectorAll('[data-unit-target]').forEach((select) => syncUnit(select));
-        }, 200);
+        window.setTimeout(() => restoreCard(card), 200);
       }
     }
   });
+
+  createSubmit?.addEventListener('click', () => {
+    createForm?.requestSubmit();
+  });
+
+  createReset?.addEventListener('click', () => {
+    createForm?.reset();
+    document.querySelectorAll('[data-unit-target]').forEach((select) => syncUnit(select));
+  });
+
+  if (window.adminMembershipFlash && typeof Swal !== 'undefined') {
+    Swal.fire({
+      icon: window.adminMembershipFlash.type === 'error' ? 'error' : 'success',
+      text: window.adminMembershipFlash.message || '',
+      timer: 2200,
+      showConfirmButton: false,
+    });
+  }
 });

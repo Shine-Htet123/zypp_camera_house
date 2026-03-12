@@ -1,23 +1,31 @@
+<?php
+require_once __DIR__ . '/config/app.php';
+require_once __DIR__ . '/database/site_content.php';
+
+$footerContent = site_content_get_footer();
+$footerImageUrl = site_content_image_url((string) ($footerContent['footer_image'] ?? ''), app_path('/storage/uploads/contents/logo.png'));
+?>
 <footer class="footer">
     <div class="footer-logo" aria-hidden="true">
-        <img src="../storage/uploads/contents/logo.png" alt="">
+        <img src="<?php echo htmlspecialchars($footerImageUrl); ?>" alt="">
     </div>
     <div class="footer-container">
 
         <div class="footer-col">
             <h3>Quick Links</h3>
-            <a href="/products.php">Shop</a>
-            <a href="/wholesale.php">Wholesale</a>
-            <a href="/about.php">About Us</a>
-            <a href="/about.php#contact">Contact Us</a>
+            <a href="<?php echo htmlspecialchars(app_path('/products.php')); ?>">Shop</a>
+            <a href="<?php echo htmlspecialchars(app_path('/wholesale.php')); ?>">Wholesale</a>
+            <a href="<?php echo htmlspecialchars(app_path('/about.php')); ?>">About Us</a>
+            <a href="<?php echo htmlspecialchars(app_path('/about.php#contact')); ?>">Contact Us</a>
         </div>
 
         <div class="footer-col">
             <h3>Support</h3>
-            <a href="/warranty-FAQ.php">Warranty & FAQs</a>
-            <a href="/reservation-policy.php">Reservation Policy</a>
-            <a href="/delivery-policy.php">Delivery Policy</a>
-            <a href="/payment-information.php">Payment Information</a>
+            <a href="<?php echo htmlspecialchars(app_path('/warranty-FAQ.php')); ?>">Warranty & FAQs</a>
+            <a href="<?php echo htmlspecialchars(app_path('/reservation-policy.php')); ?>">Reservation Policy</a>
+            <a href="<?php echo htmlspecialchars(app_path('/delivery-policy.php')); ?>">Delivery Policy</a>
+            <a href="<?php echo htmlspecialchars(app_path('/payment-information.php')); ?>">Payment Information</a>
+            <a href="<?php echo htmlspecialchars(app_path('/admin/login.php')); ?>">Admin Login</a>
         </div>
 
         <div class="footer-col">
@@ -33,36 +41,36 @@
                 <div class="row">
                     <span class="label">Address:</span>
                     <span>
-                        No. 112, 52nd Street, Middle Block, Pazundaung Township, Yangon 11171
+                        <?php echo htmlspecialchars((string) ($footerContent['address'] ?? '')); ?>
                     </span>
                 </div>
 
                 <div class="row">
                     <span class="label">Phone:</span>
-                    <span>09-251562642, 09-424574187</span>
+                    <span><?php echo htmlspecialchars((string) ($footerContent['phone'] ?? '')); ?></span>
                 </div>
 
                 <div class="row">
                     <span class="label">Email:</span>
-                    <span>zyppcamerahouse2023@gmail.com</span>
+                    <span><?php echo htmlspecialchars((string) ($footerContent['email'] ?? '')); ?></span>
                 </div>
             </div>
 
 
             <div class="social-icons">
-                <a href="#" class="social-link fb" aria-label="Facebook">
+                <a href="<?php echo htmlspecialchars((string) (($footerContent['facebook_url'] ?? '') !== '' ? $footerContent['facebook_url'] : '#')); ?>" class="social-link fb" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
                     <i class="fab fa-facebook-f"></i>
                 </a>
 
-                <a href="#" class="social-link tt" aria-label="TikTok">
+                <a href="<?php echo htmlspecialchars((string) (($footerContent['tiktok_url'] ?? '') !== '' ? $footerContent['tiktok_url'] : '#')); ?>" class="social-link tt" aria-label="TikTok" target="_blank" rel="noopener noreferrer">
                     <i class="fab fa-tiktok"></i>
                 </a>
 
-                <a href="#" class="social-link tg" aria-label="Telegram">
+                <a href="<?php echo htmlspecialchars((string) (($footerContent['telegram_url'] ?? '') !== '' ? $footerContent['telegram_url'] : '#')); ?>" class="social-link tg" aria-label="Telegram" target="_blank" rel="noopener noreferrer">
                     <i class="fas fa-paper-plane"></i>
                 </a>
 
-                <a href="#" class="social-link ig" aria-label="Instagram">
+                <a href="<?php echo htmlspecialchars((string) (($footerContent['instagram_url'] ?? '') !== '' ? $footerContent['instagram_url'] : '#')); ?>" class="social-link ig" aria-label="Instagram" target="_blank" rel="noopener noreferrer">
                     <i class="fab fa-instagram"></i>
                 </a>
             </div>

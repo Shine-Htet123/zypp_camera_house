@@ -7,6 +7,10 @@ let autoSlideInterval = null;
 const SLIDE_DURATION = 5000; // 5s
 
 function goToSlide(index) {
+    if (!heroContainer || heroWrappers.length === 0) {
+        return;
+    }
+
     currentIndex = index;
 
     // Slide the wrappers
@@ -39,7 +43,9 @@ bubbles.forEach((bubble, i) => {
 });
 
 // Init
-goToSlide(0);
+if (heroContainer && heroWrappers.length > 0) {
+    goToSlide(0);
+}
 
 // Best Sellers slider (non-looping with muted chevrons at ends)
 const bestSellerSlider = document.querySelector(".best-seller-slider");
@@ -148,6 +154,172 @@ if (ratingStars.length && ratingValueInput) {
                 s.classList.toggle("fa-regular", sValue > value);
             });
         });
+    });
+}
+
+const openCustomerLoginPanel = () => {
+    document.getElementById("user-icon")?.click();
+};
+
+const updateCartCount = (count) => {
+    const cartCount = document.querySelector(".cart-count span");
+    if (!cartCount || typeof count === "undefined") {
+        return;
+    }
+
+    cartCount.textContent = String(count);
+};
+
+document.querySelectorAll("[data-home-add-to-cart]").forEach((button) => {
+    button.addEventListener("click", async () => {
+        const productId = Number(button.dataset.productId || "0");
+        const quantity = Math.max(1, Number(button.dataset.quantity || "1"));
+
+        try {
+            const body = new URLSearchParams({
+                action: "add_item",
+                product_id: String(productId),
+                quantity: String(quantity),
+            });
+
+            const response = await fetch("/auth/cart_add.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "Accept": "application/json",
+                },
+                body: body.toString(),
+            });
+
+            const payload = await response.json();
+            if (!response.ok || !payload.success) {
+                if (payload.login_required) {
+                    openCustomerLoginPanel();
+                }
+                throw new Error(payload.message || "Failed to add item to cart.");
+            }
+
+            updateCartCount(payload.payload?.cart_count);
+
+            if (typeof Swal !== "undefined") {
+                Swal.fire({
+                    icon: "success",
+                    title: "Added to cart",
+                    text: payload.message || "The product has been added to your cart.",
+                });
+            }
+        } catch (error) {
+            if (typeof Swal !== "undefined") {
+                Swal.fire({
+                    icon: "error",
+                    title: "Add to cart failed",
+                    text: error.message,
+                });
+            }
+        }
+    });
+});
+
+const renderReviewStars = (rating) => {
+    let html = "";
+    for (let value = 1; value <= 5; value += 1) {
+        html += `<i class="${value <= rating ? "fa-solid" : "fa-regular"} fa-star"></i>`;
+    }
+    return html;
+};
+
+const createReviewCard = (review) => {
+    const card = document.createElement("div");
+    card.className = "review-card";
+    card.innerHTML = `
+        <div class="user-info">
+            <div class="user-profile">
+                <i class="fa-regular fa-user"></i>
+            </div>
+            <div class="user-name-rating">
+                <span class="user-name"></span>
+                <div class="rating">${renderReviewStars(Number(review.rating || 0))}</div>
+            </div>
+        </div>
+        <h3 class="review-topic"></h3>
+        <p class="review-text"></p>
+    `;
+
+    card.querySelector(".user-name").textContent = review.user_name || "Customer";
+    card.querySelector(".review-topic").textContent = review.topic && review.topic.trim() !== "" ? review.topic : "Customer Review";
+    card.querySelector(".review-text").textContent = review.comment || "";
+
+    return card;
+};
+
+if (reviewForm) {
+    reviewForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const submitButton = reviewForm.querySelector(".submit-review");
+        const formData = new FormData(reviewForm);
+
+        try {
+            submitButton?.setAttribute("disabled", "disabled");
+
+            const response = await fetch(reviewForm.action || "/auth/review_submit.php", {
+                method: "POST",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
+                    "Accept": "application/json",
+                },
+                body: formData,
+            });
+
+            const payload = await response.json();
+            if (!response.ok || !payload.success) {
+                if (payload.login_required) {
+                    openCustomerLoginPanel();
+                }
+                throw new Error(payload.message || "Failed to submit review.");
+            }
+
+            const reviewList = document.querySelector(".review-list");
+            if (reviewList) {
+                reviewList.querySelector(".home-empty-state-wide")?.remove();
+                reviewList.prepend(createReviewCard(payload.payload?.review || {}));
+
+                const cards = reviewList.querySelectorAll(".review-card");
+                if (cards.length > 4) {
+                    cards[cards.length - 1].remove();
+                }
+            }
+
+            reviewForm.reset();
+            ratingValueInput.value = "0";
+            ratingStars.forEach((star) => {
+                star.classList.remove("fa-solid");
+                star.classList.add("fa-regular");
+            });
+            reviewForm.classList.remove("show");
+            if (leaveReviewBtn) {
+                leaveReviewBtn.textContent = "Leave a Review";
+            }
+
+            if (typeof Swal !== "undefined") {
+                Swal.fire({
+                    icon: "success",
+                    title: "Review submitted",
+                    text: payload.message || "Thank you for your review.",
+                });
+            }
+        } catch (error) {
+            if (typeof Swal !== "undefined") {
+                Swal.fire({
+                    icon: "error",
+                    title: "Review failed",
+                    text: error.message,
+                });
+            }
+        } finally {
+            submitButton?.removeAttribute("disabled");
+        }
     });
 }
 

@@ -1,7 +1,12 @@
-# zypp-camera-house
-Full-stack e-commerce website built with HTML, CSS, JS, PHP, and MySQL
+# ZYPP Camera House
 
-## ⚠️ Project Ownership
+Full-stack e-commerce website built with PHP, MySQL, HTML, CSS, and JavaScript.
+
+## Deployment
+
+See [DEPLOYMENT.md](/c:/xampp/htdocs/ZYPP_E-com_Web/zypp_camera_house/DEPLOYMENT.md) for Hostinger deployment steps.
+
+## Project Ownership
 
 This project was developed for a client as part of a freelance agreement.
 All rights to the source code belong to the client.

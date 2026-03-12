@@ -239,7 +239,7 @@
     font-weight: 600;
 }
 
-.customer-status.online {
+.customer-status.active {
     color: var(--color-success);
 }
 
@@ -247,7 +247,7 @@
     color: #f39c12;
 }
 
-.customer-status.offline {
+.customer-status.banned {
     color: var(--color-danger);
 }
 
@@ -325,5 +325,11 @@
     font-size: 0.8rem;
     background-color: #fff;
     cursor: pointer;
+}
+
+.customers-empty-state {
+    text-align: center;
+    padding: 24px 16px;
+    color: var(--text-muted);
 }
 

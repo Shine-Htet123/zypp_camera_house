@@ -1,52 +1,32 @@
 <?php
-$aboutSections = [
-    [
-        'image' => '/storage/uploads/contents/hero-img.png',
-        'title' => 'Picture 1',
-        'body' => 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet consectetur adipisicing elit.',
-        'reverse' => false,
-    ],
-    [
-        'image' => '/storage/uploads/contents/hero-img-2.png',
-        'title' => 'Picture 2',
-        'body' => 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet.',
-        'reverse' => true,
-    ],
-    [
-        'image' => '/storage/uploads/contents/hero-img-3.png',
-        'title' => 'Picture 3',
-        'body' => 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet.',
-        'reverse' => false,
-    ],
-];
+require_once __DIR__ . '/database/site_content.php';
+
+$aboutContent = site_content_get_about();
+$aboutSections = (array) ($aboutContent['story_sections'] ?? []);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <?php include __DIR__ . '/head.php'; ?>
-    <link rel="stylesheet" href="/assets/css/about.css">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/assets/css/about.css')); ?>">
 </head>
 <body>
     <?php include __DIR__ . '/navbar.php'; ?>
 
     <main class="about-page">
         <section class="about-hero">
-            <h1>About ZYPP Camera House</h1>
-            <p>
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore
-                magna aliqua. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut
-                labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod.
-            </p>
+            <h1><?php echo htmlspecialchars((string) ($aboutContent['hero_title'] ?? 'About ZYPP Camera House')); ?></h1>
+            <p><?php echo nl2br(htmlspecialchars((string) ($aboutContent['hero_body'] ?? ''))); ?></p>
         </section>
 
         <section class="about-story">
             <?php foreach ($aboutSections as $section): ?>
-                <article class="story-row<?php echo $section['reverse'] ? ' reverse' : ''; ?>">
+                <article class="story-row<?php echo !empty($section['reverse']) ? ' reverse' : ''; ?>">
                     <div class="story-image-card">
-                        <img src="<?php echo htmlspecialchars($section['image']); ?>" alt="<?php echo htmlspecialchars($section['title']); ?>">
+                        <img src="<?php echo htmlspecialchars(site_content_image_url((string) ($section['image'] ?? ''), '')); ?>" alt="About story image">
                     </div>
                     <div class="story-copy">
-                        <p><?php echo htmlspecialchars($section['body']); ?></p>
+                        <p><?php echo nl2br(htmlspecialchars((string) ($section['body'] ?? ''))); ?></p>
                     </div>
                 </article>
             <?php endforeach; ?>
@@ -55,45 +35,43 @@ $aboutSections = [
         <section class="vision-section">
             <h2>Our Vision</h2>
             <div class="vision-copy">
-                <p>Lorem ipsum dolor sit amet,</p>
-                <p>consectetur adipisicing elit,</p>
-                <p>sed do eiusmod tempor incididunt ut</p>
-                <p>labore et dolore magna aliqua.</p>
-                <p>Lorem ipsum dolor sit</p>
+                <?php foreach ((array) ($aboutContent['vision_lines'] ?? []) as $line): ?>
+                    <p><?php echo htmlspecialchars((string) $line); ?></p>
+                <?php endforeach; ?>
             </div>
         </section>
 
         <section class="contact-section" id="contact">
             <div class="contact-card">
-                <h2>Contact</h2>
+                <h2><?php echo htmlspecialchars((string) ($aboutContent['contact_title'] ?? 'Contact')); ?></h2>
                 <div class="contact-layout">
                     <div class="contact-details">
                         <div class="contact-item">
                             <i class="fa-solid fa-location-dot"></i>
-                            <p>No. 112, 52nd Street, Middle Block, Pazundaung Township, Yangon 11171</p>
+                            <p><?php echo htmlspecialchars((string) ($aboutContent['address'] ?? '')); ?></p>
                         </div>
                         <div class="contact-item">
                             <i class="fa-solid fa-phone"></i>
-                            <p>09-251562642, 09-424574187</p>
+                            <p><?php echo htmlspecialchars((string) ($aboutContent['phone'] ?? '')); ?></p>
                         </div>
                         <div class="contact-item">
                             <i class="fa-solid fa-envelope"></i>
-                            <p>zyppcamerahouse2023@gmail.com</p>
+                            <p><?php echo htmlspecialchars((string) ($aboutContent['email'] ?? '')); ?></p>
                         </div>
 
                         <div class="contact-socials">
                             <h3>Join us on:</h3>
                             <div class="social-row">
-                                <a href="#" class="social-link fb" aria-label="Facebook">
+                                <a href="<?php echo htmlspecialchars((string) (($aboutContent['facebook_url'] ?? '') !== '' ? $aboutContent['facebook_url'] : '#')); ?>" class="social-link fb" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
                                     <i class="fab fa-facebook-f"></i>
                                 </a>
-                                <a href="#" class="social-link tt" aria-label="TikTok">
+                                <a href="<?php echo htmlspecialchars((string) (($aboutContent['tiktok_url'] ?? '') !== '' ? $aboutContent['tiktok_url'] : '#')); ?>" class="social-link tt" aria-label="TikTok" target="_blank" rel="noopener noreferrer">
                                     <i class="fab fa-tiktok"></i>
                                 </a>
-                                <a href="#" class="social-link tg" aria-label="Telegram">
+                                <a href="<?php echo htmlspecialchars((string) (($aboutContent['telegram_url'] ?? '') !== '' ? $aboutContent['telegram_url'] : '#')); ?>" class="social-link tg" aria-label="Telegram" target="_blank" rel="noopener noreferrer">
                                     <i class="fas fa-paper-plane"></i>
                                 </a>
-                                <a href="#" class="social-link ig" aria-label="Instagram">
+                                <a href="<?php echo htmlspecialchars((string) (($aboutContent['instagram_url'] ?? '') !== '' ? $aboutContent['instagram_url'] : '#')); ?>" class="social-link ig" aria-label="Instagram" target="_blank" rel="noopener noreferrer">
                                     <i class="fab fa-instagram"></i>
                                 </a>
                             </div>
@@ -102,7 +80,7 @@ $aboutSections = [
 
                     <div class="map-card" aria-label="Google Maps location">
                         <iframe
-                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3820.026510724878!2d96.1722099!3d16.775356599999995!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30c1ed33a6c6f30d%3A0x256ab0e5a54a67ac!2sZYPP%20Camera%20House!5e0!3m2!1sen!2snl!4v1772969831783!5m2!1sen!2snl"
+                            src="<?php echo htmlspecialchars((string) ($aboutContent['map_embed_url'] ?? '')); ?>"
                             width="600"
                             height="450"
                             style="border:0;"
