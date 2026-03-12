@@ -79,6 +79,93 @@ function mailer_is_configured(): bool
     return true;
 }
 
+function mailer_logo_path(): ?string
+{
+    $preferred = app_project_path('storage/uploads/contents/logo.png');
+    if (is_file($preferred)) {
+        return $preferred;
+    }
+
+    $fallback = app_project_path('assets/images/browser-icon.png');
+    if (is_file($fallback)) {
+        return $fallback;
+    }
+
+    return null;
+}
+
+function mailer_logo_url(): string
+{
+    $preferred = app_project_path('storage/uploads/contents/logo.png');
+    if (is_file($preferred)) {
+        return app_url('/storage/uploads/contents/logo.png');
+    }
+
+    return app_url('/assets/images/browser-icon.png');
+}
+
+function mailer_resolve_logo_source(\PHPMailer\PHPMailer\PHPMailer $mail): string
+{
+    $logoPath = mailer_logo_path();
+    if ($logoPath === null) {
+        return '';
+    }
+
+    $extension = strtolower(pathinfo($logoPath, PATHINFO_EXTENSION));
+    $mimeType = match ($extension) {
+        'jpg', 'jpeg' => 'image/jpeg',
+        'gif' => 'image/gif',
+        'svg' => 'image/svg+xml',
+        'webp' => 'image/webp',
+        default => 'image/png',
+    };
+
+    $contentId = 'zypp-brand-logo';
+
+    try {
+        $mail->addEmbeddedImage($logoPath, $contentId, basename($logoPath), 'base64', $mimeType);
+        return 'cid:' . $contentId;
+    } catch (\Throwable $exception) {
+        return mailer_logo_url();
+    }
+}
+
+function mailer_wrap_html(\PHPMailer\PHPMailer\PHPMailer $mail, string $html, string $subject): string
+{
+    $logoSource = mailer_resolve_logo_source($mail);
+    $safeSubject = htmlspecialchars($subject, ENT_QUOTES, 'UTF-8');
+
+    $logoMarkup = '';
+    if ($logoSource !== '') {
+        $logoMarkup = sprintf(
+            '<div style="text-align:center;margin:0 0 20px;"><img src="%s" alt="ZYPP Camera House" style="max-width:140px;width:100%%;height:auto;display:inline-block;"></div>',
+            htmlspecialchars($logoSource, ENT_QUOTES, 'UTF-8')
+        );
+    }
+
+    return '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>' . $safeSubject . '</title>
+</head>
+<body style="margin:0;padding:32px 16px;background:#f4f1ed;font-family:Arial,Helvetica,sans-serif;color:#2d241d;">
+    <div style="max-width:640px;margin:0 auto;">
+        <div style="background:#ffffff;border-radius:20px;padding:32px 28px;box-shadow:0 10px 28px rgba(72,45,22,0.10);">
+            ' . $logoMarkup . '
+            <div style="font-size:15px;line-height:1.65;color:#3d3128;">
+                ' . $html . '
+            </div>
+        </div>
+        <p style="margin:18px 0 0;text-align:center;font-size:12px;line-height:1.5;color:#8d7c6d;">
+            ZYPP Camera House
+        </p>
+    </div>
+</body>
+</html>';
+}
+
 function mailer_send(array $message): void
 {
     mailer_bootstrap_phpmailer();
@@ -108,7 +195,8 @@ function mailer_send(array $message): void
     $mail->addAddress((string) ($message['to_email'] ?? ''), (string) ($message['to_name'] ?? ''));
     $mail->Subject = (string) ($message['subject'] ?? '');
     $mail->isHTML(true);
-    $mail->Body = (string) ($message['html'] ?? '');
+    $htmlBody = (string) ($message['html'] ?? '');
+    $mail->Body = $htmlBody !== '' ? mailer_wrap_html($mail, $htmlBody, (string) ($message['subject'] ?? '')) : '';
     $mail->AltBody = (string) ($message['text'] ?? strip_tags((string) ($message['html'] ?? '')));
 
     $mail->send();
