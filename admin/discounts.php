@@ -121,6 +121,7 @@ $validUsers = admin_fetch_discount_valid_user_options();
                                     data-id="<?php echo htmlspecialchars((string) $discount['public_discount_id']); ?>"
                                     data-title="<?php echo htmlspecialchars((string) $discount['name']); ?>"
                                     data-discount-type="<?php echo htmlspecialchars((string) $discount['discount_type_label']); ?>"
+                                    data-discount-type-key="<?php echo htmlspecialchars(strtolower((string) $discount['discount_type'])); ?>"
                                     data-value-type="<?php echo htmlspecialchars((string) $discount['value_type_label']); ?>"
                                     data-value="<?php echo htmlspecialchars((string) $discount['value']); ?>"
                                     data-users="<?php echo htmlspecialchars(implode('|', $discount['valid_user_keys'])); ?>"

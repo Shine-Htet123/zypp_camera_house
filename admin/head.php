@@ -18,5 +18,22 @@
             return base + '/' + target;
         };
     </script>
+    <script>
+        (function () {
+            try {
+                if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    return;
+                }
+
+                if (window.sessionStorage.getItem('admin-page-transition') !== 'enter') {
+                    return;
+                }
+
+                document.documentElement.classList.add('admin-transition-ready', 'admin-page-entering');
+            } catch (_) {
+                // Ignore transition bootstrap errors.
+            }
+        }());
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
     <title>ZYPP Admin Dashboard</title>

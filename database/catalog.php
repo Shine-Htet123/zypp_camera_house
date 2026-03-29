@@ -479,6 +479,7 @@ function catalog_fetch_discount_user_context(?int $userId): array
         return [
             'user_id' => 0,
             'membership_tier_id' => null,
+            'standard_tier_ids' => catalog_fetch_standard_discount_tier_ids(),
         ];
     }
 
@@ -495,6 +496,7 @@ function catalog_fetch_discount_user_context(?int $userId): array
     return [
         'user_id' => (int) ($row['id'] ?? $userId),
         'membership_tier_id' => $row && $row['membership_tier_id'] !== null ? (int) $row['membership_tier_id'] : null,
+        'standard_tier_ids' => catalog_fetch_standard_discount_tier_ids(),
     ];
 }
 
@@ -510,7 +512,44 @@ function catalog_discount_is_valid_for_user(array $discount, array $userContext)
         return in_array('standard', $validUsers, true);
     }
 
-    return in_array('tier:' . (int) $membershipTierId, $validUsers, true);
+    if (in_array('tier:' . (int) $membershipTierId, $validUsers, true)) {
+        return true;
+    }
+
+    return in_array('standard', $validUsers, true)
+        && in_array((int) $membershipTierId, $userContext['standard_tier_ids'] ?? [], true);
+}
+
+function catalog_fetch_standard_discount_tier_ids(): array
+{
+    static $tierIds = null;
+    if (is_array($tierIds)) {
+        return $tierIds;
+    }
+
+    $pdo = get_database_connection();
+    $statement = $pdo->query(
+        'SELECT id, min_spent
+         FROM membership_tiers
+         ORDER BY min_spent ASC, id ASC'
+    );
+
+    $tierIds = [];
+    $lowestMinSpent = null;
+    foreach ($statement->fetchAll() as $tier) {
+        $minSpent = (float) ($tier['min_spent'] ?? 0);
+        if ($lowestMinSpent === null) {
+            $lowestMinSpent = $minSpent;
+        }
+
+        if (abs($minSpent - $lowestMinSpent) > 0.00001) {
+            break;
+        }
+
+        $tierIds[] = (int) $tier['id'];
+    }
+
+    return $tierIds;
 }
 
 function catalog_calculate_unit_discount_amount(float $unitPrice, array $discount): float
@@ -545,6 +584,7 @@ function catalog_fetch_applicable_discount_for_product(?int $userId, array $prod
          FROM discounts d
          LEFT JOIN discount_conditions dc ON dc.discount_id = d.id
          WHERE LOWER(d.status) = "active"
+           AND LOWER(d.discount_type) <> "bundle"
            AND (d.start_date IS NULL OR d.start_date <= NOW())
            AND (d.end_date IS NULL OR d.end_date >= NOW())
            AND (
@@ -617,6 +657,8 @@ function catalog_apply_discount_display(array &$product, ?int $userId): void
     $product['discount_name'] = '';
     $product['discount_value_type'] = '';
     $product['discount_value'] = 0;
+    $product['discount_start_date'] = null;
+    $product['discount_end_date'] = null;
     $product['unit_discount_amount'] = 0;
     $product['discounted_price_value'] = $originalPrice;
     $product['has_discount'] = false;
@@ -628,6 +670,8 @@ function catalog_apply_discount_display(array &$product, ?int $userId): void
         $product['discount_name'] = (string) ($discount['name'] ?? '');
         $product['discount_value_type'] = strtolower((string) ($discount['value_type'] ?? 'percentage'));
         $product['discount_value'] = (float) ($discount['value'] ?? 0);
+        $product['discount_start_date'] = $discount['start_date'] ?? null;
+        $product['discount_end_date'] = $discount['end_date'] ?? null;
         $product['unit_discount_amount'] = $discountAmount;
         $product['discounted_price_value'] = $discountedPrice;
         $product['has_discount'] = $discountAmount > 0;
@@ -636,6 +680,54 @@ function catalog_apply_discount_display(array &$product, ?int $userId): void
     $product['price_label'] = number_format($product['discounted_price_value']) . ' MMK';
     $product['original_price_label'] = $product['has_discount'] ? number_format($originalPrice) . ' MMK' : '';
     $product['discount_badge_label'] = $product['discount_name'];
+}
+
+function catalog_product_is_new_arrival(array $product, int $days = 30): bool
+{
+    $createdAt = trim((string) ($product['created_at'] ?? ''));
+    if ($createdAt === '') {
+        return false;
+    }
+
+    $createdTimestamp = strtotime($createdAt);
+    if ($createdTimestamp === false) {
+        return false;
+    }
+
+    return $createdTimestamp >= strtotime('-' . max(1, $days) . ' days');
+}
+
+function catalog_discount_has_limited_duration(array $product): bool
+{
+    if (empty($product['has_discount'])) {
+        return false;
+    }
+
+    return trim((string) ($product['discount_end_date'] ?? '')) !== '';
+}
+
+function catalog_format_limited_time_sale_label(array $product): string
+{
+    if (!catalog_discount_has_limited_duration($product)) {
+        return '';
+    }
+
+    $startDate = trim((string) ($product['discount_start_date'] ?? ''));
+    $endDate = trim((string) ($product['discount_end_date'] ?? ''));
+    $startTimestamp = $startDate !== '' ? strtotime($startDate) : false;
+    $endTimestamp = strtotime($endDate);
+    if ($endTimestamp === false) {
+        return '';
+    }
+
+    $startLabel = $startTimestamp !== false ? date('d.m.Y', $startTimestamp) : '';
+    $endLabel = date('d.m.Y', $endTimestamp);
+
+    if ($startLabel !== '') {
+        return $startLabel . ' to ' . $endLabel;
+    }
+
+    return $endLabel;
 }
 
 function fetch_product_by_id(int $productId, bool $includeHidden = false, ?int $userId = null): ?array
@@ -717,6 +809,7 @@ function catalog_fetch_customer_products(array $filters = []): array
             p.price,
             p.stock_quantity,
             p.is_featured,
+            p.created_at,
             p.category_id,
             p.brand_id,
             p.sub_category_id,
@@ -783,9 +876,19 @@ function catalog_fetch_customer_products(array $filters = []): array
         $product['brand'] = $product['brand_name'];
         $product['category'] = $product['category_name'];
         $product['sub_category'] = $product['sub_category_name'];
-        $product['tags'] = $product['is_featured'] ? ['Best Sellers'] : [];
         $product['availability'] = (int) $product['stock_quantity'] > 0 ? 'In Stock' : 'Out of Stock';
         catalog_apply_discount_display($product, $userId);
+        $product['tags'] = [];
+        if (!empty($product['is_featured'])) {
+            $product['tags'][] = 'Best Sellers';
+        }
+        if (catalog_product_is_new_arrival($product)) {
+            $product['tags'][] = 'New Arrivals';
+        }
+        if (catalog_discount_has_limited_duration($product)) {
+            $product['tags'][] = 'Limited-time Sales';
+        }
+        $product['limited_time_sale_label'] = catalog_format_limited_time_sale_label($product);
         $product['price_value'] = (float) $product['discounted_price_value'];
         $product['price'] = $product['price_label'];
         $product['original'] = $product['original_price_label'];

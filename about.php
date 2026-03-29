@@ -1,8 +1,14 @@
 <?php
+require_once __DIR__ . '/app/services/customer_auth.php';
 require_once __DIR__ . '/database/site_content.php';
 
 $aboutContent = site_content_get_about();
 $aboutSections = (array) ($aboutContent['story_sections'] ?? []);
+$currentCustomer = customer_auth_current_user();
+$facebookUrl = trim((string) ($aboutContent['facebook_url'] ?? ''));
+$tiktokUrl = trim((string) ($aboutContent['tiktok_url'] ?? ''));
+$telegramUrl = trim((string) ($aboutContent['telegram_url'] ?? ''));
+$instagramUrl = trim((string) ($aboutContent['instagram_url'] ?? ''));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -62,18 +68,26 @@ $aboutSections = (array) ($aboutContent['story_sections'] ?? []);
                         <div class="contact-socials">
                             <h3>Join us on:</h3>
                             <div class="social-row">
-                                <a href="<?php echo htmlspecialchars((string) (($aboutContent['facebook_url'] ?? '') !== '' ? $aboutContent['facebook_url'] : '#')); ?>" class="social-link fb" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
-                                    <i class="fab fa-facebook-f"></i>
-                                </a>
-                                <a href="<?php echo htmlspecialchars((string) (($aboutContent['tiktok_url'] ?? '') !== '' ? $aboutContent['tiktok_url'] : '#')); ?>" class="social-link tt" aria-label="TikTok" target="_blank" rel="noopener noreferrer">
-                                    <i class="fab fa-tiktok"></i>
-                                </a>
-                                <a href="<?php echo htmlspecialchars((string) (($aboutContent['telegram_url'] ?? '') !== '' ? $aboutContent['telegram_url'] : '#')); ?>" class="social-link tg" aria-label="Telegram" target="_blank" rel="noopener noreferrer">
-                                    <i class="fas fa-paper-plane"></i>
-                                </a>
-                                <a href="<?php echo htmlspecialchars((string) (($aboutContent['instagram_url'] ?? '') !== '' ? $aboutContent['instagram_url'] : '#')); ?>" class="social-link ig" aria-label="Instagram" target="_blank" rel="noopener noreferrer">
-                                    <i class="fab fa-instagram"></i>
-                                </a>
+                                <?php if ($facebookUrl !== ''): ?>
+                                    <a href="<?php echo htmlspecialchars($facebookUrl); ?>" class="social-link fb" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
+                                        <i class="fab fa-facebook-f"></i>
+                                    </a>
+                                <?php endif; ?>
+                                <?php if ($tiktokUrl !== ''): ?>
+                                    <a href="<?php echo htmlspecialchars($tiktokUrl); ?>" class="social-link tt" aria-label="TikTok" target="_blank" rel="noopener noreferrer">
+                                        <i class="fab fa-tiktok"></i>
+                                    </a>
+                                <?php endif; ?>
+                                <?php if (is_array($currentCustomer) && $telegramUrl !== ''): ?>
+                                    <a href="<?php echo htmlspecialchars($telegramUrl); ?>" class="social-link tg" aria-label="Telegram" target="_blank" rel="noopener noreferrer">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </a>
+                                <?php endif; ?>
+                                <?php if ($instagramUrl !== ''): ?>
+                                    <a href="<?php echo htmlspecialchars($instagramUrl); ?>" class="social-link ig" aria-label="Instagram" target="_blank" rel="noopener noreferrer">
+                                        <i class="fab fa-instagram"></i>
+                                    </a>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>

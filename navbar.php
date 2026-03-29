@@ -10,6 +10,10 @@
     $authPanel = is_array($authFlash) ? ($authFlash['panel'] ?? '') : '';
     $authMessage = is_array($authFlash) ? ($authFlash['message'] ?? '') : '';
     $authType = is_array($authFlash) ? ($authFlash['type'] ?? 'error') : 'error';
+    $referralCode = trim((string) ($_GET['ref'] ?? ''));
+    $forcedAuthPanel = $authPanel !== ''
+        ? $authPanel
+        : ((!$customerUser && ($referralCode !== '' || (string) ($_GET['register'] ?? '') === '1')) ? 'register' : '');
     $navCategories = catalog_fetch_nav_categories();
     $navBrands = catalog_fetch_nav_brands();
     $cartCount = customer_cart_count();
@@ -71,10 +75,12 @@
                 </button>
             </form>
             <div class="search-bar-content">
-                <div class="search-loading">
-                    <video autoplay muted loop playsinline class="search-loading-video">
-                        <source src="./assets/images/Search-box-loading.webm" type="video/webm">
-                    </video>
+                <div class="search-loading" aria-hidden="true">
+                    <div class="orbit-loader orbit-loader--search">
+                        <span class="orbit-loader__core">
+                            <img src="<?php echo htmlspecialchars(app_path('/storage/uploads/contents/logo.png')); ?>" alt="ZYPP Camera House">
+                        </span>
+                    </div>
                 </div>
                 <div class="search-result"></div>
                 <div class="search-empty">No products found.</div>
@@ -183,7 +189,7 @@
     <!--- Navigation Bar End ---->
 
     <!--Sidebar Start --->
-    <section class="menu-container" id="menu-container" data-auth-panel="<?php echo htmlspecialchars($authPanel); ?>">
+    <section class="menu-container" id="menu-container" data-auth-panel="<?php echo htmlspecialchars($forcedAuthPanel); ?>">
         <div class="blank-space" id="black-space"></div>
         <div class="user-menu" id="user-menu">
             <div id="close-menu">
@@ -220,6 +226,7 @@
                 <h2>Create an Account</h2>
                 <form action="<?php echo htmlspecialchars($registerPath); ?>" method="POST" id="register-form" novalidate>
                     <input type="hidden" name="redirect_to" value="<?php echo htmlspecialchars($currentRequestUri); ?>">
+                    <input type="hidden" name="ref" value="<?php echo htmlspecialchars($referralCode); ?>">
                     <div class="input">
                         <span>First Name:</span>
                         <input type="text" name="firstname">
@@ -281,7 +288,7 @@
         <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="forgot-password-title">
             <div class="modal-header">
                 <h3 id="forgot-password-title">Forgot Password</h3>
-                <button type="button" class="modal-close" aria-label="Close">Ã—</button>
+                <button type="button" class="modal-close" aria-label="Close">&times;</button>
             </div>
             <p class="modal-subtitle">Enter your email and we will send a reset link.</p>
             <form class="modal-form" id="forgot-password-form" action="<?php echo htmlspecialchars($forgotPasswordPath); ?>" method="post">
@@ -303,20 +310,20 @@
         <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="change-password-title">
             <div class="modal-header">
                 <h3 id="change-password-title">Change Password</h3>
-                <button type="button" class="modal-close" aria-label="Close">Ã—</button>
+                <button type="button" class="modal-close" aria-label="Close">&times;</button>
             </div>
             <form class="modal-form">
                 <div class="field">
                     <label>Current Password</label>
-                    <input type="password" name="current_password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢">
+                    <input type="password" name="current_password" placeholder="********">
                 </div>
                 <div class="field">
                     <label>New Password</label>
-                    <input type="password" name="new_password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢">
+                    <input type="password" name="new_password" placeholder="********">
                 </div>
                 <div class="field">
                     <label>Confirm New Password</label>
-                    <input type="password" name="confirm_password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢">
+                    <input type="password" name="confirm_password" placeholder="********">
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn ghost modal-cancel">Cancel</button>
@@ -330,7 +337,7 @@
         <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
             <div class="modal-header">
                 <h3 id="delete-account-title">Delete Account</h3>
-                <button type="button" class="modal-close" aria-label="Close">Ã—</button>
+                <button type="button" class="modal-close" aria-label="Close">&times;</button>
             </div>
             <p class="modal-subtitle danger-text">
                 This action is permanent and cannot be undone.

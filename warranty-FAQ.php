@@ -2,6 +2,7 @@
 require_once __DIR__ . '/database/site_content.php';
 
 $warrantyContent = site_content_get_warranty_faq();
+$generalFaqs = (array) ($warrantyContent['general_faqs'] ?? []);
 $warrantyCategories = (array) ($warrantyContent['categories'] ?? []);
 $defaultCategory = (string) (($warrantyCategories[0]['key'] ?? 'camera'));
 ?>
@@ -53,7 +54,7 @@ $defaultCategory = (string) (($warrantyCategories[0]['key'] ?? 'camera'));
         </section>
 
         <section class="faq-section">
-            <h3>FAQs</h3>
+            <h3>Category FAQs</h3>
             <?php foreach ($warrantyCategories as $category): ?>
                 <?php $categoryKey = (string) ($category['key'] ?? ''); ?>
                 <div class="faq-list faq-group <?php echo $categoryKey === $defaultCategory ? 'active' : ''; ?>" data-category="<?php echo htmlspecialchars($categoryKey); ?>">
@@ -71,6 +72,25 @@ $defaultCategory = (string) (($warrantyCategories[0]['key'] ?? 'camera'));
                 </div>
             <?php endforeach; ?>
         </section>
+
+        <?php if ($generalFaqs !== []): ?>
+            <section class="faq-section">
+                <h3>General FAQs</h3>
+                <div class="faq-list faq-list--general">
+                    <?php foreach ($generalFaqs as $index => $faq): ?>
+                        <div class="faq-item <?php echo $index === 0 ? 'open' : ''; ?>">
+                            <button type="button" class="faq-question">
+                                <span><?php echo htmlspecialchars((string) ($faq['q'] ?? '')); ?></span>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </button>
+                            <div class="faq-answer">
+                                <p><?php echo htmlspecialchars((string) ($faq['a'] ?? '')); ?></p>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+        <?php endif; ?>
     </main>
 
     <?php include './footer.php'; ?>

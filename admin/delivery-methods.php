@@ -20,17 +20,43 @@ $consumeFlash = static function (): ?array {
     return is_array($flash) ? $flash : null;
 };
 
+$isAjaxRequest = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
+$respondJson = static function (array $payload, int $status = 200): void {
+    http_response_code($status);
+    header('Content-Type: application/json; charset=UTF-8');
+    echo json_encode($payload, JSON_UNESCAPED_SLASHES);
+    exit;
+};
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $action = trim((string) ($_POST['delivery_method_action'] ?? 'save'));
+        $message = 'Delivery method saved successfully.';
         if ($action === 'delete') {
             admin_delivery_method_delete((int) ($_POST['delivery_method_id'] ?? 0));
-            $setFlash('Delivery method deleted successfully.');
+            $message = 'Delivery method deleted successfully.';
         } else {
             admin_delivery_method_save($_POST);
-            $setFlash('Delivery method saved successfully.');
+            $message = 'Delivery method saved successfully.';
         }
+
+        if ($isAjaxRequest) {
+            $respondJson([
+                'success' => true,
+                'message' => $message,
+                'delivery_methods' => admin_fetch_delivery_methods(),
+            ]);
+        }
+
+        $setFlash($message);
     } catch (Throwable $exception) {
+        if ($isAjaxRequest) {
+            $respondJson([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
+
         $setFlash($exception->getMessage(), 'error');
     }
 

@@ -21,38 +21,80 @@ $consumeFlash = static function (): ?array {
     return is_array($flash) ? $flash : null;
 };
 
+$isAjaxRequest = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
+$respondJson = static function (array $payload, int $status = 200): void {
+    http_response_code($status);
+    header('Content-Type: application/json; charset=UTF-8');
+    echo json_encode($payload, JSON_UNESCAPED_SLASHES);
+    exit;
+};
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $action = (string) ($_POST['entity_action'] ?? '');
+        $message = 'Saved successfully.';
         switch ($action) {
             case 'save_category':
                 admin_category_save($_POST, $_FILES);
-                $setFlash('Category saved successfully.');
+                $message = 'Category saved successfully.';
                 break;
             case 'delete_category':
                 admin_category_delete((int) ($_POST['entity_id'] ?? 0));
-                $setFlash('Category deleted successfully.');
+                $message = 'Category deleted successfully.';
                 break;
             case 'save_brand':
                 admin_brand_save($_POST, $_FILES);
-                $setFlash('Brand saved successfully.');
+                $message = 'Brand saved successfully.';
                 break;
             case 'delete_brand':
                 admin_brand_delete((int) ($_POST['entity_id'] ?? 0));
-                $setFlash('Brand deleted successfully.');
+                $message = 'Brand deleted successfully.';
                 break;
             case 'save_subcategory':
                 admin_sub_category_save($_POST);
-                $setFlash('Sub-category saved successfully.');
+                $message = 'Sub-category saved successfully.';
                 break;
             case 'delete_subcategory':
                 admin_sub_category_delete((int) ($_POST['entity_id'] ?? 0));
-                $setFlash('Sub-category deleted successfully.');
+                $message = 'Sub-category deleted successfully.';
                 break;
             default:
                 throw new RuntimeException('Unknown action.');
         }
+
+        if ($isAjaxRequest) {
+            $categories = array_map(static function (array $row): array {
+                $row['image_url'] = !empty($row['category_img'])
+                    ? catalog_public_file_url($row['category_img'], '/storage/uploads/contents/logo.png')
+                    : '';
+                return $row;
+            }, catalog_fetch_category_options());
+            $subCategories = catalog_fetch_sub_category_options();
+            $brands = array_map(static function (array $row): array {
+                $row['image_url'] = !empty($row['logo_file'])
+                    ? catalog_public_file_url($row['logo_file'], '/storage/uploads/contents/logo.png')
+                    : '';
+                return $row;
+            }, catalog_fetch_brand_options());
+
+            $respondJson([
+                'success' => true,
+                'message' => $message,
+                'categories' => $categories,
+                'sub_categories' => $subCategories,
+                'brands' => $brands,
+            ]);
+        }
+
+        $setFlash($message);
     } catch (Throwable $exception) {
+        if ($isAjaxRequest) {
+            $respondJson([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
+
         $setFlash($exception->getMessage(), 'error');
     }
 

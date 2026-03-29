@@ -209,11 +209,11 @@ function checkout_find_matching_address(PDO $pdo, int $userId, array $payload): 
         'SELECT address_id, is_default
          FROM user_addresses
          WHERE user_id = :user_id
-           AND city = :city
-           AND township = :township
-           AND street = :street
-           AND phone = :phone
-           AND COALESCE(postal_code, "") = COALESCE(:postal_code, "")
+           AND city COLLATE utf8mb4_general_ci = CAST(:city AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci
+           AND township COLLATE utf8mb4_general_ci = CAST(:township AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci
+           AND street COLLATE utf8mb4_general_ci = CAST(:street AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci
+           AND phone COLLATE utf8mb4_general_ci = CAST(:phone AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci
+           AND COALESCE(postal_code, "") COLLATE utf8mb4_general_ci = COALESCE(CAST(:postal_code AS CHAR CHARACTER SET utf8mb4), "") COLLATE utf8mb4_general_ci
          LIMIT 1'
     );
     $statement->execute([
@@ -450,6 +450,24 @@ function checkout_fetch_order_confirmation(int $userId, ?string $publicOrderId =
     $itemsStatement->execute([':order_id' => (int) $order['id']]);
     $order['items'] = $itemsStatement->fetchAll() ?: [];
     $order['reupload_requested'] = !empty($order['reupload_requested']);
+
+    foreach ($order['items'] as &$item) {
+        $qty = (int) ($item['qty'] ?? 0);
+        $unitPrice = (float) ($item['price'] ?? 0);
+        $item['line_subtotal'] = $unitPrice * $qty;
+        $item['line_total'] = (float) ($item['final_price'] ?? 0);
+    }
+    unset($item);
+
+    $order['items_total'] = (float) ($order['subtotal'] ?? 0);
+    $order['subtotal_after_discount'] = max(
+        $order['items_total'] - (float) ($order['total_discount'] ?? 0),
+        0
+    );
+    $order['shipping_fee'] = max(
+        (float) ($order['grand_total'] ?? 0) - (float) $order['subtotal_after_discount'],
+        0
+    );
 
     return $order;
 }

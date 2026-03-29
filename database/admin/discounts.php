@@ -300,6 +300,15 @@ function admin_fetch_discount_conditions_grouped(int $discountId): array
 function admin_discount_save_conditions(int $discountId, array $input): void
 {
     $pdo = get_database_connection();
+    $discount = admin_fetch_discount_row($discountId);
+    if (!$discount) {
+        throw new InvalidArgumentException('Discount not found.');
+    }
+
+    if (strtolower((string) ($discount['discount_type'] ?? '')) === 'bundle') {
+        throw new InvalidArgumentException('Bundle discounts are managed from Bundle Management, not Apply Discounts.');
+    }
+
     $pdo->beginTransaction();
     try {
         $pdo->prepare('DELETE FROM discount_conditions WHERE discount_id = :discount_id')

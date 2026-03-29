@@ -101,11 +101,15 @@ function site_content_default_home(): array
                 'subtitle' => '700,000 MMK',
                 'subtitle_color' => '#2f2419',
                 'button1_text' => 'ADD TO CART',
+                'button1_action' => 'link',
                 'button1_url' => '',
+                'button1_product_id' => 0,
                 'button1_background_color' => '#6b5241',
                 'button1_text_color' => '#ffffff',
                 'button2_text' => 'VIEW MORE',
+                'button2_action' => 'link',
                 'button2_url' => '/products.php',
+                'button2_product_id' => 0,
                 'button2_background_color' => '#ffffff',
                 'button2_text_color' => '#6b5241',
             ],
@@ -116,11 +120,15 @@ function site_content_default_home(): array
                 'subtitle' => '2,500,000 MMK',
                 'subtitle_color' => '#1f1f1f',
                 'button1_text' => 'SHOP NOW',
+                'button1_action' => 'link',
                 'button1_url' => '/products.php?brand=Canon',
+                'button1_product_id' => 0,
                 'button1_background_color' => '#6b5241',
                 'button1_text_color' => '#ffffff',
                 'button2_text' => 'VIEW MORE',
+                'button2_action' => 'link',
                 'button2_url' => '/products.php?brand=Canon',
+                'button2_product_id' => 0,
                 'button2_background_color' => '#ffffff',
                 'button2_text_color' => '#6b5241',
             ],
@@ -131,11 +139,15 @@ function site_content_default_home(): array
                 'subtitle' => 'From 1,500,000 MMK',
                 'subtitle_color' => '#1f1f1f',
                 'button1_text' => '',
+                'button1_action' => 'link',
                 'button1_url' => '',
+                'button1_product_id' => 0,
                 'button1_background_color' => '#6b5241',
                 'button1_text_color' => '#ffffff',
                 'button2_text' => 'VIEW MORE',
+                'button2_action' => 'link',
                 'button2_url' => '/products.php',
+                'button2_product_id' => 0,
                 'button2_background_color' => '#ffffff',
                 'button2_text_color' => '#6b5241',
             ],
@@ -231,6 +243,41 @@ function site_content_default_delivery_policy(): array
     ];
 }
 
+function site_content_default_delivery_locations(): array
+{
+    return [
+        'states' => [
+            [
+                'name' => 'Yangon',
+                'cities' => [
+                    [
+                        'name' => 'Yangon',
+                        'townships' => ['Hlaing', 'Mayangone', 'Bahan', 'Lanmadaw'],
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Mandalay',
+                'cities' => [
+                    [
+                        'name' => 'Mandalay',
+                        'townships' => ['Chanayethazan', 'Aungmyaythazan'],
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Nay Pyi Taw',
+                'cities' => [
+                    [
+                        'name' => 'Nay Pyi Taw',
+                        'townships' => ['Zabuthiri', 'Ottarathiri'],
+                    ],
+                ],
+            ],
+        ],
+    ];
+}
+
 function site_content_default_payment_information(): array
 {
     return [
@@ -275,6 +322,243 @@ function site_content_default_payment_information(): array
                 ],
             ],
         ],
+        'methods' => [
+            [
+                'key' => 'cod',
+                'label' => 'Cash on Delivery',
+                'section_key' => 'cash_on_delivery',
+                'is_active' => true,
+                'requires_payment_proof' => false,
+                'logo_image' => '',
+                'account_name' => '',
+                'account_number' => '',
+                'phone' => '',
+                'qr_image' => '',
+                'instructions' => [
+                    'Pay cash when your order arrives.',
+                    'Our team will confirm your order before delivery.',
+                ],
+            ],
+            [
+                'key' => 'kbzpay',
+                'label' => 'KBZPay',
+                'section_key' => 'mobile_wallets',
+                'is_active' => true,
+                'requires_payment_proof' => true,
+                'logo_image' => '/storage/uploads/contents/payment-information/kbzpay.png',
+                'account_name' => 'Shine Htet',
+                'account_number' => '09123456789',
+                'phone' => '09123456789',
+                'qr_image' => '/storage/uploads/contents/logo.png',
+                'instructions' => [
+                    'Please transfer the exact amount and upload your payment proof.',
+                    'Our team will verify the payment before confirming your order.',
+                ],
+            ],
+            [
+                'key' => 'wave',
+                'label' => 'Wave Pay',
+                'section_key' => 'mobile_wallets',
+                'is_active' => true,
+                'requires_payment_proof' => true,
+                'logo_image' => '/storage/uploads/contents/payment-information/wavepay.png',
+                'account_name' => 'Shine Htet',
+                'account_number' => '09123456789',
+                'phone' => '09123456789',
+                'qr_image' => '/storage/uploads/contents/logo.png',
+                'instructions' => [
+                    'Please transfer the exact amount and upload your payment proof.',
+                    'Our team will verify the payment before confirming your order.',
+                ],
+            ],
+            [
+                'key' => 'aya',
+                'label' => 'AYA Pay',
+                'section_key' => 'mobile_wallets',
+                'is_active' => true,
+                'requires_payment_proof' => true,
+                'logo_image' => '/storage/uploads/contents/payment-information/ayapay.png',
+                'account_name' => 'Shine Htet',
+                'account_number' => '09123456789',
+                'phone' => '09123456789',
+                'qr_image' => '/storage/uploads/contents/logo.png',
+                'instructions' => [
+                    'Please transfer the exact amount and upload your payment proof.',
+                    'Our team will verify the payment before confirming your order.',
+                ],
+            ],
+        ],
+    ];
+}
+
+function site_content_payment_method_slug(string $value): string
+{
+    $value = strtolower(trim($value));
+    $value = preg_replace('/[^a-z0-9]+/', '_', $value) ?? '';
+    return trim($value, '_');
+}
+
+function site_content_normalize_payment_information(array $content): array
+{
+    $defaultContent = site_content_default_payment_information();
+    $pageTitle = trim((string) ($content['page_title'] ?? $defaultContent['page_title'] ?? ''));
+    if ($pageTitle === '') {
+        $pageTitle = (string) ($defaultContent['page_title'] ?? 'Our Available Payment Options');
+    }
+
+    $defaultSections = [];
+    foreach ((array) ($defaultContent['sections'] ?? []) as $section) {
+        if (!is_array($section)) {
+            continue;
+        }
+
+        $sectionKey = site_content_payment_method_slug((string) ($section['key'] ?? ''));
+        if ($sectionKey === '') {
+            continue;
+        }
+
+        $defaultSections[$sectionKey] = $section;
+    }
+
+    $rawSections = is_array($content['sections'] ?? null) && (array) ($content['sections'] ?? []) !== []
+        ? (array) $content['sections']
+        : (array) ($defaultContent['sections'] ?? []);
+    $sections = [];
+
+    foreach ($rawSections as $sectionIndex => $section) {
+        if (!is_array($section)) {
+            continue;
+        }
+
+        $sectionKey = site_content_payment_method_slug((string) ($section['key'] ?? ''));
+        if ($sectionKey === '') {
+            $sectionKey = site_content_payment_method_slug((string) ($section['title'] ?? ''));
+        }
+        if ($sectionKey === '') {
+            $sectionKey = 'section_' . $sectionIndex;
+        }
+
+        $fallbackSection = $defaultSections[$sectionKey] ?? [];
+        $logos = [];
+        foreach ((array) ($section['logos'] ?? $fallbackSection['logos'] ?? []) as $logo) {
+            if (!is_array($logo)) {
+                continue;
+            }
+
+            $label = trim((string) ($logo['label'] ?? ''));
+            $image = trim((string) ($logo['image'] ?? ''));
+            if ($label === '' && $image === '') {
+                continue;
+            }
+
+            $logos[] = [
+                'label' => $label,
+                'image' => $image,
+            ];
+        }
+
+        $notes = [];
+        foreach ((array) ($section['notes'] ?? $fallbackSection['notes'] ?? []) as $note) {
+            $note = trim((string) $note);
+            if ($note !== '') {
+                $notes[] = $note;
+            }
+        }
+
+        $sections[] = [
+            'key' => $sectionKey,
+            'title' => trim((string) ($section['title'] ?? $fallbackSection['title'] ?? '')),
+            'logos' => $logos,
+            'notes' => $notes,
+        ];
+    }
+
+    if ($sections === []) {
+        $sections = (array) ($defaultContent['sections'] ?? []);
+    }
+
+    $validSectionKeys = array_values(array_filter(array_map(
+        static fn (array $section): string => trim((string) ($section['key'] ?? '')),
+        $sections
+    )));
+    $defaultMethods = [];
+    foreach ((array) ($defaultContent['methods'] ?? []) as $method) {
+        if (!is_array($method)) {
+            continue;
+        }
+
+        $methodKey = site_content_payment_method_slug((string) ($method['key'] ?? ''));
+        if ($methodKey === '') {
+            continue;
+        }
+
+        $defaultMethods[$methodKey] = $method;
+    }
+
+    $rawMethods = is_array($content['methods'] ?? null) && (array) ($content['methods'] ?? []) !== []
+        ? (array) $content['methods']
+        : (array) ($defaultContent['methods'] ?? []);
+    $methods = [];
+
+    foreach ($rawMethods as $methodIndex => $method) {
+        if (!is_array($method)) {
+            continue;
+        }
+
+        $methodKey = site_content_payment_method_slug((string) ($method['key'] ?? ''));
+        if ($methodKey === '') {
+            $methodKey = site_content_payment_method_slug((string) ($method['label'] ?? ''));
+        }
+        if ($methodKey === '') {
+            $methodKey = 'payment_method_' . $methodIndex;
+        }
+
+        $fallbackMethod = $defaultMethods[$methodKey] ?? [];
+        $label = trim((string) ($method['label'] ?? $fallbackMethod['label'] ?? ''));
+        if ($label === '') {
+            continue;
+        }
+
+        $sectionKey = site_content_payment_method_slug((string) ($method['section_key'] ?? $fallbackMethod['section_key'] ?? ''));
+        if (!in_array($sectionKey, $validSectionKeys, true)) {
+            $sectionKey = $validSectionKeys[0] ?? '';
+        }
+
+        $instructions = [];
+        foreach ((array) ($method['instructions'] ?? $fallbackMethod['instructions'] ?? []) as $instruction) {
+            $instruction = trim((string) $instruction);
+            if ($instruction !== '') {
+                $instructions[] = $instruction;
+            }
+        }
+
+        $methods[] = [
+            'key' => $methodKey,
+            'label' => $label,
+            'section_key' => $sectionKey,
+            'is_active' => array_key_exists('is_active', $method)
+                ? !empty($method['is_active'])
+                : !empty($fallbackMethod['is_active']),
+            'requires_payment_proof' => array_key_exists('requires_payment_proof', $method)
+                ? !empty($method['requires_payment_proof'])
+                : !empty($fallbackMethod['requires_payment_proof']),
+            'logo_image' => trim((string) ($method['logo_image'] ?? $fallbackMethod['logo_image'] ?? '')),
+            'account_name' => trim((string) ($method['account_name'] ?? $fallbackMethod['account_name'] ?? '')),
+            'account_number' => trim((string) ($method['account_number'] ?? $fallbackMethod['account_number'] ?? '')),
+            'phone' => trim((string) ($method['phone'] ?? $fallbackMethod['phone'] ?? '')),
+            'qr_image' => trim((string) ($method['qr_image'] ?? $fallbackMethod['qr_image'] ?? '')),
+            'instructions' => $instructions,
+        ];
+    }
+
+    if ($methods === []) {
+        $methods = (array) ($defaultContent['methods'] ?? []);
+    }
+
+    return [
+        'page_title' => $pageTitle,
+        'sections' => $sections,
+        'methods' => $methods,
     ];
 }
 
@@ -297,6 +581,11 @@ function site_content_default_warranty_faq(): array
     return [
         'hero_title' => 'Warranty & FAQs',
         'hero_subtitle' => 'Please select the category you want to know.',
+        'general_faqs' => [
+            ['q' => 'Do I need the original receipt for warranty service?', 'a' => 'Yes. Please bring the original receipt or valid proof of purchase when requesting warranty service.'],
+            ['q' => 'Does warranty cover accidental or water damage?', 'a' => 'No. Warranty only covers eligible manufacturing defects and does not cover accidental, impact, or water damage.'],
+            ['q' => 'How long does warranty inspection or repair take?', 'a' => 'Service time depends on the product issue and parts availability. Our team will confirm an estimated timeline after inspection.'],
+        ],
         'categories' => [
             [
                 'key' => 'camera',
@@ -515,7 +804,8 @@ function site_content_get_home(): array
 function site_content_get_footer(): array
 {
     $content = site_content_fetch_raw('footer');
-    return is_array($content) ? $content : site_content_default_footer();
+    $defaultContent = site_content_default_footer();
+    return is_array($content) ? array_merge($defaultContent, $content) : $defaultContent;
 }
 
 function site_content_get_about(): array
@@ -527,13 +817,108 @@ function site_content_get_about(): array
 function site_content_get_delivery_policy(): array
 {
     $content = site_content_fetch_raw('support_delivery_policy');
-    return is_array($content) ? $content : site_content_default_delivery_policy();
+    $defaultContent = site_content_default_delivery_policy();
+    return is_array($content) ? array_merge($defaultContent, $content) : $defaultContent;
+}
+
+function site_content_normalize_delivery_locations(array $content): array
+{
+    $states = [];
+
+    foreach ((array) ($content['states'] ?? []) as $state) {
+        $stateName = trim((string) ($state['name'] ?? ''));
+        if ($stateName === '') {
+            continue;
+        }
+
+        $cities = [];
+        foreach ((array) ($state['cities'] ?? []) as $city) {
+            $cityName = trim((string) ($city['name'] ?? ''));
+            if ($cityName === '') {
+                continue;
+            }
+
+            $townships = [];
+            foreach ((array) ($city['townships'] ?? []) as $township) {
+                $townshipName = trim((string) $township);
+                if ($townshipName !== '' && !in_array($townshipName, $townships, true)) {
+                    $townships[] = $townshipName;
+                }
+            }
+
+            $cities[] = [
+                'name' => $cityName,
+                'townships' => $townships,
+            ];
+        }
+
+        $states[] = [
+            'name' => $stateName,
+            'cities' => $cities,
+        ];
+    }
+
+    return ['states' => $states];
+}
+
+function site_content_get_delivery_locations(): array
+{
+    $content = site_content_fetch_raw('delivery_locations');
+    $defaultContent = site_content_default_delivery_locations();
+    if (!is_array($content)) {
+        return $defaultContent;
+    }
+
+    $normalized = site_content_normalize_delivery_locations($content);
+    return $normalized['states'] !== [] ? $normalized : $defaultContent;
 }
 
 function site_content_get_payment_information(): array
 {
     $content = site_content_fetch_raw('support_payment_information');
-    return is_array($content) ? $content : site_content_default_payment_information();
+    if (!is_array($content)) {
+        return site_content_default_payment_information();
+    }
+
+    return site_content_normalize_payment_information($content);
+}
+
+function site_content_get_payment_method_definitions(bool $activeOnly = false): array
+{
+    $paymentContent = site_content_get_payment_information();
+    $methods = [];
+
+    foreach ((array) ($paymentContent['methods'] ?? []) as $method) {
+        if (!is_array($method)) {
+            continue;
+        }
+
+        if ($activeOnly && empty($method['is_active'])) {
+            continue;
+        }
+
+        $methods[] = $method;
+    }
+
+    return $methods;
+}
+
+function site_content_find_payment_method(string $identifier, bool $activeOnly = false): ?array
+{
+    $identifierSlug = site_content_payment_method_slug($identifier);
+    if ($identifierSlug === '') {
+        return null;
+    }
+
+    foreach (site_content_get_payment_method_definitions($activeOnly) as $method) {
+        $keySlug = site_content_payment_method_slug((string) ($method['key'] ?? ''));
+        $labelSlug = site_content_payment_method_slug((string) ($method['label'] ?? ''));
+        if ($identifierSlug === $keySlug || $identifierSlug === $labelSlug) {
+            return $method;
+        }
+    }
+
+    return null;
 }
 
 function site_content_get_reservation_policy(): array
@@ -550,6 +935,7 @@ function site_content_get_warranty_faq(): array
     return [
         'hero_title' => (string) (($content['hero_title'] ?? $defaultContent['hero_title'] ?? 'Warranty & FAQs')),
         'hero_subtitle' => (string) (($content['hero_subtitle'] ?? $defaultContent['hero_subtitle'] ?? '')),
+        'general_faqs' => (array) (($content['general_faqs'] ?? $defaultContent['general_faqs'] ?? [])),
         'categories' => site_content_merge_warranty_categories(is_array($content) ? $content : null),
     ];
 }

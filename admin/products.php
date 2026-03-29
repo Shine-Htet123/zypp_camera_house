@@ -21,11 +21,35 @@ $consumeFlash = static function (): ?array {
     return is_array($flash) ? $flash : null;
 };
 
+$isAjaxRequest = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
+$respondJson = static function (array $payload, int $status = 200): void {
+    http_response_code($status);
+    header('Content-Type: application/json; charset=UTF-8');
+    echo json_encode($payload, JSON_UNESCAPED_SLASHES);
+    exit;
+};
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['product_action'] ?? '') === 'delete') {
     try {
-        admin_product_delete((int) ($_POST['product_id'] ?? 0));
+        $productId = (int) ($_POST['product_id'] ?? 0);
+        admin_product_delete($productId);
+        if ($isAjaxRequest) {
+            $respondJson([
+                'success' => true,
+                'message' => 'Product deleted successfully.',
+                'product_id' => $productId,
+            ]);
+        }
+
         $setFlash('Product deleted successfully.');
     } catch (Throwable $exception) {
+        if ($isAjaxRequest) {
+            $respondJson([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
+
         $setFlash($exception->getMessage(), 'error');
     }
 

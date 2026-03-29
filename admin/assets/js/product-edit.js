@@ -23,16 +23,22 @@ document.addEventListener('DOMContentLoaded', () => {
   let newImageFiles = new DataTransfer();
   let activeImageKey = '';
 
-  const showWarning = (message) => {
+  const showAlert = async (options) => {
     if (window.Swal) {
-      Swal.fire({
-        icon: 'warning',
-        text: message,
-        confirmButtonColor: '#3b2615',
-      });
-      return;
+      return Swal.fire(options);
     }
-    alert(message);
+
+    const message = options?.text || options?.title || '';
+    if (message) alert(message);
+    return null;
+  };
+
+  const showWarning = (message) => {
+    showAlert({
+      icon: 'warning',
+      text: message,
+      confirmButtonColor: '#3b2615',
+    });
   };
 
   const validateForm = () => {
@@ -61,6 +67,11 @@ document.addEventListener('DOMContentLoaded', () => {
     formFooter?.classList.add('is-visible');
   };
 
+  const clearDirty = () => {
+    formDirty = false;
+    formFooter?.classList.remove('is-visible');
+  };
+
   const syncSubCategories = () => {
     if (!categorySelect || !subCategorySelect) return;
     const categoryId = categorySelect.value;
@@ -74,20 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
       subCategorySelect.value = '';
     }
   };
-
-  if (productForm) {
-    productForm.addEventListener('input', (event) => {
-      if (event.target?.classList?.contains('spec-edit-input')) return;
-      setDirty();
-    });
-    productForm.addEventListener('change', setDirty);
-    productForm.addEventListener('submit', (event) => {
-      const message = validateForm();
-      if (!message) return;
-      event.preventDefault();
-      showWarning(message);
-    });
-  }
 
   const buildListItem = (value, inputName, label) => {
     const li = document.createElement('li');
@@ -224,6 +221,35 @@ document.addEventListener('DOMContentLoaded', () => {
     imageGrid.insertBefore(tile, uploadTile);
   };
 
+  const appendExistingTile = (image, index) => {
+    const tile = document.createElement('div');
+    tile.className = `image-tile${index === 0 ? ' active' : ''}`;
+    tile.dataset.index = String(index);
+    tile.dataset.imageId = String(image.image_id || '');
+    tile.dataset.imageKey = `existing:${image.image_id}`;
+    tile.innerHTML = `
+      <img alt="Product image">
+      <div class="image-tools">
+        <button type="button" class="icon-btn reupload" title="Upload new">
+          <i class="fa-solid fa-upload"></i>
+        </button>
+        <label class="primary-radio" title="Set primary">
+          <input type="radio" name="primary_image_marker">
+          <span></span>
+        </label>
+        <button type="button" class="icon-btn delete" title="Delete">
+          <i class="fa-regular fa-trash-can"></i>
+        </button>
+      </div>
+    `;
+    tile.querySelector('img').src = image.url || image.image_file || '';
+    const radio = tile.querySelector('.primary-radio input');
+    if (radio) {
+      radio.checked = Boolean(Number(image.is_primary || 0));
+    }
+    imageGrid?.insertBefore(tile, uploadTile);
+  };
+
   const refreshNewTiles = () => {
     newTiles().forEach((tile) => tile.remove());
     Array.from(newImageFiles.files).forEach((file, index) => appendNewTile(file, index));
@@ -234,6 +260,102 @@ document.addEventListener('DOMContentLoaded', () => {
       if (firstTile) setActiveImage(firstTile.dataset.imageKey || '');
     }
   };
+
+  const rebuildImageGridFromServer = (images) => {
+    if (!imageGrid) return;
+
+    imageGrid.querySelectorAll('.image-tile:not(.upload-tile)').forEach((tile) => tile.remove());
+    newImageFiles = new DataTransfer();
+    syncFilesToInput();
+    if (uploadInput) {
+      uploadInput.value = '';
+    }
+    if (deletedImageInputs) {
+      deletedImageInputs.innerHTML = '';
+    }
+
+    (Array.isArray(images) ? images : []).forEach((image, index) => appendExistingTile(image, index));
+    updateUploadTileVisibility();
+
+    const primaryTile = imageGrid.querySelector('.image-tile .primary-radio input:checked')?.closest('.image-tile');
+    const firstTile = imageGrid.querySelector('.image-tile:not(.upload-tile)');
+    const nextTile = primaryTile || firstTile;
+    const nextKey = nextTile?.dataset.imageKey || '';
+
+    if (nextKey) {
+      setPrimary(nextKey);
+      setActiveImage(nextKey);
+    } else {
+      if (primaryImageKey) primaryImageKey.value = '';
+      activeImageKey = '';
+    }
+  };
+
+  const submitProductForm = async () => {
+    if (!productForm) return;
+
+    const formData = new FormData(productForm);
+    window.AdminLoading?.show('Saving product...');
+    let loaderVisible = true;
+
+    try {
+      const response = await fetch(productForm.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          Accept: 'application/json',
+        },
+      });
+
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.message || 'Failed to update product.');
+      }
+
+      rebuildImageGridFromServer(result.images || []);
+      clearDirty();
+      window.AdminLoading?.reset?.();
+      loaderVisible = false;
+      await showAlert({
+        icon: 'success',
+        text: result.message || 'Product updated successfully.',
+        confirmButtonColor: '#3b2615',
+      });
+    } catch (error) {
+      window.AdminLoading?.reset?.();
+      loaderVisible = false;
+      await showAlert({
+        icon: 'error',
+        title: 'Save failed',
+        text: error.message || 'Failed to update product.',
+        confirmButtonColor: '#3b2615',
+      });
+    } finally {
+      if (loaderVisible) {
+        window.AdminLoading?.reset?.();
+      }
+    }
+  };
+
+  if (productForm) {
+    productForm.addEventListener('input', (event) => {
+      if (event.target?.classList?.contains('spec-edit-input')) return;
+      setDirty();
+    });
+    productForm.addEventListener('change', setDirty);
+    productForm.addEventListener('submit', async (event) => {
+      const message = validateForm();
+      event.preventDefault();
+
+      if (message) {
+        showWarning(message);
+        return;
+      }
+
+      await submitProductForm();
+    });
+  }
 
   [
     { input: specInput, button: specAdd, list: specList, name: 'spec_names[]', label: 'specification' },
@@ -345,9 +467,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.location.reload();
   });
 
-  if (window.adminProductEditFlash && window.Swal) {
+  if (window.adminProductEditFlash && window.adminProductEditFlash.type === 'error' && window.Swal) {
     Swal.fire({
-      icon: window.adminProductEditFlash.type === 'error' ? 'error' : 'success',
+      icon: 'error',
       text: window.adminProductEditFlash.message || '',
       timer: 2200,
       showConfirmButton: false,

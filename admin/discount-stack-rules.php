@@ -55,7 +55,7 @@ $stackRules = admin_fetch_discount_stack_rules();
         <div class="stack-layout">
             <section class="priority-section">
                 <h1>Discount Priority</h1>
-                <p class="priority-subtitle">Drag and Drop the discount type to manage priority</p>
+                <p class="priority-subtitle">Drag and drop on desktop, or press and move on mobile, to manage priority</p>
 
                 <div class="priority-card">
                     <div class="priority-head">

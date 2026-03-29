@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $cartData = customer_cart_fetch_view_model();
 $cartItems = $cartData['items'];
-$subtotal = $cartData['subtotal'];
+$itemsTotal = $cartData['items_total'];
 $totalDiscount = $cartData['total_discount'];
 $cartFlash = customer_cart_consume_flash();
 ?>
@@ -68,7 +68,12 @@ $cartFlash = customer_cart_consume_flash();
 
         <h2 class="cart-title">Cart Summary</h2>
 
-        <form class="summary-card" action="/cart.php" method="post">
+        <form
+            class="summary-card"
+            action="/cart.php"
+            method="post"
+            data-cart-has-bundle-pricing="<?php echo !empty($cartData['has_bundle_pricing']) ? '1' : '0'; ?>"
+        >
             <?php if ($cartData['requires_login']): ?>
                 <div class="cart-empty-message">Please log in to view your cart.</div>
             <?php elseif ($cartItems === []): ?>
@@ -93,12 +98,20 @@ $cartFlash = customer_cart_consume_flash();
                         data-unit-price="<?php echo (int) $item['unit_price']; ?>"
                         data-discount-value="<?php echo (int) $item['discount_value']; ?>"
                         data-discount-type="<?php echo htmlspecialchars($item['discount_type']); ?>"
+                        data-line-subtotal="<?php echo (int) $item['line_subtotal']; ?>"
+                        data-line-discount="<?php echo (int) $item['line_discount']; ?>"
+                        data-line-total="<?php echo (int) $item['line_total']; ?>"
                     >
                         <input type="hidden" name="cart[<?php echo (int) $item['product_id']; ?>][product_id]" value="<?php echo (int) $item['product_id']; ?>">
                         <div class="item-cell summary-cell">
                             <img src="<?php echo htmlspecialchars($item['image']); ?>" alt="<?php echo htmlspecialchars($item['name']); ?>">
                             <div class="item-info">
                                 <span class="item-name"><?php echo htmlspecialchars($item['name']); ?></span>
+                                <?php if (!empty($item['matched_bundle_names'])): ?>
+                                    <span class="item-bundle-note">
+                                        <?php echo htmlspecialchars(implode(', ', (array) $item['matched_bundle_names'])); ?> applied
+                                    </span>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <div class="quantity-cell summary-cell">
@@ -124,10 +137,11 @@ $cartFlash = customer_cart_consume_flash();
                             <span data-price-value><?php echo customer_cart_format_mmk($item['unit_price']); ?></span> MMK
                         </span>
                         <span class="cell summary-cell">
-                            - <span data-discount-value><?php echo customer_cart_format_mmk($item['discount_value']); ?></span> <span data-discount-unit><?php echo $item['discount_type'] === 'fixed' ? 'MMK' : '%'; ?></span> each
+                            <span data-discount-text><?php echo htmlspecialchars((string) ($item['discount_summary'] ?? '')); ?></span>
+                            <span class="discount-detail"><?php echo htmlspecialchars((string) ($item['discount_detail'] ?? '')); ?></span>
                         </span>
                         <span class="cell summary-cell">
-                            <span data-line-subtotal><?php echo customer_cart_format_mmk($item['line_subtotal']); ?></span> MMK
+                            <span data-line-total><?php echo customer_cart_format_mmk($item['line_total']); ?></span> MMK
                         </span>
                         <div class="action-cell summary-cell">
                             <button type="button" class="delete-btn" aria-label="Remove" data-remove-row>
@@ -143,7 +157,7 @@ $cartFlash = customer_cart_consume_flash();
             <div class="summary-totals">
                 <div class="total-row">
                     <span>Subtotal:</span>
-                    <strong><span data-cart-subtotal><?php echo customer_cart_format_mmk($subtotal); ?></span> MMK</strong>
+                    <strong><span data-cart-items-total><?php echo customer_cart_format_mmk($itemsTotal); ?></span> MMK</strong>
                 </div>
                 <div class="total-row discount">
                     <span>Total Discount:</span>

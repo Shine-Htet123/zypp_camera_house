@@ -58,26 +58,7 @@ function profile_email_exists_for_other_user(string $email, int $userId): bool
     return (bool) $statement->fetchColumn();
 }
 
-function profile_has_address_content(array $payload): bool
-{
-    $fields = [
-        'phone',
-        'address',
-        'township',
-        'city',
-        'postal_code',
-    ];
-
-    foreach ($fields as $field) {
-        if (trim((string) ($payload[$field] ?? '')) !== '') {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-function profile_normalize_payload(array $input): array
+function profile_normalize_identity_payload(array $input): array
 {
     $fullName = trim((string) ($input['full_name'] ?? ''));
     $email = mb_strtolower(trim((string) ($input['email'] ?? '')));
@@ -93,15 +74,27 @@ function profile_normalize_payload(array $input): array
     return [
         'full_name' => $fullName,
         'email' => $email,
+    ];
+}
+
+function profile_normalize_address_payload(array $input): array
+{
+    $payload = [
         'phone' => trim((string) ($input['phone'] ?? '')),
         'address' => trim((string) ($input['address'] ?? '')),
         'township' => trim((string) ($input['township'] ?? '')),
         'city' => trim((string) ($input['city'] ?? '')),
         'postal_code' => trim((string) ($input['postal_code'] ?? '')),
     ];
+
+    if ($payload['phone'] === '' || $payload['address'] === '' || $payload['township'] === '' || $payload['city'] === '') {
+        throw new InvalidArgumentException('Please complete phone, address, township, and city.');
+    }
+
+    return $payload;
 }
 
-function profile_update_user_identity(PDO $pdo, int $userId, string $fullName, string $email): void
+function profile_apply_user_identity_update(PDO $pdo, int $userId, string $fullName, string $email): void
 {
     if (profile_email_exists_for_other_user($email, $userId)) {
         throw new InvalidArgumentException('This email is already used by another account.');
@@ -115,19 +108,26 @@ function profile_update_user_identity(PDO $pdo, int $userId, string $fullName, s
     ]);
 }
 
+function profile_update_user_identity(int $userId, array $input): array
+{
+    $payload = profile_normalize_identity_payload($input);
+    $pdo = get_database_connection();
+
+    profile_apply_user_identity_update($pdo, $userId, $payload['full_name'], $payload['email']);
+
+    return profile_user_by_id($userId) ?? [];
+}
+
 function profile_save_address_card(int $userId, ?int $addressId, array $input): array
 {
-    $payload = profile_normalize_payload($input);
+    $payload = profile_normalize_address_payload($input);
     $pdo = get_database_connection();
 
     $pdo->beginTransaction();
 
     try {
-        profile_update_user_identity($pdo, $userId, $payload['full_name'], $payload['email']);
-
         $savedAddress = null;
         $existingAddressCount = count(profile_fetch_user_addresses($userId));
-        $addressHasContent = profile_has_address_content($payload);
 
         if ($addressId !== null && $addressId > 0) {
             $existingAddress = profile_find_address($userId, $addressId);
@@ -155,7 +155,7 @@ function profile_save_address_card(int $userId, ?int $addressId, array $input): 
             ]);
 
             $savedAddress = profile_find_address($userId, $addressId);
-        } elseif ($addressHasContent) {
+        } else {
             $statement = $pdo->prepare(
                 'INSERT INTO user_addresses (user_id, city, township, street, phone, postal_code, is_default)
                  VALUES (:user_id, :city, :township, :street, :phone, :postal_code, :is_default)'
@@ -182,7 +182,6 @@ function profile_save_address_card(int $userId, ?int $addressId, array $input): 
     }
 
     return [
-        'user' => profile_user_by_id($userId),
         'address' => $savedAddress,
     ];
 }
@@ -210,11 +209,8 @@ function profile_delete_address_card(int $userId, ?int $addressId): array
 
         $remaining = profile_fetch_user_addresses($userId);
         $nextDefaultId = null;
-        $mode = 'remove';
 
-        if ($remaining === []) {
-            $mode = 'reset_blank';
-        } elseif ((int) $address['is_default'] === 1) {
+        if ($remaining !== [] && (int) $address['is_default'] === 1) {
             $nextDefaultId = (int) $remaining[0]['address_id'];
             $setDefault = $pdo->prepare('UPDATE user_addresses SET is_default = 0 WHERE user_id = :user_id');
             $setDefault->execute([':user_id' => $userId]);
@@ -235,9 +231,9 @@ function profile_delete_address_card(int $userId, ?int $addressId): array
     }
 
     return [
-        'mode' => $mode,
         'deleted_address_id' => $addressId,
         'next_default_address_id' => $nextDefaultId,
+        'remaining_count' => count($remaining),
     ];
 }
 

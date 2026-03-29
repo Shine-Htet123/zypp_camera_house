@@ -20,17 +20,43 @@ $consumeFlash = static function (): ?array {
     return is_array($flash) ? $flash : null;
 };
 
+$isAjaxRequest = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
+$respondJson = static function (array $payload, int $status = 200): void {
+    http_response_code($status);
+    header('Content-Type: application/json; charset=UTF-8');
+    echo json_encode($payload, JSON_UNESCAPED_SLASHES);
+    exit;
+};
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $action = trim((string) ($_POST['membership_action'] ?? 'save'));
+        $message = 'Membership tier saved successfully.';
         if ($action === 'delete') {
             admin_membership_delete((int) ($_POST['tier_id'] ?? 0));
-            $setFlash('Membership tier deleted successfully.');
+            $message = 'Membership tier deleted successfully.';
         } else {
             admin_membership_save($_POST);
-            $setFlash('Membership tier saved successfully.');
+            $message = 'Membership tier saved successfully.';
         }
+
+        if ($isAjaxRequest) {
+            $respondJson([
+                'success' => true,
+                'message' => $message,
+                'tiers' => admin_fetch_membership_tiers(),
+            ]);
+        }
+
+        $setFlash($message);
     } catch (Throwable $exception) {
+        if ($isAjaxRequest) {
+            $respondJson([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
+
         $setFlash($exception->getMessage(), 'error');
     }
 
@@ -69,9 +95,6 @@ $tiers = admin_fetch_membership_tiers();
                             data-tier-ref-type="<?php echo htmlspecialchars((string) ($tier['referral_discount_type_label'] !== '' ? $tier['referral_discount_type_label'] : '')); ?>"
                             data-tier-ref-value="<?php echo htmlspecialchars($tier['referral_discount_value'] !== null ? (string) $tier['referral_discount_value'] : ''); ?>"
                         >
-                            <div class="tier-icon">
-                                <i class="fa-regular fa-image"></i>
-                            </div>
                             <h3><?php echo htmlspecialchars((string) $tier['tier_name']); ?></h3>
                             <p><?php echo htmlspecialchars((string) $tier['range']); ?></p>
                             <div class="tier-actions">

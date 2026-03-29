@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const searchBtn = document.getElementById('productSearchBtn');
   const searchTrigger = document.getElementById('productSearchTrigger');
   const showAllButton = document.querySelector('.admin-show-all');
-  const cards = Array.from(document.querySelectorAll('.product-card'));
+  let cards = Array.from(document.querySelectorAll('.product-card'));
   const filterToggle = document.getElementById('filterToggle');
   const filterDropdown = document.getElementById('filterDropdown');
   const filterForm = document.getElementById('filterForm');
@@ -16,6 +16,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const pageSize = 9;
   let currentPage = 1;
   let totalPages = Math.max(1, Math.ceil(cards.length / pageSize));
+
+  const showAlert = async (options) => {
+    if (window.Swal) {
+      return Swal.fire(options);
+    }
+    const message = options?.text || options?.title || '';
+    if (message) alert(message);
+    return null;
+  };
 
   const getVisibleCards = () => cards.filter((card) => card.dataset.filtered !== 'false');
 
@@ -143,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const productId = btn.dataset.productId || '0';
       if (!deleteForm || !productId) return;
 
-      Swal.fire({
+      showAlert({
         title: 'Delete this product?',
         text: 'This action cannot be undone.',
         icon: 'warning',
@@ -152,10 +161,47 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelButtonColor: '#6c757d',
         confirmButtonText: 'Delete',
         cancelButtonText: 'Cancel',
-      }).then((result) => {
-        if (result.isConfirmed) {
-          deleteForm.querySelector('input[name="product_id"]').value = productId;
-          deleteForm.submit();
+      }).then(async (result) => {
+        if (!result.isConfirmed) return;
+
+        const formData = new FormData(deleteForm);
+        formData.set('product_id', productId);
+
+        window.AdminLoading?.show('Deleting product...');
+        try {
+          const response = await fetch(deleteForm.action || window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              Accept: 'application/json',
+            },
+          });
+
+          const payload = await response.json().catch(() => null);
+          if (!response.ok || !payload?.success) {
+            throw new Error(payload?.message || 'Delete failed.');
+          }
+
+          const card = btn.closest('.product-card');
+          card?.remove();
+          cards = Array.from(document.querySelectorAll('.product-card'));
+          filterCards();
+
+          await showAlert({
+            icon: 'success',
+            text: payload.message || 'Product deleted successfully.',
+            confirmButtonColor: '#3b2615',
+          });
+        } catch (error) {
+          await showAlert({
+            icon: 'error',
+            title: 'Delete failed',
+            text: error.message || 'Delete failed.',
+            confirmButtonColor: '#3b2615',
+          });
+        } finally {
+          window.AdminLoading?.hide();
         }
       });
     });

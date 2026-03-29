@@ -6,6 +6,9 @@
     flex-direction: column;
     gap: 20px;
     padding-bottom: 140px;
+    overflow: visible;
+    height: auto;
+    max-height: none;
 }
 
 .page-header h1 {
@@ -354,7 +357,7 @@
     max-width: 620px;
     margin: 0 auto;
     position: fixed;
-    left: 50%;
+    left: calc(50% + (var(--admin-sidebar-width) / 2));
     bottom: 28px;
     transform: translate(-50%, 120%);
     opacity: 0;
@@ -396,6 +399,12 @@
 .btn-footer.discard {
     background: var(--color-danger);
     color: var(--bg-card);
+}
+
+@media (max-width: 1024px) {
+    .form-footer {
+        left: 50%;
+    }
 }
 
 @media (max-width: 900px) {

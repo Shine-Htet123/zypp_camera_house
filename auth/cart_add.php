@@ -2,18 +2,23 @@
 
 require_once __DIR__ . '/../app/services/cart.php';
 
+$input = $_SERVER['REQUEST_METHOD'] === 'GET' ? $_GET : $_POST;
+
 try {
-    $payload = customer_cart_add($_POST);
+    $action = trim((string) ($input['action'] ?? 'add_item'));
+    $isBundleAdd = $action === 'add_bundle';
+    $payload = $isBundleAdd ? customer_cart_add_bundle($input) : customer_cart_add($input);
+    $successMessage = $isBundleAdd ? 'Bundle added to cart.' : 'Product added to cart.';
 
     if (customer_auth_is_json_request()) {
         customer_auth_json([
             'success' => true,
-            'message' => 'Product added to cart.',
+            'message' => $successMessage,
             'payload' => $payload,
         ]);
     }
 
-    customer_cart_set_flash('Product added to cart.', 'success');
+    customer_cart_set_flash($successMessage, 'success');
     customer_auth_redirect('/cart.php');
 } catch (Throwable $exception) {
     if (customer_auth_is_json_request()) {

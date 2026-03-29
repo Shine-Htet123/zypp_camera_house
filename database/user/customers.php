@@ -78,11 +78,12 @@ function fetch_admin_customers(array $filters = []): array
         ) AS default_address
             ON default_address.user_id = u.id
         LEFT JOIN (
-            SELECT referrer_user_id, COUNT(*) AS referral_count
-            FROM referrals
-            GROUP BY referrer_user_id
+            SELECT referred_by_user_id, COUNT(*) AS referral_count
+            FROM users
+            WHERE referred_by_user_id IS NOT NULL
+            GROUP BY referred_by_user_id
         ) AS referrals
-            ON referrals.referrer_user_id = u.id
+            ON referrals.referred_by_user_id = u.id
         WHERE 1 = 1
     SQL;
 

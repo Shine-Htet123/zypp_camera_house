@@ -171,7 +171,8 @@ const updateCartCount = (count) => {
 };
 
 document.querySelectorAll("[data-home-add-to-cart]").forEach((button) => {
-    button.addEventListener("click", async () => {
+    button.addEventListener("click", async (event) => {
+        event.preventDefault();
         const productId = Number(button.dataset.productId || "0");
         const quantity = Math.max(1, Number(button.dataset.quantity || "1"));
 

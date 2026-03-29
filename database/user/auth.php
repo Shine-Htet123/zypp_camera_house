@@ -57,6 +57,21 @@ function auth_user_by_email(string $email): ?array
     return $user ?: null;
 }
 
+function auth_user_by_referral_token(string $token): ?array
+{
+    $token = trim($token);
+    if ($token === '') {
+        return null;
+    }
+
+    $pdo = get_database_connection();
+    $statement = $pdo->prepare('SELECT * FROM users WHERE referral_token = :referral_token LIMIT 1');
+    $statement->execute([':referral_token' => $token]);
+    $user = $statement->fetch();
+
+    return $user ?: null;
+}
+
 function auth_password_is_strong(string $password): bool
 {
     return (bool) preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/', $password);

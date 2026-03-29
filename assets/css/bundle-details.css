@@ -144,6 +144,12 @@
     gap: 12px;
 }
 
+.bundle-purchase-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
 .bundle-hero-content h1 {
     font-size: 1.9rem;
     margin: 0;
@@ -214,6 +220,56 @@
 
 .bundle-stat .value {
     font-weight: 700;
+}
+
+.bundle-action-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+.bundle-qty-controls {
+    display: grid;
+    grid-template-columns: 40px 58px 40px;
+    align-items: center;
+    border-radius: 999px;
+    background: #f3ece6;
+    overflow: hidden;
+}
+
+.bundle-qty-controls button {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    color: #4a372c;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.bundle-qty-controls span {
+    text-align: center;
+    font-weight: 700;
+    color: #241a14;
+}
+
+.bundle-buy-btn {
+    min-height: 44px;
+    padding: 0 22px;
+    border: none;
+    border-radius: 999px;
+    background: #5d4e47;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.bundle-buy-btn:disabled {
+    background: #b7aea8;
+    cursor: not-allowed;
 }
 
 .bundle-items-section {

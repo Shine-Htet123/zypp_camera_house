@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../app/services/mailer.php';
+require_once __DIR__ . '/../site_content.php';
 
 function admin_orders_table_exists(string $table): bool
 {
@@ -84,6 +85,17 @@ function admin_orders_normalize_order_status(string $status): string
     };
 }
 
+function admin_orders_is_cod_payment_method(string $paymentMethod): bool
+{
+    $method = site_content_find_payment_method($paymentMethod);
+    if ($method) {
+        return empty($method['requires_payment_proof']);
+    }
+
+    $normalized = strtolower(trim($paymentMethod));
+    return in_array($normalized, ['cod', 'cash on delivery'], true);
+}
+
 function admin_orders_format_mmk(float|int|string $amount): string
 {
     return number_format((float) $amount) . ' MMK';
@@ -163,6 +175,121 @@ function admin_orders_fetch_notification_targets(array $orderIds): array
     }
 
     return $indexed;
+}
+
+function admin_orders_should_auto_confirm(string $orderStatus, ?string $paymentStatus): bool
+{
+    $normalizedOrderStatus = strtolower(trim($orderStatus));
+    $normalizedPaymentStatus = $paymentStatus !== null ? strtolower(trim($paymentStatus)) : '';
+
+    return $normalizedPaymentStatus === 'paid'
+        && in_array($normalizedOrderStatus, ['pending', 'confirmed'], true);
+}
+
+function admin_orders_send_confirmed_email(array $order): void
+{
+    $toEmail = trim((string) ($order['customer_email'] ?? ''));
+    if ($toEmail === '' || !mailer_is_configured()) {
+        return;
+    }
+
+    $customerName = trim((string) ($order['customer_name'] ?? 'Customer'));
+    $orderNo = '#' . (string) ($order['public_order_id'] ?? '');
+    $orderStatusLabel = admin_orders_normalize_order_status((string) ($order['status'] ?? 'pending'));
+    $paymentStatusLabel = admin_orders_normalize_payment_status((string) ($order['payment_status'] ?? 'pending'));
+    $orderUrl = app_url('/check-order.php?order=' . rawurlencode((string) ($order['public_order_id'] ?? '')));
+    $orderDetail = admin_fetch_order_detail((int) ($order['id'] ?? 0));
+    $summaryHtml = '';
+    $summaryText = '';
+
+    if ($orderDetail) {
+        $itemRowsHtml = '';
+        $itemLinesText = [];
+
+        foreach (($orderDetail['items'] ?? []) as $item) {
+            $name = (string) ($item['name'] ?? '');
+            $qty = (int) ($item['qty'] ?? 0);
+            $priceDisplay = (string) ($item['price_display'] ?? admin_orders_format_mmk($item['price'] ?? 0));
+
+            $itemRowsHtml .= '
+                <tr>
+                    <td style="padding:12px 10px;text-align:left;border-bottom:1px solid #eee;">' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '</td>
+                    <td style="padding:12px 10px;text-align:center;border-bottom:1px solid #eee;">' . $qty . '</td>
+                    <td style="padding:12px 10px;text-align:right;border-bottom:1px solid #eee;">' . htmlspecialchars($priceDisplay, ENT_QUOTES, 'UTF-8') . '</td>
+                </tr>';
+
+            $itemLinesText[] = $name . ' | Qty: ' . $qty . ' | Price: ' . $priceDisplay;
+        }
+
+        $deliverySummary = implode(', ', array_filter([
+            (string) ($orderDetail['delivery_name'] ?? ''),
+            (string) ($orderDetail['delivery_phone'] ?? ''),
+            (string) ($orderDetail['delivery_address'] ?? ''),
+        ]));
+
+        $summaryHtml = '
+            <table style="width:100%;border-collapse:collapse;margin:20px 0 16px;background:#fff7f1;border-radius:14px;overflow:hidden;">
+                <thead>
+                    <tr style="background:#f4ece6;">
+                        <th style="padding:12px 10px;text-align:left;">Item</th>
+                        <th style="padding:12px 10px;text-align:center;">Qty.</th>
+                        <th style="padding:12px 10px;text-align:right;">Price</th>
+                    </tr>
+                </thead>
+                <tbody>' . $itemRowsHtml . '</tbody>
+            </table>
+            <div style="margin:0 0 18px;padding:16px 18px;background:#faf6f2;border-radius:14px;">
+                <p style="margin:0 0 8px;"><strong>Subtotal:</strong> ' . htmlspecialchars((string) ($orderDetail['subtotal_display'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</p>
+                <p style="margin:0 0 8px;"><strong>Total Discount:</strong> -' . htmlspecialchars((string) ($orderDetail['total_discount_display'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</p>
+                <p style="margin:0;"><strong>Grand Total:</strong> ' . htmlspecialchars((string) ($orderDetail['total_display'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</p>
+            </div>
+            <p><strong>Delivery Information</strong><br>' . htmlspecialchars($deliverySummary !== '' ? $deliverySummary : 'Pick up at store', ENT_QUOTES, 'UTF-8') . '</p>';
+
+        $summaryText = "\n\nOrder Summary\n"
+            . implode("\n", $itemLinesText) . "\n"
+            . 'Subtotal: ' . ((string) ($orderDetail['subtotal_display'] ?? '-')) . "\n"
+            . 'Total Discount: -' . ((string) ($orderDetail['total_discount_display'] ?? '-')) . "\n"
+            . 'Grand Total: ' . ((string) ($orderDetail['total_display'] ?? '-')) . "\n"
+            . 'Delivery Information: ' . ($deliverySummary !== '' ? $deliverySummary : 'Pick up at store');
+    }
+
+    try {
+        mailer_send([
+            'to_email' => $toEmail,
+            'to_name' => $customerName,
+            'subject' => 'Your ZYPP order ' . $orderNo . ' is confirmed',
+            'html' => '
+                <h2 style="margin:0 0 16px;color:#241a14;">Order Confirmed</h2>
+                <p>Hello ' . htmlspecialchars($customerName, ENT_QUOTES, 'UTF-8') . ',</p>
+                <p>Your order <strong>' . htmlspecialchars($orderNo, ENT_QUOTES, 'UTF-8') . '</strong> has been confirmed.</p>
+                <p>We have verified your order and will continue with the next fulfillment steps shortly.</p>
+                <p><strong>Order Status</strong> ' . htmlspecialchars($orderStatusLabel, ENT_QUOTES, 'UTF-8') . '<br><strong>Payment Status</strong> ' . htmlspecialchars($paymentStatusLabel, ENT_QUOTES, 'UTF-8') . '</p>
+                ' . $summaryHtml . '
+                <p style="margin:24px 0 0;">
+                    <a href="' . htmlspecialchars($orderUrl, ENT_QUOTES, 'UTF-8') . '" style="background:#b58463;color:#fff;text-decoration:none;padding:12px 18px;border-radius:10px;display:inline-block;">View Order Details</a>
+                </p>
+                <p style="margin:18px 0 0;">Order details link:</p>
+                <p style="margin:0;"><a href="' . htmlspecialchars($orderUrl, ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($orderUrl, ENT_QUOTES, 'UTF-8') . '</a></p>',
+            'text' => "Hello {$customerName},\n\nYour ZYPP order {$orderNo} has been confirmed.\nOrder status: {$orderStatusLabel}\nPayment status: {$paymentStatusLabel}{$summaryText}\n\nOrder details:\n{$orderUrl}",
+        ]);
+    } catch (Throwable $exception) {
+        error_log('[ZYPP] Failed to send confirmed order email: ' . $exception->getMessage());
+    }
+}
+
+function admin_orders_notify_customer(?array $previous, array $updated, bool $reuploadRequested = false): void
+{
+    $orderChanged = !$previous || strtolower((string) ($previous['status'] ?? '')) !== strtolower((string) ($updated['status'] ?? ''));
+    $paymentChanged = !$previous || strtolower((string) ($previous['payment_status'] ?? '')) !== strtolower((string) ($updated['payment_status'] ?? ''));
+    $becameConfirmed = strtolower((string) ($updated['status'] ?? '')) === 'confirmed'
+        && strtolower((string) ($previous['status'] ?? '')) !== 'confirmed';
+
+    if ($becameConfirmed && !$reuploadRequested) {
+        admin_orders_send_confirmed_email($updated);
+        return;
+    }
+
+    admin_orders_send_status_update_email($updated, $paymentChanged, $orderChanged, $reuploadRequested);
 }
 
 function admin_orders_send_status_update_email(array $order, bool $paymentChanged, bool $orderChanged, bool $reuploadRequested = false): void
@@ -249,7 +376,7 @@ function admin_orders_send_status_update_email(array $order, bool $paymentChange
                             <td style="padding:10px 8px;border:1px solid #3b3b3b;border-radius:4px;background:#fff;text-align:center;">' . htmlspecialchars((string) ($orderDetail['subtotal_display'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</td>
                         </tr>
                         <tr>
-                            <td colspan="3" style="padding:10px 8px;border:1px solid #3b3b3b;border-radius:4px;background:#fff;font-weight:700;text-align:center;">Discount</td>
+                            <td colspan="3" style="padding:10px 8px;border:1px solid #3b3b3b;border-radius:4px;background:#fff;font-weight:700;text-align:center;">Total Discount</td>
                             <td style="padding:10px 8px;border:1px solid #3b3b3b;border-radius:4px;background:#fff;text-align:center;color:#e53935;">-' . htmlspecialchars($discountDisplay, ENT_QUOTES, 'UTF-8') . '</td>
                         </tr>
                         <tr>
@@ -278,7 +405,7 @@ function admin_orders_send_status_update_email(array $order, bool $paymentChange
             . "Customer: {$customerName}\n\n"
             . implode("\n", $itemLinesText) . "\n\n"
             . 'Subtotal: ' . ((string) ($orderDetail['subtotal_display'] ?? '-')) . "\n"
-            . 'Discount: -' . $discountDisplay . "\n"
+            . 'Total Discount: -' . $discountDisplay . "\n"
             . 'Grand Total: ' . ((string) ($orderDetail['total_display'] ?? '-')) . "\n"
             . 'Delivery Information: ' . ((string) ($orderDetail['delivery_name'] ?? '-')) . "\n"
             . ((string) ($orderDetail['delivery_email'] ?? '-')) . "\n"
@@ -384,6 +511,7 @@ function admin_fetch_orders(array $filters = []): array
         $row['payment_status_label'] = admin_orders_normalize_payment_status((string) $row['payment_status']);
         $row['order_status_label'] = admin_orders_normalize_order_status((string) $row['order_status']);
         $row['payment_method_label'] = trim((string) $row['payment_method']) !== '' ? (string) $row['payment_method'] : '-';
+        $row['can_edit_payment_status'] = admin_orders_is_cod_payment_method((string) $row['payment_method_label']);
         $row['total_display'] = admin_orders_format_mmk($row['grand_total'] ?? 0);
         $row['time_display'] = admin_orders_format_datetime($row['created_at'] ?? null);
     }
@@ -481,11 +609,13 @@ function admin_fetch_order_detail(int $orderId): ?array
     $items = $itemsStatement->fetchAll() ?: [];
 
     $order['items'] = array_map(static function (array $item): array {
+        $qty = (int) $item['qty'];
+        $lineSubtotal = (float) ($item['price'] ?? 0) * $qty;
         return [
-            'qty' => (int) $item['qty'],
+            'qty' => $qty,
             'name' => (string) $item['name'],
-            'price' => (float) $item['final_price'],
-            'price_display' => admin_orders_format_mmk($item['final_price']),
+            'price' => $lineSubtotal,
+            'price_display' => admin_orders_format_mmk($lineSubtotal),
         ];
     }, $items);
 
@@ -508,9 +638,11 @@ function admin_fetch_order_detail(int $orderId): ?array
     $order['order_status_label'] = admin_orders_normalize_order_status((string) $order['order_status']);
     $order['payment_status_label'] = admin_orders_normalize_payment_status((string) $order['payment_status']);
     $order['subtotal_display'] = admin_orders_format_mmk($order['subtotal'] ?? 0);
-    $order['shipping_fee'] = admin_orders_shipping_fee($order);
-    $order['shipping_fee_display'] = admin_orders_format_mmk($order['shipping_fee']);
-    $order['total_display'] = admin_orders_format_mmk($order['grand_total'] ?? 0);
+    $order['total_discount_display'] = admin_orders_format_mmk($order['total_discount'] ?? 0);
+    $order['grand_total_display'] = admin_orders_format_mmk($order['grand_total'] ?? 0);
+    $order['total_display'] = $order['grand_total_display'];
+    $order['payment_method_label'] = trim((string) ($order['payment_method'] ?? '')) !== '' ? (string) $order['payment_method'] : '-';
+    $order['can_edit_payment_status'] = admin_orders_is_cod_payment_method($order['payment_method_label']);
     $order['delivery_name'] = $deliveryName;
     $order['delivery_email'] = trim((string) ($order['email'] ?? '')) !== '' ? (string) $order['email'] : (string) $order['customer_email'];
     $order['delivery_phone'] = (string) ($order['phone'] ?? '');
@@ -522,9 +654,10 @@ function admin_fetch_order_detail(int $orderId): ?array
 
 function admin_update_order_status_only(int $orderId, string $orderStatus): void
 {
-    $orderStatus = strtolower(trim($orderStatus));
+    $normalizedOrderStatus = admin_orders_normalize_order_status($orderStatus);
+    $orderStatus = strtolower($normalizedOrderStatus);
 
-    if (!in_array(admin_orders_normalize_order_status($orderStatus), admin_orders_order_status_options(), true)) {
+    if (!in_array($normalizedOrderStatus, admin_orders_order_status_options(), true)) {
         throw new InvalidArgumentException('Order status is invalid.');
     }
 
@@ -556,9 +689,132 @@ function admin_update_order_status_only(int $orderId, string $orderStatus): void
     $after = admin_orders_fetch_notification_targets([$orderId]);
     $updated = $after[$orderId] ?? null;
     if ($updated) {
-        $orderChanged = !$previous || strtolower((string) ($previous['status'] ?? '')) !== strtolower((string) ($updated['status'] ?? ''));
-        admin_orders_send_status_update_email($updated, false, $orderChanged);
+        admin_orders_notify_customer($previous, $updated);
     }
+}
+
+function admin_update_order_statuses(int $orderId, string $orderStatus, ?string $paymentStatus = null): array
+{
+    $requestedOrderStatus = admin_orders_normalize_order_status($orderStatus);
+    $normalizedPaymentStatus = $paymentStatus !== null
+        ? admin_orders_normalize_payment_status($paymentStatus)
+        : null;
+
+    $pdo = get_database_connection();
+    $statement = $pdo->prepare(
+        'SELECT
+            o.id,
+            o.status AS order_status,
+            COALESCE(pay.payment_status, o.payment_status) AS payment_status,
+            COALESCE(pay.payment_method, CASE WHEN LOWER(o.payment_status) = "unpaid" THEN "COD" ELSE "-" END) AS payment_method,
+            pay.payment_id
+         FROM orders o
+         ' . admin_orders_build_payment_join() . '
+         WHERE o.id = :order_id
+         LIMIT 1'
+    );
+    $statement->execute([':order_id' => $orderId]);
+    $current = $statement->fetch();
+
+    if (!$current) {
+        throw new RuntimeException('Order not found.');
+    }
+
+    $canEditPaymentStatus = admin_orders_is_cod_payment_method((string) ($current['payment_method'] ?? ''));
+    if ($normalizedPaymentStatus !== null && !$canEditPaymentStatus) {
+        throw new InvalidArgumentException('Payment status can only be edited for Cash on Delivery orders.');
+    }
+
+    $effectiveOrderStatus = $requestedOrderStatus;
+    if (admin_orders_should_auto_confirm($effectiveOrderStatus, $normalizedPaymentStatus)) {
+        $effectiveOrderStatus = 'Confirmed';
+    }
+
+    $before = admin_orders_fetch_notification_targets([$orderId]);
+    $previous = $before[$orderId] ?? null;
+
+    $pdo->beginTransaction();
+    try {
+        $orderUpdate = $pdo->prepare(
+            'UPDATE orders
+             SET status = :order_status,
+                 payment_status = :payment_status,
+                 updated_at = NOW()
+             WHERE id = :order_id'
+        );
+        $orderUpdate->execute([
+            ':order_status' => strtolower($effectiveOrderStatus),
+            ':payment_status' => strtolower($normalizedPaymentStatus ?? admin_orders_normalize_payment_status((string) ($current['payment_status'] ?? 'pending'))),
+            ':order_id' => $orderId,
+        ]);
+
+        if ($normalizedPaymentStatus !== null && (int) ($current['payment_id'] ?? 0) > 0) {
+            $paymentUpdate = $pdo->prepare(
+                'UPDATE payments
+                 SET payment_status = :payment_status
+                 WHERE payment_id = :payment_id'
+            );
+            $paymentUpdate->execute([
+                ':payment_status' => strtolower($normalizedPaymentStatus),
+                ':payment_id' => (int) $current['payment_id'],
+            ]);
+        }
+
+        $pdo->commit();
+    } catch (Throwable $exception) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $exception;
+    }
+
+    $after = admin_orders_fetch_notification_targets([$orderId]);
+    $updated = $after[$orderId] ?? null;
+    if ($updated) {
+        admin_orders_notify_customer($previous, $updated);
+    }
+
+    return [
+        'order_status' => $effectiveOrderStatus,
+        'payment_status' => $normalizedPaymentStatus ?? admin_orders_normalize_payment_status((string) ($current['payment_status'] ?? 'pending')),
+    ];
+}
+
+function admin_payment_proof_activity_expression(string $paymentAlias = 'p', string $orderAlias = 'o'): string
+{
+    if (admin_orders_column_exists('payments', 'submitted_at')) {
+        return 'COALESCE(' . $paymentAlias . '.submitted_at, ' . $orderAlias . '.created_at)';
+    }
+
+    return $orderAlias . '.created_at';
+}
+
+function admin_payment_proof_build_marker(?string $timestamp, int $paymentId): string
+{
+    $normalizedTimestamp = trim((string) $timestamp);
+    if ($normalizedTimestamp === '' || $paymentId <= 0) {
+        return '';
+    }
+
+    return $normalizedTimestamp . '|' . $paymentId;
+}
+
+function admin_payment_proof_parse_marker(?string $marker): array
+{
+    $marker = trim((string) $marker);
+    if ($marker === '') {
+        return [null, 0];
+    }
+
+    $separator = strrpos($marker, '|');
+    if ($separator === false) {
+        return [$marker, 0];
+    }
+
+    $timestamp = trim(substr($marker, 0, $separator));
+    $paymentId = (int) substr($marker, $separator + 1);
+
+    return [$timestamp !== '' ? $timestamp : null, max(0, $paymentId)];
 }
 
 function admin_fetch_payment_proofs(array $filters = []): array
@@ -603,6 +859,21 @@ function admin_fetch_payment_proofs(array $filters = []): array
         $bindings[':query_payment_id'] = $searchBinding;
     }
 
+    $paymentIds = array_values(array_unique(array_filter(
+        array_map('intval', (array) ($filters['payment_ids'] ?? [])),
+        static fn (int $id): bool => $id > 0
+    )));
+    if ($paymentIds !== []) {
+        $paymentIdPlaceholders = [];
+        foreach ($paymentIds as $index => $paymentId) {
+            $placeholder = ':payment_id_' . $index;
+            $paymentIdPlaceholders[] = $placeholder;
+            $bindings[$placeholder] = $paymentId;
+        }
+
+        $sql .= ' AND p.payment_id IN (' . implode(', ', $paymentIdPlaceholders) . ')';
+    }
+
     $sql .= ' ORDER BY p.payment_id DESC';
 
     $statement = $pdo->prepare($sql);
@@ -623,6 +894,81 @@ function admin_fetch_payment_proofs(array $filters = []): array
     unset($row);
 
     return $rows;
+}
+
+function admin_fetch_payment_proof_notification_snapshot(?string $sinceMarker = null, int $limit = 8): array
+{
+    if (!admin_orders_column_exists('payments', 'payment_proof_file')) {
+        return [
+            'pending_count' => 0,
+            'latest_marker' => '',
+            'new_count' => 0,
+            'proofs' => [],
+        ];
+    }
+
+    $pdo = get_database_connection();
+    $activityExpression = admin_payment_proof_activity_expression('p', 'o');
+
+    $latestStatement = $pdo->prepare(
+        'SELECT ' . $activityExpression . ' AS activity_at, p.payment_id
+         FROM payments p
+         INNER JOIN orders o ON o.id = p.order_id
+         WHERE p.payment_proof_file IS NOT NULL
+           AND p.payment_proof_file <> ""
+         ORDER BY activity_at DESC, p.payment_id DESC
+         LIMIT 1'
+    );
+    $latestStatement->execute();
+    $latestRow = $latestStatement->fetch() ?: null;
+    $latestMarker = $latestRow
+        ? admin_payment_proof_build_marker((string) ($latestRow['activity_at'] ?? ''), (int) ($latestRow['payment_id'] ?? 0))
+        : '';
+
+    $pendingCount = admin_fetch_payment_proof_notification_count();
+    [$sinceTimestamp, $sincePaymentId] = admin_payment_proof_parse_marker($sinceMarker);
+
+    $newPaymentIds = [];
+    if ($sinceTimestamp !== null) {
+        $newStatement = $pdo->prepare(
+            'SELECT p.payment_id
+             FROM payments p
+             INNER JOIN orders o ON o.id = p.order_id
+             WHERE p.payment_proof_file IS NOT NULL
+               AND p.payment_proof_file <> ""
+               AND (
+                    ' . $activityExpression . ' > :since_timestamp
+                    OR (' . $activityExpression . ' = :since_timestamp AND p.payment_id > :since_payment_id)
+               )
+             ORDER BY ' . $activityExpression . ' DESC, p.payment_id DESC
+             LIMIT ' . max(1, (int) $limit)
+        );
+        $newStatement->execute([
+            ':since_timestamp' => $sinceTimestamp,
+            ':since_payment_id' => $sincePaymentId,
+        ]);
+        $newPaymentIds = array_values(array_unique(array_map('intval', array_column($newStatement->fetchAll() ?: [], 'payment_id'))));
+    }
+
+    $proofs = $newPaymentIds !== []
+        ? admin_fetch_payment_proofs(['payment_ids' => $newPaymentIds])
+        : [];
+
+    if ($proofs !== []) {
+        $proofOrder = array_flip($newPaymentIds);
+        usort($proofs, static function (array $left, array $right) use ($proofOrder): int {
+            $leftIndex = $proofOrder[(int) ($left['payment_id'] ?? 0)] ?? PHP_INT_MAX;
+            $rightIndex = $proofOrder[(int) ($right['payment_id'] ?? 0)] ?? PHP_INT_MAX;
+            return $leftIndex <=> $rightIndex;
+        });
+    }
+
+    return [
+        'pending_count' => $pendingCount,
+        'latest_marker' => $latestMarker,
+        'new_count' => count($proofs),
+        'proofs' => $proofs,
+    ];
 }
 
 function admin_fetch_payment_proof_notification_count(): int
@@ -669,12 +1015,14 @@ function admin_update_payment_proof_statuses(array $paymentIds, string $action):
     $placeholders = implode(', ', array_fill(0, count($paymentIds), '?'));
     $beforeOrderIds = [];
     $beforeStatuses = [];
+    $beforeOrderStatuses = [];
     $beforeReuploadFlags = [];
 
     $beforeOrdersStatement = $pdo->prepare(
-        "SELECT DISTINCT order_id, payment_status" .
+        "SELECT DISTINCT p.order_id, p.payment_status, o.status AS order_status" .
         ($hasReuploadRequested ? ', reupload_requested' : ', 0 AS reupload_requested') . "
-         FROM payments
+         FROM payments p
+         INNER JOIN orders o ON o.id = p.order_id
          WHERE payment_id IN ($placeholders)"
     );
     $beforeOrdersStatement->execute($paymentIds);
@@ -682,6 +1030,7 @@ function admin_update_payment_proof_statuses(array $paymentIds, string $action):
         $orderId = (int) $row['order_id'];
         $beforeOrderIds[] = $orderId;
         $beforeStatuses[$orderId] = strtolower((string) ($row['payment_status'] ?? ''));
+        $beforeOrderStatuses[$orderId] = strtolower((string) ($row['order_status'] ?? 'pending'));
         $beforeReuploadFlags[$orderId] = !empty($row['reupload_requested']);
     }
 
@@ -724,10 +1073,14 @@ function admin_update_payment_proof_statuses(array $paymentIds, string $action):
             $orderStatement = $pdo->prepare(
                 "UPDATE orders
                  SET payment_status = ?,
+                     status = CASE
+                        WHEN ? = 'paid' AND LOWER(status) = 'pending' THEN 'confirmed'
+                        ELSE status
+                     END,
                      updated_at = NOW()
                  WHERE id IN ($orderPlaceholders)"
             );
-            $orderStatement->execute(array_merge([$mappedStatus], $orderIds));
+            $orderStatement->execute(array_merge([$mappedStatus, $mappedStatus], $orderIds));
         }
 
         $pdo->commit();
@@ -741,11 +1094,15 @@ function admin_update_payment_proof_statuses(array $paymentIds, string $action):
     if ($beforeOrderIds !== []) {
         $afterOrders = admin_orders_fetch_notification_targets($beforeOrderIds);
         foreach ($afterOrders as $orderId => $order) {
-            $paymentChanged = ($beforeStatuses[$orderId] ?? '') !== strtolower((string) ($order['payment_status'] ?? ''));
             $reuploadRequested = $action === 'request'
                 && (!($beforeReuploadFlags[$orderId] ?? false))
                 && !empty($order['reupload_requested']);
-            admin_orders_send_status_update_email($order, $paymentChanged, false, $reuploadRequested);
+            $previous = [
+                'status' => $beforeOrderStatuses[$orderId] ?? 'pending',
+                'payment_status' => $beforeStatuses[$orderId] ?? '',
+            ];
+
+            admin_orders_notify_customer($previous, $order, $reuploadRequested);
         }
     }
 

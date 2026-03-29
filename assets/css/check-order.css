@@ -165,6 +165,15 @@
     font-weight: var(--font-weight-bold);
 }
 
+.order-actions .download-btn,
+.order-actions .download-btn:visited,
+.order-actions .download-btn:hover,
+.order-actions .download-btn:active,
+.order-actions .download-btn:focus {
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+
 .download-btn:hover {
     background-color: #2f8a2f;
 }

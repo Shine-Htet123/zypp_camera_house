@@ -33,6 +33,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const passwordToggleButtons = document.querySelectorAll('[data-password-toggle]');
   const securityState = {};
 
+  const forgotPasswordModal = document.querySelector('#forgotPasswordModal');
+  const forgotPasswordForm = document.querySelector('#forgotPasswordForm');
+  const forgotPasswordOpenButtons = document.querySelectorAll('.forgot-password-btn');
+  const forgotPasswordCloseButton = forgotPasswordModal ? forgotPasswordModal.querySelector('.modal-close') : null;
+  const forgotPasswordCancelButton = document.querySelector('.forgot-password-cancel-btn');
+  const forgotPasswordFeedback = document.querySelector('#forgotPasswordFeedback');
+  const forgotPasswordEmailInput = document.querySelector('#adminForgotPasswordEmail');
+  const forgotPasswordUrl = window.appPath ? window.appPath('/admin/forgot-password.php') : '/admin/forgot-password.php';
+
   const initialAvatar = avatarImg && !avatarImg.hasAttribute('hidden') ? avatarImg.getAttribute('src') : '';
   let currentAvatarUrl = initialAvatar;
 
@@ -94,6 +103,12 @@ document.addEventListener('DOMContentLoaded', () => {
     securityFeedback.classList.toggle('success', type === 'success');
   };
 
+  const setForgotPasswordFeedback = (message, type = '') => {
+    if (!forgotPasswordFeedback) return;
+    forgotPasswordFeedback.textContent = message;
+    forgotPasswordFeedback.classList.toggle('success', type === 'success');
+  };
+
   const syncProfileForm = () => {
     profileInputs.forEach((input) => {
       const key = input.name;
@@ -120,6 +135,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (icon) icon.className = 'fa-regular fa-eye';
     });
     setSecurityFeedback('');
+  };
+
+  const syncForgotPasswordForm = () => {
+    if (forgotPasswordEmailInput) {
+      forgotPasswordEmailInput.value = securityState.recovery_email || profileState.email || '';
+    }
+    setForgotPasswordFeedback('');
   };
 
   const openProfileModal = () => {
@@ -152,6 +174,22 @@ document.addEventListener('DOMContentLoaded', () => {
     securityModal.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
     syncSecurityForm();
+  };
+
+  const openForgotPasswordModal = () => {
+    if (!forgotPasswordModal) return;
+    syncForgotPasswordForm();
+    forgotPasswordModal.classList.add('open');
+    forgotPasswordModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeForgotPasswordModal = () => {
+    if (!forgotPasswordModal) return;
+    forgotPasswordModal.classList.remove('open');
+    forgotPasswordModal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    syncForgotPasswordForm();
   };
 
   const updateProfileDisplay = (key, value) => {
@@ -231,10 +269,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   profileOpenButtons.forEach((button) => button.addEventListener('click', openProfileModal));
   securityOpenButtons.forEach((button) => button.addEventListener('click', openSecurityModal));
+  forgotPasswordOpenButtons.forEach((button) => button.addEventListener('click', openForgotPasswordModal));
   profileCloseButton?.addEventListener('click', closeProfileModal);
   securityCloseButton?.addEventListener('click', closeSecurityModal);
+  forgotPasswordCloseButton?.addEventListener('click', closeForgotPasswordModal);
   profileCancelButton?.addEventListener('click', closeProfileModal);
   securityCancelButton?.addEventListener('click', closeSecurityModal);
+  forgotPasswordCancelButton?.addEventListener('click', closeForgotPasswordModal);
 
   profileModal?.addEventListener('click', (event) => {
     if (event.target === profileModal) closeProfileModal();
@@ -242,6 +283,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   securityModal?.addEventListener('click', (event) => {
     if (event.target === securityModal) closeSecurityModal();
+  });
+
+  forgotPasswordModal?.addEventListener('click', (event) => {
+    if (event.target === forgotPasswordModal) closeForgotPasswordModal();
   });
 
   passwordToggleButtons.forEach((button) => {
@@ -309,6 +354,51 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  forgotPasswordForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    setForgotPasswordFeedback('');
+
+    const email = forgotPasswordEmailInput?.value.trim() || '';
+    if (!email) {
+      setForgotPasswordFeedback('Email is required.');
+      return;
+    }
+
+    const formData = new FormData(forgotPasswordForm);
+
+    try {
+      const response = await fetch(forgotPasswordUrl, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json',
+        },
+      });
+
+      const payload = await response.json().catch(() => ({
+        success: false,
+        message: 'Unexpected server response.',
+      }));
+
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.message || 'Unable to send reset link right now.');
+      }
+
+      closeForgotPasswordModal();
+      if (window.Swal) {
+        await Swal.fire({
+          icon: 'success',
+          title: 'Check your email',
+          text: payload.message || 'If an admin account matches that email, a reset link has been sent.',
+          confirmButtonColor: '#56b356',
+        });
+      }
+    } catch (error) {
+      setForgotPasswordFeedback(error.message || 'Unable to send reset link right now.');
+    }
+  });
+
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && profileModal?.classList.contains('open')) {
       closeProfileModal();
@@ -316,6 +406,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (event.key === 'Escape' && securityModal?.classList.contains('open')) {
       closeSecurityModal();
+      return;
+    }
+    if (event.key === 'Escape' && forgotPasswordModal?.classList.contains('open')) {
+      closeForgotPasswordModal();
     }
   });
 

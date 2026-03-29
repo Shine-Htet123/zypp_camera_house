@@ -38,6 +38,11 @@
     box-shadow: var(--box-shadow-normal);
 }
 
+.products-search-form {
+    width: 100%;
+    min-width: 0;
+}
+
 .search-box input {
     border: none;
     outline: none;
@@ -351,8 +356,31 @@
         align-items: stretch;
     }
 
+    .products-search-form {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: stretch;
+    }
+
     .search-box {
         width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        grid-column: 1 / -1;
+    }
+
+    .search-trigger,
+    .admin-show-all,
+    .btn-new-product,
+    .filter-wrapper {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .search-trigger,
+    .admin-show-all {
+        justify-self: stretch;
     }
 
     .action-buttons {

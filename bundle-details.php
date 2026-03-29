@@ -51,6 +51,12 @@ if (!$bundle) {
                     </div>
                 </div>
                 <div class="bundle-hero-content">
+                    <div
+                        class="bundle-purchase-panel"
+                        data-bundle-info
+                        data-bundle-id="<?php echo (int) $bundle['id']; ?>"
+                        data-bundle-stock="<?php echo (int) $bundle['availability_count']; ?>"
+                    >
                     <span class="bundle-badge"><?php echo htmlspecialchars((string) $bundle['discount_value_label']); ?></span>
                     <h1><?php echo htmlspecialchars((string) $bundle['bundle_name']); ?></h1>
                     <p class="bundle-public-id"><?php echo htmlspecialchars((string) $bundle['public_bundle_id']); ?></p>
@@ -75,6 +81,22 @@ if (!$bundle) {
                             <span class="label">Discount</span>
                             <span class="value"><?php echo htmlspecialchars((string) $bundle['discount_badge']); ?></span>
                         </div>
+                    </div>
+                    <div class="bundle-action-row">
+                        <div class="bundle-qty-controls" aria-label="Bundle quantity">
+                            <button type="button" data-bundle-qty="decrease">-</button>
+                            <span data-bundle-qty-value>1</span>
+                            <button type="button" data-bundle-qty="increase">+</button>
+                        </div>
+                        <button
+                            type="button"
+                            class="bundle-buy-btn"
+                            data-add-bundle-to-cart
+                            <?php echo (int) $bundle['availability_count'] > 0 ? '' : 'disabled'; ?>
+                        >
+                            <?php echo (int) $bundle['availability_count'] > 0 ? 'Add Bundle to Cart' : 'Out of Stock'; ?>
+                        </button>
+                    </div>
                     </div>
                 </div>
             </section>
@@ -103,5 +125,6 @@ if (!$bundle) {
     </main>
 
     <?php include __DIR__ . '/footer.php'; ?>
+    <script src="<?php echo htmlspecialchars(app_path('/assets/js/bundle-details.js')); ?>"></script>
 </body>
 </html>

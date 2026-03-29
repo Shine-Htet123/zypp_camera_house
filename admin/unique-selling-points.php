@@ -20,20 +20,45 @@ $consumeFlash = static function (): ?array {
     return is_array($flash) ? $flash : null;
 };
 
+$isAjaxRequest = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
+$respondJson = static function (array $payload, int $status = 200): void {
+    http_response_code($status);
+    header('Content-Type: application/json; charset=UTF-8');
+    echo json_encode($payload, JSON_UNESCAPED_SLASHES);
+    exit;
+};
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $action = (string) ($_POST['usp_action'] ?? '');
+        $message = '';
         if ($action === 'save') {
             admin_usp_save($_POST, $_FILES);
-            $setFlash('Unique selling point saved successfully.');
+            $message = 'Unique selling point saved successfully.';
         } elseif ($action === 'delete') {
             admin_usp_delete((int) ($_POST['entity_id'] ?? 0));
-            $setFlash('Unique selling point deleted successfully.');
+            $message = 'Unique selling point deleted successfully.';
         }
 
+        if ($isAjaxRequest) {
+            $respondJson([
+                'success' => true,
+                'message' => $message,
+                'points' => admin_fetch_unique_selling_points(),
+            ]);
+        }
+
+        $setFlash($message);
         header('Location: ' . app_path('/admin/unique-selling-points.php'));
         exit;
     } catch (Throwable $exception) {
+        if ($isAjaxRequest) {
+            $respondJson([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
+
         $setFlash($exception->getMessage(), 'error');
         header('Location: ' . app_path('/admin/unique-selling-points.php'));
         exit;

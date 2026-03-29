@@ -1,5 +1,6 @@
 const list = document.getElementById('priorityList');
 let dragged = null;
+let pointerDrag = null;
 const footerBar = document.querySelector('.stack-footer');
 const footerSave = footerBar?.querySelector('.btn-save');
 const footerDiscard = footerBar?.querySelector('.btn-discard');
@@ -8,6 +9,40 @@ const priorityOrderInput = document.querySelector('[data-priority-order]');
 const stackRulesInput = document.querySelector('[data-stack-rules]');
 let baselineOrder = [];
 let baselineAllowed = new Map();
+
+const getCurrentPriorityOrder = () => Array.from(list?.querySelectorAll('.priority-item') || []).map((node) => node.dataset.type);
+
+const syncPriorityDirtyState = () => {
+    const currentOrder = getCurrentPriorityOrder();
+    if (currentOrder.join('|') !== baselineOrder.join('|')) {
+        setFooterVisible(true);
+    }
+};
+
+const moveDraggedItem = (clientY) => {
+    if (!list || !dragged) return;
+    const items = Array.from(list.querySelectorAll('.priority-item')).filter((item) => item !== dragged);
+    const target = items.find((item) => {
+        const rect = item.getBoundingClientRect();
+        return clientY < rect.top + rect.height / 2;
+    });
+
+    if (!target) {
+        list.appendChild(dragged);
+        return;
+    }
+
+    list.insertBefore(dragged, target);
+};
+
+const finishDrag = (item = dragged) => {
+    if (!item) return;
+    item.classList.remove('dragging');
+    dragged = null;
+    pointerDrag = null;
+    updatePriorityNumbers();
+    syncPriorityDirtyState();
+};
 
 if (list) {
     list.addEventListener('dragstart', (event) => {
@@ -21,13 +56,7 @@ if (list) {
     list.addEventListener('dragend', (event) => {
         const item = event.target.closest('.priority-item');
         if (!item) return;
-        item.classList.remove('dragging');
-        dragged = null;
-        updatePriorityNumbers();
-        const currentOrder = Array.from(list.querySelectorAll('.priority-item')).map((node) => node.dataset.type);
-        if (currentOrder.join('|') !== baselineOrder.join('|')) {
-            setFooterVisible(true);
-        }
+        finishDrag(item);
     });
 
     list.addEventListener('dragover', (event) => {
@@ -37,6 +66,46 @@ if (list) {
         const rect = target.getBoundingClientRect();
         const next = (event.clientY - rect.top) > rect.height / 2;
         list.insertBefore(dragged, next ? target.nextSibling : target);
+    });
+
+    list.addEventListener('pointerdown', (event) => {
+        const item = event.target.closest('.priority-item');
+        if (!item || event.pointerType === 'mouse') return;
+
+        pointerDrag = {
+            pointerId: event.pointerId,
+            item,
+        };
+        dragged = item;
+        item.classList.add('dragging');
+        item.setPointerCapture?.(event.pointerId);
+    });
+
+    list.addEventListener('pointermove', (event) => {
+        if (!pointerDrag || pointerDrag.pointerId !== event.pointerId || pointerDrag.item !== dragged) {
+            return;
+        }
+
+        event.preventDefault();
+        moveDraggedItem(event.clientY);
+    });
+
+    list.addEventListener('pointerup', (event) => {
+        if (!pointerDrag || pointerDrag.pointerId !== event.pointerId) {
+            return;
+        }
+
+        pointerDrag.item.releasePointerCapture?.(event.pointerId);
+        finishDrag(pointerDrag.item);
+    });
+
+    list.addEventListener('pointercancel', (event) => {
+        if (!pointerDrag || pointerDrag.pointerId !== event.pointerId) {
+            return;
+        }
+
+        pointerDrag.item.releasePointerCapture?.(event.pointerId);
+        finishDrag(pointerDrag.item);
     });
 }
 

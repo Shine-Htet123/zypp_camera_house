@@ -31,6 +31,192 @@ function admin_content_management_lines(string $value): array
     return $result;
 }
 
+function admin_content_management_delivery_location_lines(string $value): array
+{
+    $lines = preg_split('/\r\n|\r|\n/', $value) ?: [];
+    $states = [];
+
+    foreach ($lines as $line) {
+        $line = trim((string) $line);
+        if ($line === '') {
+            continue;
+        }
+
+        $parts = array_map('trim', explode('|', $line));
+        if (count($parts) < 3) {
+            continue;
+        }
+
+        [$stateName, $cityName, $townshipName] = [$parts[0], $parts[1], $parts[2]];
+        if ($stateName === '' || $cityName === '' || $townshipName === '') {
+            continue;
+        }
+
+        if (!isset($states[$stateName])) {
+            $states[$stateName] = [
+                'name' => $stateName,
+                'cities' => [],
+            ];
+        }
+
+        if (!isset($states[$stateName]['cities'][$cityName])) {
+            $states[$stateName]['cities'][$cityName] = [
+                'name' => $cityName,
+                'townships' => [],
+            ];
+        }
+
+        if (!in_array($townshipName, $states[$stateName]['cities'][$cityName]['townships'], true)) {
+            $states[$stateName]['cities'][$cityName]['townships'][] = $townshipName;
+        }
+    }
+
+    $result = [];
+    foreach ($states as $state) {
+        $cities = [];
+        foreach ($state['cities'] as $city) {
+            $cities[] = $city;
+        }
+
+        $state['cities'] = $cities;
+        $result[] = $state;
+    }
+
+    return ['states' => $result];
+}
+
+function admin_content_management_delivery_locations_from_columns(array $statesInput, array $citiesInput, array $townshipsInput): array
+{
+    $states = [];
+    $rowCount = max(count($statesInput), count($citiesInput), count($townshipsInput));
+
+    for ($index = 0; $index < $rowCount; $index++) {
+        $stateName = trim((string) ($statesInput[$index] ?? ''));
+        $cityName = trim((string) ($citiesInput[$index] ?? ''));
+        $townshipName = trim((string) ($townshipsInput[$index] ?? ''));
+
+        if ($stateName === '' && $cityName === '' && $townshipName === '') {
+            continue;
+        }
+
+        if ($stateName === '' || $cityName === '' || $townshipName === '') {
+            continue;
+        }
+
+        if (!isset($states[$stateName])) {
+            $states[$stateName] = [
+                'name' => $stateName,
+                'cities' => [],
+            ];
+        }
+
+        if (!isset($states[$stateName]['cities'][$cityName])) {
+            $states[$stateName]['cities'][$cityName] = [
+                'name' => $cityName,
+                'townships' => [],
+            ];
+        }
+
+        if (!in_array($townshipName, $states[$stateName]['cities'][$cityName]['townships'], true)) {
+            $states[$stateName]['cities'][$cityName]['townships'][] = $townshipName;
+        }
+    }
+
+    $result = [];
+    foreach ($states as $state) {
+        $cities = [];
+        foreach ($state['cities'] as $city) {
+            $cities[] = $city;
+        }
+        $state['cities'] = $cities;
+        $result[] = $state;
+    }
+
+    return ['states' => $result];
+}
+
+function admin_content_management_delivery_locations_from_tables(
+    array $statesInput,
+    array $cityStatesInput,
+    array $citiesInput,
+    array $townshipStatesInput,
+    array $townshipCitiesInput,
+    array $townshipsInput
+): array {
+    $states = [];
+
+    foreach ($statesInput as $stateName) {
+        $stateName = trim((string) $stateName);
+        if ($stateName === '' || isset($states[$stateName])) {
+            continue;
+        }
+
+        $states[$stateName] = [
+            'name' => $stateName,
+            'cities' => [],
+        ];
+    }
+
+    $cityRowCount = max(count($cityStatesInput), count($citiesInput));
+    for ($index = 0; $index < $cityRowCount; $index++) {
+        $stateName = trim((string) ($cityStatesInput[$index] ?? ''));
+        $cityName = trim((string) ($citiesInput[$index] ?? ''));
+
+        if ($stateName === '' && $cityName === '') {
+            continue;
+        }
+
+        if ($stateName === '' || $cityName === '' || !isset($states[$stateName])) {
+            continue;
+        }
+
+        if (!isset($states[$stateName]['cities'][$cityName])) {
+            $states[$stateName]['cities'][$cityName] = [
+                'name' => $cityName,
+                'townships' => [],
+            ];
+        }
+    }
+
+    $townshipRowCount = max(count($townshipStatesInput), count($townshipCitiesInput), count($townshipsInput));
+    for ($index = 0; $index < $townshipRowCount; $index++) {
+        $stateName = trim((string) ($townshipStatesInput[$index] ?? ''));
+        $cityName = trim((string) ($townshipCitiesInput[$index] ?? ''));
+        $townshipName = trim((string) ($townshipsInput[$index] ?? ''));
+
+        if ($stateName === '' && $cityName === '' && $townshipName === '') {
+            continue;
+        }
+
+        if (
+            $stateName === ''
+            || $cityName === ''
+            || $townshipName === ''
+            || !isset($states[$stateName])
+            || !isset($states[$stateName]['cities'][$cityName])
+        ) {
+            continue;
+        }
+
+        if (!in_array($townshipName, $states[$stateName]['cities'][$cityName]['townships'], true)) {
+            $states[$stateName]['cities'][$cityName]['townships'][] = $townshipName;
+        }
+    }
+
+    $result = [];
+    foreach ($states as $state) {
+        $cities = [];
+        foreach ($state['cities'] as $city) {
+            $cities[] = $city;
+        }
+
+        $state['cities'] = $cities;
+        $result[] = $state;
+    }
+
+    return ['states' => $result];
+}
+
 function admin_content_management_faq_lines(string $value): array
 {
     $lines = preg_split('/\r\n|\r|\n/', $value) ?: [];
@@ -112,18 +298,63 @@ function admin_content_management_page_options(): array
         ['value' => 'about', 'label' => 'About'],
         ['value' => 'warranty', 'label' => 'Warranty & FAQs'],
         ['value' => 'delivery', 'label' => 'Delivery Policy'],
+        ['value' => 'delivery_locations', 'label' => 'Delivery Locations'],
         ['value' => 'payment', 'label' => 'Payment Information'],
         ['value' => 'reservation', 'label' => 'Reservation Policy'],
     ];
+}
+
+function admin_content_management_fetch_home_button_product_options(): array
+{
+    $pdo = get_database_connection();
+    $statement = $pdo->query(
+        'SELECT p.product_id, p.name, b.name AS brand_name
+         FROM products p
+         LEFT JOIN brands b ON b.brand_id = p.brand_id
+         WHERE p.visibility = 1
+         ORDER BY p.name ASC, p.product_id ASC'
+    );
+
+    return $statement->fetchAll() ?: [];
 }
 
 function admin_content_management_save_home(array $input, array $files): void
 {
     $current = site_content_get_home();
     $slides = [];
+    $pdo = get_database_connection();
     for ($index = 0; $index < 3; $index++) {
         $existing = $current['hero_slides'][$index] ?? [];
         $imageField = 'hero_image_' . $index;
+        $button1Action = trim((string) ($input['hero_button1_action'][$index] ?? 'link'));
+        $button2Action = trim((string) ($input['hero_button2_action'][$index] ?? 'link'));
+        $button1ProductId = (int) ($input['hero_button1_product_id'][$index] ?? 0);
+        $button2ProductId = (int) ($input['hero_button2_product_id'][$index] ?? 0);
+
+        if (!in_array($button1Action, ['link', 'add_to_cart'], true)) {
+            $button1Action = 'link';
+        }
+
+        if (!in_array($button2Action, ['link', 'add_to_cart'], true)) {
+            $button2Action = 'link';
+        }
+
+        if ($button1Action === 'add_to_cart' && $button1ProductId <= 0) {
+            throw new InvalidArgumentException('Please select a product for Home slide ' . ($index + 1) . ' button 1.');
+        }
+
+        if ($button2Action === 'add_to_cart' && $button2ProductId <= 0) {
+            throw new InvalidArgumentException('Please select a product for Home slide ' . ($index + 1) . ' button 2.');
+        }
+
+        if ($button1ProductId > 0 && !admin_catalog_record_exists($pdo, 'products', 'product_id', $button1ProductId)) {
+            throw new InvalidArgumentException('Selected product for Home slide ' . ($index + 1) . ' button 1 is invalid.');
+        }
+
+        if ($button2ProductId > 0 && !admin_catalog_record_exists($pdo, 'products', 'product_id', $button2ProductId)) {
+            throw new InvalidArgumentException('Selected product for Home slide ' . ($index + 1) . ' button 2 is invalid.');
+        }
+
         $slides[] = [
             'image' => admin_content_management_store_image($files[$imageField] ?? null, $existing['image'] ?? null),
             'title' => trim((string) ($input['hero_title'][$index] ?? '')),
@@ -131,11 +362,15 @@ function admin_content_management_save_home(array $input, array $files): void
             'subtitle' => trim((string) ($input['hero_subtitle'][$index] ?? '')),
             'subtitle_color' => trim((string) ($input['hero_subtitle_color'][$index] ?? '#2f2419')),
             'button1_text' => trim((string) ($input['hero_button1_text'][$index] ?? '')),
+            'button1_action' => $button1Action,
             'button1_url' => trim((string) ($input['hero_button1_url'][$index] ?? '')),
+            'button1_product_id' => $button1ProductId,
             'button1_background_color' => trim((string) ($input['hero_button1_background_color'][$index] ?? '#6b5241')),
             'button1_text_color' => trim((string) ($input['hero_button1_text_color'][$index] ?? '#ffffff')),
             'button2_text' => trim((string) ($input['hero_button2_text'][$index] ?? '')),
+            'button2_action' => $button2Action,
             'button2_url' => trim((string) ($input['hero_button2_url'][$index] ?? '')),
+            'button2_product_id' => $button2ProductId,
             'button2_background_color' => trim((string) ($input['hero_button2_background_color'][$index] ?? '#ffffff')),
             'button2_text_color' => trim((string) ($input['hero_button2_text_color'][$index] ?? '#6b5241')),
         ];
@@ -214,6 +449,37 @@ function admin_content_management_save_delivery_policy(array $input, array $file
     ]);
 }
 
+function admin_content_management_save_delivery_locations(array $input): void
+{
+    if (
+        isset($input['state_name'])
+        || isset($input['city_state'])
+        || isset($input['city_name'])
+        || isset($input['township_state'])
+        || isset($input['township_city'])
+        || isset($input['township_name'])
+    ) {
+        $locations = admin_content_management_delivery_locations_from_tables(
+            (array) ($input['state_name'] ?? []),
+            (array) ($input['city_state'] ?? []),
+            (array) ($input['city_name'] ?? []),
+            (array) ($input['township_state'] ?? []),
+            (array) ($input['township_city'] ?? []),
+            (array) ($input['township_name'] ?? [])
+        );
+    } elseif (isset($input['location_state']) || isset($input['location_city']) || isset($input['location_township'])) {
+        $locations = admin_content_management_delivery_locations_from_columns(
+            (array) ($input['location_state'] ?? []),
+            (array) ($input['location_city'] ?? []),
+            (array) ($input['location_township'] ?? [])
+        );
+    } else {
+        $locations = admin_content_management_delivery_location_lines((string) ($input['locations'] ?? ''));
+    }
+
+    site_content_save_raw('delivery_locations', $locations);
+}
+
 function admin_content_management_save_payment_information(array $input, array $files): void
 {
     $current = site_content_get_payment_information();
@@ -221,36 +487,121 @@ function admin_content_management_save_payment_information(array $input, array $
     $defaultSections = $current['sections'] ?? [];
 
     foreach ($defaultSections as $sectionIndex => $existingSection) {
-        $logos = [];
-        for ($logoIndex = 0; $logoIndex < 5; $logoIndex++) {
-            $existingLogo = $existingSection['logos'][$logoIndex] ?? ['label' => '', 'image' => ''];
-            $label = trim((string) ($input['payment_logo_label'][$sectionIndex][$logoIndex] ?? ''));
-            $image = admin_content_management_store_image(
-                $files['payment_logo_image_' . $sectionIndex . '_' . $logoIndex] ?? null,
-                $existingLogo['image'] ?? null
-            );
-
-            if ($label === '' && trim((string) $image) === '') {
-                continue;
-            }
-
-            $logos[] = [
-                'label' => $label,
-                'image' => $image,
-            ];
-        }
-
         $sections[] = [
             'key' => (string) ($existingSection['key'] ?? ('section_' . $sectionIndex)),
             'title' => trim((string) ($input['payment_section_title'][$sectionIndex] ?? '')),
-            'logos' => $logos,
+            'logos' => (array) ($existingSection['logos'] ?? []),
             'notes' => admin_content_management_lines((string) ($input['payment_section_notes'][$sectionIndex] ?? '')),
+        ];
+    }
+
+    $sectionKeys = array_values(array_filter(array_map(
+        static fn (array $section): string => trim((string) ($section['key'] ?? '')),
+        $sections
+    )));
+    $methods = [];
+    $existingMethods = (array) ($current['methods'] ?? []);
+    $methodKeys = (array) ($input['payment_method_key'] ?? []);
+    $methodLabels = (array) ($input['payment_method_label'] ?? []);
+    $methodSectionKeys = (array) ($input['payment_method_section_key'] ?? []);
+    $methodAccountNames = (array) ($input['payment_method_account_name'] ?? []);
+    $methodAccountNumbers = (array) ($input['payment_method_account_number'] ?? []);
+    $methodPhones = (array) ($input['payment_method_phone'] ?? []);
+    $methodInstructions = (array) ($input['payment_method_instructions'] ?? []);
+    $methodActiveFlags = (array) ($input['payment_method_is_active'] ?? []);
+    $methodProofFlags = (array) ($input['payment_method_requires_payment_proof'] ?? []);
+    $methodFileKeys = array_filter(
+        array_keys($files),
+        static fn (string $key): bool => str_starts_with($key, 'payment_method_qr_image_')
+    );
+    $methodRowCount = max(
+        count($existingMethods),
+        count($methodKeys),
+        count($methodLabels),
+        count($methodSectionKeys),
+        count($methodAccountNames),
+        count($methodAccountNumbers),
+        count($methodPhones),
+        count($methodInstructions),
+        count($methodFileKeys)
+    );
+    $usedMethodKeys = [];
+
+    for ($methodIndex = 0; $methodIndex < $methodRowCount; $methodIndex++) {
+        $existingMethod = $existingMethods[$methodIndex] ?? [];
+        $label = trim((string) ($methodLabels[$methodIndex] ?? ''));
+        $methodKey = site_content_payment_method_slug((string) ($methodKeys[$methodIndex] ?? ''));
+        if ($methodKey === '') {
+            $methodKey = site_content_payment_method_slug($label);
+        }
+
+        $sectionKey = site_content_payment_method_slug((string) ($methodSectionKeys[$methodIndex] ?? ($existingMethod['section_key'] ?? '')));
+        if (!in_array($sectionKey, $sectionKeys, true)) {
+            $sectionKey = $sectionKeys[0] ?? '';
+        }
+
+        $accountName = trim((string) ($methodAccountNames[$methodIndex] ?? ''));
+        $accountNumber = trim((string) ($methodAccountNumbers[$methodIndex] ?? ''));
+        $phone = trim((string) ($methodPhones[$methodIndex] ?? ''));
+        $instructions = admin_content_management_lines((string) ($methodInstructions[$methodIndex] ?? ''));
+        $logoImage = admin_content_management_store_image(
+            $files['payment_method_logo_image_' . $methodIndex] ?? null,
+            $existingMethod['logo_image'] ?? null
+        );
+        $qrImage = admin_content_management_store_image(
+            $files['payment_method_qr_image_' . $methodIndex] ?? null,
+            $existingMethod['qr_image'] ?? null
+        );
+
+        if (
+            $label === ''
+            && $methodKey === ''
+            && $sectionKey === ''
+            && $accountName === ''
+            && $accountNumber === ''
+            && $phone === ''
+            && $instructions === []
+            && trim((string) $logoImage) === ''
+            && trim((string) $qrImage) === ''
+        ) {
+            continue;
+        }
+
+        if ($label === '') {
+            continue;
+        }
+
+        if ($methodKey === '') {
+            $methodKey = 'payment_method_' . ($methodIndex + 1);
+        }
+
+        $baseMethodKey = $methodKey;
+        $suffix = 2;
+        while (in_array($methodKey, $usedMethodKeys, true)) {
+            $methodKey = $baseMethodKey . '_' . $suffix;
+            $suffix++;
+        }
+        $usedMethodKeys[] = $methodKey;
+
+        $methods[] = [
+            'key' => $methodKey,
+            'label' => $label,
+            'section_key' => $sectionKey,
+            'is_active' => !empty($methodActiveFlags[$methodIndex]),
+            'requires_payment_proof' => !empty($methodProofFlags[$methodIndex]),
+            'logo_image' => $logoImage,
+            'account_name' => $accountName,
+            'account_number' => $accountNumber,
+            'phone' => $phone,
+            'qr_image' => $qrImage,
+            'instructions' => $instructions,
         ];
     }
 
     site_content_save_raw('support_payment_information', [
         'page_title' => trim((string) ($input['page_title'] ?? '')),
         'sections' => $sections,
+        'methods' => $methods,
     ]);
 }
 
@@ -283,6 +634,10 @@ function admin_content_management_save_warranty_faq(array $input, array $files):
     site_content_save_raw('support_warranty_faq', [
         'hero_title' => trim((string) ($input['hero_title'] ?? '')),
         'hero_subtitle' => trim((string) ($input['hero_subtitle'] ?? '')),
+        'general_faqs' => admin_content_management_faq_pairs(
+            (array) ($input['general_faq_question'] ?? []),
+            (array) ($input['general_faq_answer'] ?? [])
+        ),
         'categories' => $categories,
     ]);
 }

@@ -1,46 +1,33 @@
 const loadingScreen = document.querySelector('.loading-screen');
-const loadingVideo = loadingScreen
-  ? loadingScreen.querySelector('.page-loading-video')
-  : null;
 
 if (loadingScreen) {
-  let pageLoaded = document.readyState === 'complete';
-  let videoFinished = !loadingVideo;
+  const MIN_LOADING_MS = 1000;
   let hideTriggered = false;
+  const loaderShownAt = window.performance?.now ? window.performance.now() : Date.now();
 
   const hideLoader = () => {
-    if (hideTriggered || !pageLoaded || !videoFinished) {
+    if (hideTriggered) {
       return;
     }
 
-    hideTriggered = true;
-    loadingScreen.classList.add('hidden');
+    const now = window.performance?.now ? window.performance.now() : Date.now();
+    const remaining = Math.max(0, MIN_LOADING_MS - (now - loaderShownAt));
+
+    window.setTimeout(() => {
+      if (hideTriggered) {
+        return;
+      }
+
+      hideTriggered = true;
+      loadingScreen.classList.add('hidden');
+    }, remaining);
   };
 
-  if (loadingVideo) {
-    loadingVideo.currentTime = 0;
-
-    const playPromise = loadingVideo.play();
-
-    if (playPromise && typeof playPromise.catch === 'function') {
-      playPromise.catch(() => {});
-    }
-
-    loadingVideo.addEventListener('ended', () => {
-      videoFinished = true;
-      hideLoader();
-    });
-
-    loadingVideo.addEventListener('error', () => {
-      videoFinished = true;
-      hideLoader();
-    });
+  if (document.readyState === 'complete') {
+    window.requestAnimationFrame(hideLoader);
+  } else {
+    window.addEventListener('load', () => {
+      window.setTimeout(hideLoader, 120);
+    }, { once: true });
   }
-
-  window.addEventListener('load', () => {
-    pageLoaded = true;
-    hideLoader();
-  });
-
-  hideLoader();
 }

@@ -47,6 +47,8 @@ foreach ($results as $product) {
         'name' => (string) $product['name'],
         'image_url' => (string) $product['image'],
         'price' => (string) $product['price'],
+        'original_price' => (string) ($product['original'] ?? ''),
+        'has_discount' => !empty($product['original']),
         'brand_name' => (string) ($product['brand_name'] ?? $product['brand'] ?? ''),
         'detail_url' => $productDetailsPath . '?id=' . (int) $product['product_id'],
         'specs' => $specLabels,

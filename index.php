@@ -13,6 +13,42 @@ $featuredCategories = home_fetch_featured_categories();
 $bestSellers = home_fetch_best_sellers($currentCustomerId);
 $latestReviews = home_fetch_latest_reviews();
 $trustBadges = (array) ($homeContent['trust_badges'] ?? []);
+
+$buildHeroButton = static function (array $slide, string $buttonKey): ?array {
+    $text = trim((string) ($slide[$buttonKey . '_text'] ?? ''));
+    if ($text === '') {
+        return null;
+    }
+
+    $action = trim((string) ($slide[$buttonKey . '_action'] ?? 'link'));
+    $productId = (int) ($slide[$buttonKey . '_product_id'] ?? 0);
+
+    if ($action === 'add_to_cart' && $productId > 0) {
+        $query = http_build_query([
+            'product_id' => $productId,
+            'quantity' => 1,
+        ]);
+
+        return [
+            'text' => $text,
+            'href' => app_path('/auth/cart_add.php?' . $query),
+            'is_add_to_cart' => true,
+            'product_id' => $productId,
+            'quantity' => 1,
+        ];
+    }
+
+    $url = trim((string) ($slide[$buttonKey . '_url'] ?? ''));
+    $isAbsolute = str_starts_with($url, 'http://') || str_starts_with($url, 'https://');
+
+    return [
+        'text' => $text,
+        'href' => $isAbsolute ? $url : app_path($url !== '' ? $url : '/products.php'),
+        'is_add_to_cart' => false,
+        'product_id' => 0,
+        'quantity' => 1,
+    ];
+};
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -40,15 +76,35 @@ $trustBadges = (array) ($homeContent['trust_badges'] ?? []);
                             <h1 class="hero-title"><?php echo htmlspecialchars((string) $slide['title']); ?></h1>
                         <?php endif; ?>
                         <?php if (trim((string) ($slide['button1_text'] ?? '')) !== '' || trim((string) ($slide['button2_text'] ?? '')) !== ''): ?>
+                            <?php
+                            $button1 = $buildHeroButton($slide, 'button1');
+                            $button2 = $buildHeroButton($slide, 'button2');
+                            ?>
                             <div class="hero-btn">
-                                <?php if (trim((string) ($slide['button1_text'] ?? '')) !== ''): ?>
-                                    <a class="hero-action btn1" href="<?php echo htmlspecialchars(app_path((string) (($slide['button1_url'] ?? '') !== '' ? $slide['button1_url'] : '/products.php'))); ?>">
-                                        <?php echo htmlspecialchars((string) $slide['button1_text']); ?>
+                                <?php if ($button1 !== null): ?>
+                                    <a
+                                        class="hero-action btn1"
+                                        href="<?php echo htmlspecialchars((string) $button1['href']); ?>"
+                                        <?php if (!empty($button1['is_add_to_cart'])): ?>
+                                            data-home-add-to-cart
+                                            data-product-id="<?php echo (int) $button1['product_id']; ?>"
+                                            data-quantity="<?php echo (int) $button1['quantity']; ?>"
+                                        <?php endif; ?>
+                                    >
+                                        <?php echo htmlspecialchars((string) $button1['text']); ?>
                                     </a>
                                 <?php endif; ?>
-                                <?php if (trim((string) ($slide['button2_text'] ?? '')) !== ''): ?>
-                                    <a class="hero-action btn2" href="<?php echo htmlspecialchars(app_path((string) (($slide['button2_url'] ?? '') !== '' ? $slide['button2_url'] : '/products.php'))); ?>">
-                                        <?php echo htmlspecialchars((string) $slide['button2_text']); ?>
+                                <?php if ($button2 !== null): ?>
+                                    <a
+                                        class="hero-action btn2"
+                                        href="<?php echo htmlspecialchars((string) $button2['href']); ?>"
+                                        <?php if (!empty($button2['is_add_to_cart'])): ?>
+                                            data-home-add-to-cart
+                                            data-product-id="<?php echo (int) $button2['product_id']; ?>"
+                                            data-quantity="<?php echo (int) $button2['quantity']; ?>"
+                                        <?php endif; ?>
+                                    >
+                                        <?php echo htmlspecialchars((string) $button2['text']); ?>
                                     </a>
                                 <?php endif; ?>
                             </div>
@@ -155,23 +211,25 @@ $trustBadges = (array) ($homeContent['trust_badges'] ?? []);
                 <?php else: ?>
                     <?php foreach ($bestSellers as $product): ?>
                         <a class="product-card" href="<?= htmlspecialchars((string) $product['detail_url']) ?>">
-                            <div class="product-img-box">
-                                <img src="<?= htmlspecialchars((string) $product['image_url']) ?>" alt="<?= htmlspecialchars((string) $product['name']) ?>">
-                            </div>
-                            <div class="product-description">
-                                <h3 class="product-name"><?= htmlspecialchars((string) $product['name']) ?></h3>
-                                <h4 class="brand-name"><?= htmlspecialchars((string) $product['brand_name']) ?></h4>
-                                <div class="product-price">
-                                    <?php if (!empty($product['show_discount'])): ?>
-                                        <h4 class="original-price"><span class="price-format"><?= (int) $product['original_price_raw'] ?></span> MMK</h4>
-                                    <?php endif; ?>
-                                    <h4 class="discounted-price"><span class="price-format"><?= (int) $product['discounted_price_raw'] ?></span> MMK</h4>
+                            <div class="product-card-content">
+                                <div class="product-img-box">
+                                    <img src="<?= htmlspecialchars((string) $product['image_url']) ?>" alt="<?= htmlspecialchars((string) $product['name']) ?>">
                                 </div>
-                                <?php if (!empty($product['show_discount'])): ?>
-                                    <div class="discount-box">
-                                        <h5>Save <span class="price-format"><?= (int) $product['save_amount_raw'] ?></span> MMK</h5>
+                                <div class="product-description">
+                                    <h3 class="product-name"><?= htmlspecialchars((string) $product['name']) ?></h3>
+                                    <h4 class="brand-name"><?= htmlspecialchars((string) $product['brand_name']) ?></h4>
+                                    <div class="product-price">
+                                        <?php if (!empty($product['show_discount'])): ?>
+                                            <h4 class="original-price"><span class="price-format"><?= (int) $product['original_price_raw'] ?></span> MMK</h4>
+                                        <?php endif; ?>
+                                        <h4 class="discounted-price"><span class="price-format"><?= (int) $product['discounted_price_raw'] ?></span> MMK</h4>
                                     </div>
-                                <?php endif; ?>
+                                    <div class="discount-box-slot">
+                                        <div class="discount-box<?php echo empty($product['show_discount']) ? ' is-empty' : ''; ?>">
+                                            <h5>Save <span class="price-format"><?= (int) $product['save_amount_raw'] ?></span> MMK</h5>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </a>
                     <?php endforeach; ?>

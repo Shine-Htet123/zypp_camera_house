@@ -7,13 +7,30 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 
 require_once __DIR__ . '/../app/services/admin_auth.php';
 
+$isAjax = admin_auth_is_json_request();
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         admin_auth_request_password_reset($_POST);
-        admin_auth_set_flash('If an admin account matches that email, a reset link has been sent.', 'success');
+        $message = 'If an admin account matches that email, a reset link has been sent.';
+        if ($isAjax) {
+            admin_auth_json([
+                'success' => true,
+                'message' => $message,
+            ]);
+        }
+
+        admin_auth_set_flash($message, 'success');
         header('Location: ' . app_path('/admin/forgot-password.php'));
         exit;
     } catch (Throwable $exception) {
+        if ($isAjax) {
+            admin_auth_json([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
+
         admin_auth_set_flash($exception->getMessage());
         header('Location: ' . app_path('/admin/forgot-password.php'));
         exit;

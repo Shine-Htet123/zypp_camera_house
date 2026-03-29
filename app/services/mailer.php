@@ -81,11 +81,6 @@ function mailer_is_configured(): bool
 
 function mailer_logo_path(): ?string
 {
-    $preferred = app_project_path('storage/uploads/contents/logo.png');
-    if (is_file($preferred)) {
-        return $preferred;
-    }
-
     $fallback = app_project_path('assets/images/browser-icon.png');
     if (is_file($fallback)) {
         return $fallback;
@@ -96,11 +91,6 @@ function mailer_logo_path(): ?string
 
 function mailer_logo_url(): string
 {
-    $preferred = app_project_path('storage/uploads/contents/logo.png');
-    if (is_file($preferred)) {
-        return app_url('/storage/uploads/contents/logo.png');
-    }
-
     return app_url('/assets/images/browser-icon.png');
 }
 
@@ -198,6 +188,31 @@ function mailer_send(array $message): void
     $htmlBody = (string) ($message['html'] ?? '');
     $mail->Body = $htmlBody !== '' ? mailer_wrap_html($mail, $htmlBody, (string) ($message['subject'] ?? '')) : '';
     $mail->AltBody = (string) ($message['text'] ?? strip_tags((string) ($message['html'] ?? '')));
+
+    foreach ((array) ($message['embedded_images'] ?? []) as $embeddedImage) {
+        $data = (string) ($embeddedImage['data'] ?? '');
+        $contentId = trim((string) ($embeddedImage['cid'] ?? ''));
+        $name = trim((string) ($embeddedImage['name'] ?? 'embedded-image'));
+        $mimeType = trim((string) ($embeddedImage['mime'] ?? 'application/octet-stream'));
+
+        if ($data === '' || $contentId === '') {
+            continue;
+        }
+
+        $mail->addStringEmbeddedImage($data, $contentId, $name, 'base64', $mimeType);
+    }
+
+    foreach ((array) ($message['attachments'] ?? []) as $attachment) {
+        $data = (string) ($attachment['data'] ?? '');
+        $name = trim((string) ($attachment['name'] ?? 'attachment'));
+        $mimeType = trim((string) ($attachment['mime'] ?? 'application/octet-stream'));
+
+        if ($data === '') {
+            continue;
+        }
+
+        $mail->addStringAttachment($data, $name, 'base64', $mimeType);
+    }
 
     $mail->send();
 }

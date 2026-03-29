@@ -1,4 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const pageUrl = window.location.href;
+  const categoryTableBody = document.querySelector('.cols-category tbody');
+  const subCategoryTableBody = document.querySelector('.cols-subcategory tbody');
+  const brandTableBody = document.querySelector('.cols-brand tbody');
+  const deleteForm = document.getElementById('categoryBrandDeleteForm');
+
   const modals = {
     category: {
       overlay: document.getElementById('categoryModal'),
@@ -28,7 +34,75 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   };
 
-  const deleteForm = document.getElementById('categoryBrandDeleteForm');
+  const showAlert = async (options) => {
+    if (window.Swal) {
+      return Swal.fire(options);
+    }
+
+    const message = options?.text || options?.title || '';
+    if (message) alert(message);
+    return null;
+  };
+
+  const escapeHtml = (value) => {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+
+  const requestJson = async (formData) => {
+    window.AdminLoading?.show('Saving changes...');
+    try {
+      const response = await fetch(pageUrl, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          Accept: 'application/json',
+        },
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.success) {
+        throw new Error(payload?.message || 'Request failed.');
+      }
+      return payload;
+    } finally {
+      window.AdminLoading?.hide();
+    }
+  };
+
+  const closeModal = (overlay) => {
+    if (!overlay) return;
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-hidden', 'true');
+  };
+
+  const resetModal = (type) => {
+    const config = modals[type];
+    const overlay = config?.overlay;
+    if (!overlay) return;
+
+    const form = overlay.querySelector('form');
+    form?.reset();
+    const idInput = form?.querySelector('input[name="entity_id"]');
+    if (idInput) idInput.value = '0';
+
+    if (config.imagePreview) {
+      const preview = overlay.querySelector(`#${config.imagePreview}`);
+      if (preview) {
+        preview.classList.remove('has-image');
+        preview.innerHTML = '<i class="fa-regular fa-image"></i>';
+      }
+    }
+
+    if (config.imageInput) {
+      const input = overlay.querySelector(`#${config.imageInput}`);
+      if (input) input.value = '';
+    }
+  };
 
   const openModal = (type, values = {}) => {
     const config = modals[type];
@@ -37,8 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const overlay = config.overlay;
     const title = overlay.querySelector(`#${config.titleId}`);
     const form = overlay.querySelector('form');
-    const closeBtn = overlay.querySelector('.modal-close');
-    const discardBtn = overlay.querySelector('.btn-footer.discard');
 
     overlay.classList.add('open');
     overlay.setAttribute('aria-hidden', 'false');
@@ -66,14 +138,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (select) select.value = values.featured || 'no';
     }
 
-    if (closeBtn) closeBtn.style.display = 'inline-flex';
-    if (discardBtn) discardBtn.style.display = 'inline-flex';
-
     if (config.imagePreview) {
       const preview = overlay.querySelector(`#${config.imagePreview}`);
       if (preview) {
         if (values.image) {
-          preview.innerHTML = `<img src="${values.image}" alt="Preview" style="width:100%;height:100%;object-fit:contain;">`;
+          preview.innerHTML = `<img src="${escapeHtml(values.image)}" alt="Preview" style="width:100%;height:100%;object-fit:contain;">`;
           preview.classList.add('has-image');
         } else {
           preview.classList.remove('has-image');
@@ -88,16 +157,190 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const closeModal = (overlay) => {
-    if (!overlay) return;
-    overlay.classList.remove('open');
-    overlay.setAttribute('aria-hidden', 'true');
+  const renderStatus = (featured) => {
+    const enabled = Number(featured) === 1 || String(featured) === 'yes';
+    return `
+      <td class="status ${enabled ? 'yes' : 'no'}">
+        <i class="fa-solid ${enabled ? 'fa-circle-check' : 'fa-circle-xmark'}"></i>
+      </td>
+    `;
   };
 
-  document.addEventListener('click', (event) => {
+  const renderImageCell = (url, name) => {
+    if (url) {
+      return `
+        <td class="image-cell">
+          <img class="table-image" src="${escapeHtml(url)}" alt="${escapeHtml(name)}">
+        </td>
+      `;
+    }
+
+    return `
+      <td class="image-cell">
+        <div class="image-placeholder"><i class="fa-regular fa-image"></i></div>
+      </td>
+    `;
+  };
+
+  const renderCategories = (categories) => {
+    if (!categoryTableBody) return;
+    categoryTableBody.innerHTML = (categories || []).map((row) => `
+      <tr
+        class="data-row cols-category"
+        data-type="Category"
+        data-id="${Number(row.category_id || 0)}"
+        data-name="${escapeHtml(row.name || '')}"
+        data-featured="${Number(row.featured || 0) ? 'yes' : 'no'}"
+      >
+        <td>${Number(row.category_id || 0)}</td>
+        <td>${escapeHtml(row.name || '')}</td>
+        ${renderImageCell(row.image_url || '', row.name || '')}
+        ${renderStatus(row.featured)}
+        <td class="action-buttons">
+          <button type="button" class="icon-btn edit" aria-label="Edit category" data-edit="category">
+            <i class="fa-regular fa-pen-to-square"></i>
+          </button>
+          <button type="button" class="icon-btn delete" aria-label="Delete category" data-delete-type="category">
+            <i class="fa-regular fa-trash-can"></i>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  };
+
+  const renderSubCategories = (subCategories) => {
+    if (!subCategoryTableBody) return;
+    subCategoryTableBody.innerHTML = (subCategories || []).map((row) => `
+      <tr
+        class="data-row cols-subcategory"
+        data-type="Sub-Category"
+        data-id="${Number(row.sub_category_id || 0)}"
+        data-name="${escapeHtml(row.name || '')}"
+        data-parent-id="${Number(row.category_id || 0)}"
+        data-parent-name="${escapeHtml(row.category_name || '')}"
+        data-featured="${Number(row.featured || 0) ? 'yes' : 'no'}"
+      >
+        <td>${Number(row.sub_category_id || 0)}</td>
+        <td>${escapeHtml(row.name || '')}</td>
+        <td>${escapeHtml(row.category_name || '')}</td>
+        ${renderStatus(row.featured)}
+        <td class="action-buttons">
+          <button type="button" class="icon-btn edit" aria-label="Edit sub-category" data-edit="subcategory">
+            <i class="fa-regular fa-pen-to-square"></i>
+          </button>
+          <button type="button" class="icon-btn delete" aria-label="Delete sub-category" data-delete-type="subcategory">
+            <i class="fa-regular fa-trash-can"></i>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  };
+
+  const renderBrands = (brands) => {
+    if (!brandTableBody) return;
+    brandTableBody.innerHTML = (brands || []).map((row) => `
+      <tr
+        class="data-row cols-brand"
+        data-type="Brand"
+        data-id="${Number(row.brand_id || 0)}"
+        data-name="${escapeHtml(row.name || '')}"
+        data-featured="${Number(row.featured || 0) ? 'yes' : 'no'}"
+      >
+        <td>${Number(row.brand_id || 0)}</td>
+        <td>${escapeHtml(row.name || '')}</td>
+        ${renderImageCell(row.image_url || '', row.name || '')}
+        ${renderStatus(row.featured)}
+        <td class="action-buttons">
+          <button type="button" class="icon-btn edit" aria-label="Edit brand" data-edit="brand">
+            <i class="fa-regular fa-pen-to-square"></i>
+          </button>
+          <button type="button" class="icon-btn delete" aria-label="Delete brand" data-delete-type="brand">
+            <i class="fa-regular fa-trash-can"></i>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  };
+
+  const syncSubCategoryOptions = (categories) => {
+    const select = modals.subcategory.overlay?.querySelector('[name="subCategoryParentId"]');
+    if (!select) return;
+
+    const options = ['<option value="">Select category</option>'].concat(
+      (categories || []).map((category) => (
+        `<option value="${Number(category.category_id || 0)}">${escapeHtml(category.name || '')}</option>`
+      ))
+    );
+    select.innerHTML = options.join('');
+  };
+
+  const applyPayload = (payload) => {
+    renderCategories(payload.categories || []);
+    renderSubCategories(payload.sub_categories || []);
+    renderBrands(payload.brands || []);
+    syncSubCategoryOptions(payload.categories || []);
+  };
+
+  Object.entries(modals).forEach(([type, config]) => {
+    const overlay = config.overlay;
+    if (!overlay) return;
+
+    const form = overlay.querySelector('form');
+    const closeBtn = overlay.querySelector('.modal-close');
+    const discardBtn = overlay.querySelector('.btn-footer.discard');
+
+    closeBtn?.addEventListener('click', () => closeModal(overlay));
+    discardBtn?.addEventListener('click', () => {
+      resetModal(type);
+      closeModal(overlay);
+    });
+
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) {
+        resetModal(type);
+        closeModal(overlay);
+      }
+    });
+
+    if (config.imageInput && config.imagePreview) {
+      const input = overlay.querySelector(`#${config.imageInput}`);
+      const preview = overlay.querySelector(`#${config.imagePreview}`);
+      input?.addEventListener('change', () => {
+        const file = input.files?.[0];
+        if (!file || !preview) return;
+        preview.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="Preview" style="width:100%;height:100%;object-fit:contain;">`;
+        preview.classList.add('has-image');
+      });
+    }
+
+    form?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      try {
+        const payload = await requestJson(new FormData(form));
+        applyPayload(payload);
+        resetModal(type);
+        closeModal(overlay);
+        await showAlert({
+          icon: 'success',
+          text: payload.message || 'Saved successfully.',
+          confirmButtonColor: '#3b2615',
+        });
+      } catch (error) {
+        await showAlert({
+          icon: 'error',
+          title: 'Save failed',
+          text: error.message || 'Request failed.',
+          confirmButtonColor: '#3b2615',
+        });
+      }
+    });
+  });
+
+  document.addEventListener('click', async (event) => {
     const newBtn = event.target.closest('.btn-new');
-    if (newBtn && newBtn.dataset.modal) {
+    if (newBtn?.dataset.modal) {
       const type = newBtn.dataset.modal;
+      resetModal(type);
       if (type === 'category') {
         openModal('category', { title: 'Add Category', featured: 'no' });
       } else if (type === 'brand') {
@@ -147,67 +390,48 @@ document.addEventListener('DOMContentLoaded', () => {
       const type = deleteBtn.dataset.deleteType || '';
       const id = row.dataset.id || '';
       const name = row.dataset.name || 'this item';
-      const actionInput = deleteForm.querySelector('input[name="entity_action"]');
-      const idInput = deleteForm.querySelector('input[name="entity_id"]');
+      if (!type || !id) return;
 
-      if (!actionInput || !idInput || !type || !id) return;
+      const confirmation = await showAlert({
+        title: `Delete this ${type.replace('subcategory', 'sub-category')}?`,
+        text: `"${name}" will be removed permanently.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Delete',
+        cancelButtonText: 'Cancel',
+      });
 
-      const submitDelete = () => {
-        actionInput.value = `delete_${type}`;
-        idInput.value = id;
-        deleteForm.submit();
-      };
+      if (!confirmation?.isConfirmed) {
+        return;
+      }
 
-      if (window.Swal) {
-        Swal.fire({
-          title: `Delete this ${type.replace('subcategory', 'sub-category')}?`,
-          text: `"${name}" will be removed permanently.`,
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonColor: '#d33',
-          cancelButtonColor: '#6c757d',
-          confirmButtonText: 'Delete',
-          cancelButtonText: 'Cancel',
-        }).then((result) => {
-          if (result.isConfirmed) {
-            submitDelete();
-          }
+      const formData = new FormData(deleteForm);
+      formData.set('entity_action', `delete_${type}`);
+      formData.set('entity_id', id);
+
+      try {
+        const payload = await requestJson(formData);
+        applyPayload(payload);
+        await showAlert({
+          icon: 'success',
+          text: payload.message || 'Deleted successfully.',
+          confirmButtonColor: '#3b2615',
         });
-      } else {
-        submitDelete();
+      } catch (error) {
+        await showAlert({
+          icon: 'error',
+          title: 'Delete failed',
+          text: error.message || 'Delete failed.',
+          confirmButtonColor: '#3b2615',
+        });
       }
     }
   });
 
-  Object.values(modals).forEach((config) => {
-    const overlay = config.overlay;
-    if (!overlay) return;
-
-    const closeBtn = overlay.querySelector('.modal-close');
-    const discardBtn = overlay.querySelector('.btn-footer.discard');
-
-    closeBtn?.addEventListener('click', () => closeModal(overlay));
-    discardBtn?.addEventListener('click', () => closeModal(overlay));
-
-    overlay.addEventListener('click', (event) => {
-      if (event.target === overlay) closeModal(overlay);
-    });
-
-    if (config.imageInput && config.imagePreview) {
-      const input = overlay.querySelector(`#${config.imageInput}`);
-      const preview = overlay.querySelector(`#${config.imagePreview}`);
-      input?.addEventListener('change', () => {
-        const file = input.files && input.files[0];
-        if (!file || !preview) return;
-        const url = URL.createObjectURL(file);
-        preview.innerHTML = `<img src="${url}" alt="Preview" style="width:100%;height:100%;object-fit:contain;">`;
-        preview.classList.add('has-image');
-      });
-    }
-  });
-
-  if (window.categoryBrandFlash && window.Swal) {
-    Swal.fire({
+  if (window.categoryBrandFlash) {
+    showAlert({
       icon: window.categoryBrandFlash.type === 'error' ? 'error' : 'success',
       text: window.categoryBrandFlash.message || '',
       timer: 2200,

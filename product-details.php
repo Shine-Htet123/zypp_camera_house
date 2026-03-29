@@ -177,23 +177,25 @@ $uniqueSellingPoints = catalog_fetch_unique_selling_points_for_product_detail();
                     <div class="best-seller-slider">
                         <?php foreach ($relatedProducts as $relatedProduct): ?>
                             <a href="<?php echo htmlspecialchars(app_path('/product-details.php?id=' . (int) $relatedProduct['product_id'])); ?>" class="product-card">
-                                <div class="product-img-box">
-                                    <img src="<?php echo htmlspecialchars($relatedProduct['image_url']); ?>" alt="<?php echo htmlspecialchars($relatedProduct['name']); ?>">
-                                </div>
-                                <div class="product-description">
-                                    <h4 class="product-name"><?php echo htmlspecialchars($relatedProduct['name']); ?></h4>
-                                    <span class="brand-name"><?php echo htmlspecialchars($relatedProduct['brand_name']); ?></span>
-                                    <div class="product-price">
-                                        <?php if (!empty($relatedProduct['original_price_label'])): ?>
-                                            <span class="old-price"><?php echo htmlspecialchars($relatedProduct['original_price_label']); ?></span>
-                                        <?php endif; ?>
-                                        <span class="new-price"><?php echo htmlspecialchars($relatedProduct['price_label']); ?></span>
+                                <div class="product-card-content">
+                                    <div class="product-img-box">
+                                        <img src="<?php echo htmlspecialchars($relatedProduct['image_url']); ?>" alt="<?php echo htmlspecialchars($relatedProduct['name']); ?>">
                                     </div>
-                                    <?php if (!empty($relatedProduct['discount_badge_label'])): ?>
-                                        <div class="discount-box"><?php echo htmlspecialchars($relatedProduct['discount_badge_label']); ?></div>
-                                    <?php elseif ($relatedProduct['is_featured']): ?>
-                                        <div class="discount-box">Featured</div>
-                                    <?php endif; ?>
+                                    <div class="product-description">
+                                        <h4 class="product-name"><?php echo htmlspecialchars($relatedProduct['name']); ?></h4>
+                                        <span class="brand-name"><?php echo htmlspecialchars($relatedProduct['brand_name']); ?></span>
+                                        <div class="product-price">
+                                            <?php if (!empty($relatedProduct['original_price_label'])): ?>
+                                                <span class="old-price"><?php echo htmlspecialchars($relatedProduct['original_price_label']); ?></span>
+                                            <?php endif; ?>
+                                            <span class="new-price"><?php echo htmlspecialchars($relatedProduct['price_label']); ?></span>
+                                        </div>
+                                        <?php if (!empty($relatedProduct['discount_badge_label'])): ?>
+                                            <div class="discount-box"><?php echo htmlspecialchars($relatedProduct['discount_badge_label']); ?></div>
+                                        <?php elseif ($relatedProduct['is_featured']): ?>
+                                            <div class="discount-box">Featured</div>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                             </a>
                         <?php endforeach; ?>

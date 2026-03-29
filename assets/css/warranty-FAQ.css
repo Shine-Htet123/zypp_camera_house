@@ -145,6 +145,10 @@
     gap: 15px;
 }
 
+.faq-list--general {
+    display: flex;
+}
+
 .faq-group {
     display: none;
 }

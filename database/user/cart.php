@@ -77,6 +77,7 @@ function cart_fetch_user_discount_context(int $userId): array
     return [
         'user_id' => (int) ($row['id'] ?? $userId),
         'membership_tier_id' => $row && $row['membership_tier_id'] !== null ? (int) $row['membership_tier_id'] : null,
+        'standard_tier_ids' => cart_fetch_standard_discount_tier_ids(),
     ];
 }
 
@@ -102,7 +103,12 @@ function cart_discount_is_valid_for_user(array $discount, array $userContext): b
         return in_array('standard', $validUsers, true);
     }
 
-    return in_array('tier:' . (int) $membershipTierId, $validUsers, true);
+    if (in_array('tier:' . (int) $membershipTierId, $validUsers, true)) {
+        return true;
+    }
+
+    return in_array('standard', $validUsers, true)
+        && in_array((int) $membershipTierId, $userContext['standard_tier_ids'] ?? [], true);
 }
 
 function cart_calculate_unit_discount_amount(float $unitPrice, array $discount): float
@@ -137,6 +143,7 @@ function cart_fetch_applicable_discount_for_product(int $userId, array $product)
          FROM discounts d
          LEFT JOIN discount_conditions dc ON dc.discount_id = d.id
          WHERE LOWER(d.status) = "active"
+           AND LOWER(d.discount_type) <> "bundle"
            AND (d.start_date IS NULL OR d.start_date <= NOW())
            AND (d.end_date IS NULL OR d.end_date >= NOW())
            AND (
@@ -191,6 +198,38 @@ function cart_fetch_applicable_discount_for_product(int $userId, array $product)
     });
 
     return $applicable[0];
+}
+
+function cart_fetch_standard_discount_tier_ids(): array
+{
+    static $tierIds = null;
+    if (is_array($tierIds)) {
+        return $tierIds;
+    }
+
+    $pdo = get_database_connection();
+    $statement = $pdo->query(
+        'SELECT id, min_spent
+         FROM membership_tiers
+         ORDER BY min_spent ASC, id ASC'
+    );
+
+    $tierIds = [];
+    $lowestMinSpent = null;
+    foreach ($statement->fetchAll() as $tier) {
+        $minSpent = (float) ($tier['min_spent'] ?? 0);
+        if ($lowestMinSpent === null) {
+            $lowestMinSpent = $minSpent;
+        }
+
+        if (abs($minSpent - $lowestMinSpent) > 0.00001) {
+            break;
+        }
+
+        $tierIds[] = (int) $tier['id'];
+    }
+
+    return $tierIds;
 }
 
 function cart_fetch_item_record(int $cartId, int $productId): ?array

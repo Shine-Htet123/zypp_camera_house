@@ -206,6 +206,7 @@ $securityProfile = [
                     </span>
                 </div>
             </div>
+            <button type="button" class="security-link forgot-password-btn">Forgot Password</button>
         </section>
     </main>
 
@@ -309,6 +310,30 @@ $securityProfile = [
                 <div class="modal-actions">
                     <button type="button" class="action-btn cancel-btn security-cancel-btn">Cancel</button>
                     <button type="submit" class="action-btn save-btn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="forgotPasswordModal" aria-hidden="true">
+        <div class="modal-card security-modal" role="dialog" aria-modal="true" aria-labelledby="forgotPasswordModalTitle">
+            <button type="button" class="modal-close" aria-label="Close forgot password editor">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h2 id="forgotPasswordModalTitle">Forgot Password</h2>
+            <p class="modal-subtitle">Enter the admin email and we will send a reset link.</p>
+
+            <form class="security-form" id="forgotPasswordForm" action="<?php echo htmlspecialchars(app_path('/admin/forgot-password.php')); ?>" method="post">
+                <div class="security-field">
+                    <label for="adminForgotPasswordEmail">Email</label>
+                    <input type="email" id="adminForgotPasswordEmail" name="email" value="<?php echo htmlspecialchars($securityProfile['recovery_email'] !== '' ? $securityProfile['recovery_email'] : $adminProfile['email']); ?>">
+                </div>
+
+                <div class="security-feedback" id="forgotPasswordFeedback" aria-live="polite"></div>
+
+                <div class="modal-actions">
+                    <button type="button" class="action-btn cancel-btn forgot-password-cancel-btn">Cancel</button>
+                    <button type="submit" class="action-btn save-btn">Send Reset Link</button>
                 </div>
             </form>
         </div>

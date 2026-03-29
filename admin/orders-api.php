@@ -28,13 +28,18 @@ try {
         }
 
         $orderStatus = admin_orders_normalize_order_status((string) ($_POST['order_status'] ?? ''));
+        $paymentStatus = null;
+        if (isset($_POST['payment_status']) && trim((string) $_POST['payment_status']) !== '') {
+            $paymentStatus = admin_orders_normalize_payment_status((string) $_POST['payment_status']);
+        }
 
-        admin_update_order_status_only($orderId, $orderStatus);
+        $result = admin_update_order_statuses($orderId, $orderStatus, $paymentStatus);
 
         echo json_encode([
             'success' => true,
             'data' => [
-                'order_status' => $orderStatus,
+                'order_status' => $result['order_status'],
+                'payment_status' => $result['payment_status'],
             ],
         ]);
         exit;

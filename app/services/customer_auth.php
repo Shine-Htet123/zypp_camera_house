@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../../config/customer_bootstrap.php';
 require_once __DIR__ . '/../../config/oauth.php';
 require_once __DIR__ . '/../../database/user/auth.php';
+require_once __DIR__ . '/../../database/user/membership.php';
 require_once __DIR__ . '/../../database/security/password_resets.php';
 require_once __DIR__ . '/mailer.php';
 
@@ -157,19 +158,59 @@ function customer_auth_validate_registration(array $input): array
     ];
 }
 
+function customer_auth_resolve_referrer_from_token(?string $token): ?array
+{
+    $token = trim((string) $token);
+    if ($token === '') {
+        return null;
+    }
+
+    $referrer = auth_user_by_referral_token($token);
+    if (!$referrer) {
+        throw new InvalidArgumentException('Referral link is invalid.');
+    }
+
+    return $referrer;
+}
+
+function customer_auth_resolve_referrer_from_input(array $input): ?array
+{
+    return customer_auth_resolve_referrer_from_token(
+        (string) ($input['ref'] ?? $input['referral_token'] ?? '')
+    );
+}
+
+function customer_auth_resolve_referrer_from_redirect_target(?string $target): ?array
+{
+    $target = trim((string) $target);
+    if ($target === '') {
+        return null;
+    }
+
+    $query = parse_url($target, PHP_URL_QUERY);
+    if (!is_string($query) || $query === '') {
+        return null;
+    }
+
+    parse_str($query, $params);
+    return customer_auth_resolve_referrer_from_token((string) ($params['ref'] ?? ''));
+}
+
 function customer_auth_register(array $input): array
 {
     $payload = customer_auth_validate_registration($input);
+    $initialTier = membership_resolve_tier_for_spent(0.0);
+    $referrer = customer_auth_resolve_referrer_from_input($input);
 
     $user = auth_create_user([
         'public_user_id' => auth_generate_public_user_id(),
         'name' => $payload['name'],
         'email' => $payload['email'],
         'password' => password_hash($payload['password'], PASSWORD_DEFAULT),
-        'membership_tier_id' => null,
+        'membership_tier_id' => $initialTier !== null ? (int) $initialTier['id'] : null,
         'status' => 'active',
         'referral_token' => auth_generate_referral_token(),
-        'referred_by_user_id' => null,
+        'referred_by_user_id' => $referrer !== null ? (int) $referrer['id'] : null,
         'google_provider_id' => null,
     ]);
 
@@ -486,17 +527,19 @@ function customer_auth_start_oauth(string $provider, string $redirectTo, string 
     throw new InvalidArgumentException('Unsupported provider.');
 }
 
-function customer_auth_create_social_user(string $provider, string $providerId, string $email, string $name): array
+function customer_auth_create_social_user(string $provider, string $providerId, string $email, string $name, ?array $referrer = null): array
 {
+    $initialTier = membership_resolve_tier_for_spent(0.0);
+
     $user = auth_create_user([
         'public_user_id' => auth_generate_public_user_id(),
         'name' => $name !== '' ? $name : ucfirst($provider) . ' User',
         'email' => mb_strtolower(trim($email)),
         'password' => password_hash(bin2hex(random_bytes(24)), PASSWORD_DEFAULT),
-        'membership_tier_id' => null,
+        'membership_tier_id' => $initialTier !== null ? (int) $initialTier['id'] : null,
         'status' => 'active',
         'referral_token' => auth_generate_referral_token(),
-        'referred_by_user_id' => null,
+        'referred_by_user_id' => $referrer !== null ? (int) $referrer['id'] : null,
         'google_provider_id' => $provider === 'google' ? $providerId : null,
     ]);
 
@@ -507,7 +550,7 @@ function customer_auth_create_social_user(string $provider, string $providerId, 
     return $user;
 }
 
-function customer_auth_finish_provider_login(string $provider, string $providerId, string $email, string $name): array
+function customer_auth_finish_provider_login(string $provider, string $providerId, string $email, string $name, ?array $referrer = null): array
 {
     $providerUser = auth_user_by_provider_id($provider, $providerId);
     if ($providerUser) {
@@ -527,7 +570,7 @@ function customer_auth_finish_provider_login(string $provider, string $providerI
         throw new RuntimeException('This email already exists. Please log in with your email and password first.');
     }
 
-    $user = customer_auth_create_social_user($provider, $providerId, $email, $name);
+    $user = customer_auth_create_social_user($provider, $providerId, $email, $name, $referrer);
     customer_auth_login_user($user);
 
     return $user;
@@ -590,7 +633,7 @@ function customer_auth_fetch_google_identity(array $config, string $code): array
     ];
 }
 
-function customer_auth_handle_google_callback(array $config, string $code): array
+function customer_auth_handle_google_callback(array $config, string $code, ?array $referrer = null): array
 {
     $identity = customer_auth_fetch_google_identity($config, $code);
 
@@ -598,7 +641,8 @@ function customer_auth_handle_google_callback(array $config, string $code): arra
         $identity['provider'],
         $identity['provider_id'],
         $identity['email'],
-        $identity['name']
+        $identity['name'],
+        $referrer
     );
 }
 
@@ -607,6 +651,7 @@ function customer_auth_handle_oauth_callback(string $provider, array $queryData,
     $storedState = $_SESSION['oauth_state'] ?? '';
     $storedProvider = $_SESSION['oauth_provider'] ?? '';
     $storedMode = $_SESSION['oauth_mode'] ?? 'login';
+    $storedRedirectTo = $_SESSION['oauth_redirect_to'] ?? '/';
     $requestState = (string) ($queryData['state'] ?? $postData['state'] ?? '');
     $code = (string) ($queryData['code'] ?? $postData['code'] ?? '');
 
@@ -619,6 +664,9 @@ function customer_auth_handle_oauth_callback(string $provider, array $queryData,
     }
 
     $config = customer_auth_provider_config($provider);
+    $referrer = $storedMode === 'login'
+        ? customer_auth_resolve_referrer_from_redirect_target((string) $storedRedirectTo)
+        : null;
 
     try {
         if ($storedMode === 'connect') {
@@ -629,7 +677,7 @@ function customer_auth_handle_oauth_callback(string $provider, array $queryData,
         }
 
         if ($provider === 'google') {
-            return customer_auth_handle_google_callback($config, $code);
+            return customer_auth_handle_google_callback($config, $code, $referrer);
         }
     } finally {
         unset($_SESSION['oauth_state'], $_SESSION['oauth_provider'], $_SESSION['oauth_mode']);

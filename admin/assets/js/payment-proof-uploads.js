@@ -18,8 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const downloadProof = document.getElementById('downloadProof');
   const copyProof = document.getElementById('copyProof');
   const selectAll = document.getElementById('selectAllProofs');
-  const rowChecks = Array.from(document.querySelectorAll('.proof-check'));
-  const rows = Array.from(document.querySelectorAll('.proof-row'));
+  const tableBody = document.querySelector('.proof-table-grid tbody');
   const bulkApprove = document.querySelector('.btn-approve');
   const bulkReject = document.querySelector('.btn-reject');
   const bulkRequest = document.querySelector('.btn-request');
@@ -33,6 +32,46 @@ document.addEventListener('DOMContentLoaded', () => {
   const searchButton = document.getElementById('proofSearchButton');
   const showAllButton = document.querySelector('.admin-show-all');
   const emptyRow = document.querySelector('.proof-empty-row');
+  const getRowChecks = () => Array.from(document.querySelectorAll('.proof-check'));
+  const getRows = () => Array.from(document.querySelectorAll('.proof-row'));
+
+  const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+  const renderProofRow = (proof) => `
+    <tr
+      class="proof-row"
+      data-order-id="${Number(proof.order_id || 0)}"
+      data-order-no="${escapeHtml(proof.order_no_display || '')}"
+      data-order-date="${escapeHtml(proof.order_date_display || '')}"
+      data-payment-status="${escapeHtml(proof.status_label || 'Pending')}"
+      data-order-status="${escapeHtml(proof.order_status_label || 'Pending')}"
+      data-payment-method="${escapeHtml(proof.payment_method || '')}"
+      data-payment-id="${Number(proof.payment_id || 0)}"
+    >
+      <td><input type="checkbox" class="proof-check" value="${Number(proof.payment_id || 0)}"></td>
+      <td>${Number(proof.no || 0)}</td>
+      <td class="payment-id-cell">${escapeHtml(proof.payment_id_display || '')}</td>
+      <td class="order-link order-id-link">${escapeHtml(proof.order_no_display || '')}</td>
+      <td>${escapeHtml(proof.public_user_id || '')}</td>
+      <td>${escapeHtml(proof.amount_display || '')}</td>
+      <td>
+        <span class="status ${(proof.status_label || 'Pending').toLowerCase()}">
+          ${escapeHtml(proof.status_label || 'Pending')}
+        </span>
+      </td>
+      <td>${escapeHtml(proof.payment_method || '')}</td>
+      <td>
+        <button type="button" class="proof-thumb" data-proof-src="${escapeHtml(proof.payment_proof_file || '')}">
+          <img src="${escapeHtml(proof.payment_proof_file || '')}" alt="Payment proof thumbnail">
+        </button>
+      </td>
+    </tr>
+  `;
 
   const clearStatusClasses = (el, base) => {
     if (!el) return;
@@ -68,8 +107,74 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const updateEmptyState = () => {
     if (!emptyRow) return;
-    const visibleRows = rows.filter((row) => row.style.display !== 'none');
+    const visibleRows = getRows().filter((row) => row.style.display !== 'none');
     emptyRow.style.display = visibleRows.length === 0 ? '' : 'none';
+  };
+
+  const renumberRows = () => {
+    getRows().forEach((row, index) => {
+      if (row.children[1]) {
+        row.children[1].textContent = String(index + 1);
+      }
+    });
+  };
+
+  const syncSelectAllState = () => {
+    if (!selectAll) return;
+    const visibleChecks = getRowChecks().filter((item) => item.closest('.proof-row')?.style.display !== 'none');
+    const checked = visibleChecks.filter((item) => item.checked).length;
+    selectAll.checked = checked === visibleChecks.length && visibleChecks.length > 0;
+    selectAll.indeterminate = checked > 0 && checked < visibleChecks.length;
+  };
+
+  const refreshMethodOptions = () => {
+    if (!filterMethod) return;
+
+    const currentValue = filterMethod.value;
+    const methods = Array.from(new Set(
+      getRows()
+        .map((row) => (row.dataset.paymentMethod || '').trim())
+        .filter((value) => value !== '')
+    )).sort((left, right) => left.localeCompare(right));
+
+    filterMethod.innerHTML = '<option value="">All</option>'
+      + methods.map((method) => `<option value="${escapeHtml(method)}">${escapeHtml(method)}</option>`).join('');
+
+    filterMethod.value = methods.includes(currentValue) ? currentValue : '';
+  };
+
+  const mergeIncomingProofs = (proofs) => {
+    if (!tableBody || !Array.isArray(proofs) || proofs.length === 0) return;
+
+    proofs.slice().reverse().forEach((proof) => {
+      const paymentId = String(proof.payment_id || '');
+      if (paymentId === '') return;
+
+      const existingRow = tableBody.querySelector(`.proof-row[data-payment-id="${paymentId}"]`);
+      const selected = existingRow?.querySelector('.proof-check')?.checked === true;
+      const wrapper = document.createElement('tbody');
+      wrapper.innerHTML = renderProofRow(proof).trim();
+      const nextRow = wrapper.querySelector('.proof-row');
+      if (!nextRow) return;
+
+      const nextCheckbox = nextRow.querySelector('.proof-check');
+      if (nextCheckbox) {
+        nextCheckbox.checked = selected;
+      }
+
+      if (existingRow) {
+        existingRow.replaceWith(nextRow);
+      } else {
+        tableBody.insertBefore(nextRow, emptyRow?.nextSibling || tableBody.firstChild);
+      }
+    });
+
+    renumberRows();
+    refreshMethodOptions();
+    syncSelectAllState();
+    updateBulkButtons();
+    applyFilters();
+    window.AdminPaymentProofNotifications?.refresh?.();
   };
 
   const applyFilters = () => {
@@ -77,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const status = (filterStatus?.value || '').trim().toLowerCase();
     const method = (filterMethod?.value || '').trim().toLowerCase();
 
-    rows.forEach((row) => {
+    getRows().forEach((row) => {
       const haystack = [
         row.dataset.orderNo,
         row.dataset.paymentMethod,
@@ -112,8 +217,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     [
       ['Subtotal', detail.subtotal_display],
-      ['Shipping Fees', detail.shipping_fee_display],
-      ['Total', detail.total_display],
+      ['Total Discount', `-${detail.total_discount_display}`],
+      ['Grand Total', detail.grand_total_display || detail.total_display],
     ].forEach(([label, value]) => {
       const row = document.createElement('div');
       row.className = 'summary-row summary-total';
@@ -147,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const updateBulkButtons = () => {
-    const checked = rowChecks.filter((item) => item.checked).length;
+    const checked = getRowChecks().filter((item) => item.checked).length;
     const enabled = checked > 0;
     [bulkApprove, bulkReject, bulkRequest].forEach((btn) => {
       if (!btn) return;
@@ -156,10 +261,10 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const selectedPaymentIds = () =>
-    rowChecks.filter((item) => item.checked).map((item) => item.value);
+    getRowChecks().filter((item) => item.checked).map((item) => item.value);
 
   const updateSelectedRowsStatus = (paymentIds, paymentStatus) => {
-    rows.forEach((row) => {
+    getRows().forEach((row) => {
       if (!paymentIds.includes(row.dataset.paymentId)) return;
       row.dataset.paymentStatus = paymentStatus;
       const badge = row.querySelector('.status');
@@ -189,7 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     updateSelectedRowsStatus(paymentIds, payload.data.payment_status);
-    rowChecks.forEach((item) => { item.checked = false; });
+    getRowChecks().forEach((item) => { item.checked = false; });
     if (selectAll) {
       selectAll.checked = false;
       selectAll.indeterminate = false;
@@ -198,8 +303,12 @@ document.addEventListener('DOMContentLoaded', () => {
     applyFilters();
   };
 
-  rows.forEach((row) => {
-    row.querySelector('.order-id-link')?.addEventListener('click', async () => {
+  document.addEventListener('click', async (event) => {
+    const orderLink = event.target.closest('.order-id-link');
+    if (orderLink) {
+      const row = orderLink.closest('.proof-row');
+      if (!row) return;
+
       try {
         const detail = await loadOrderDetail(row.dataset.orderId || '');
         populateOrderModal(detail);
@@ -209,25 +318,25 @@ document.addEventListener('DOMContentLoaded', () => {
           Swal.fire({ icon: 'error', title: 'Load failed', text: error.message });
         }
       }
-    });
-  });
+      return;
+    }
 
-  document.querySelectorAll('.proof-thumb').forEach((button) => {
-    button.addEventListener('click', () => {
-      const row = button.closest('.proof-row');
-      const src = button.dataset.proofSrc;
-      if (proofImage) {
-        proofImage.src = src || '';
-        proofImage.alt = 'Payment proof';
-      }
-      if (downloadProof) {
-        downloadProof.href = src || '#';
-      }
-      if (modalPaymentId && row) {
-        modalPaymentId.textContent = row.querySelector('.payment-id-cell')?.textContent.trim() || '-';
-      }
-      openModal(proofModal);
-    });
+    const proofButton = event.target.closest('.proof-thumb');
+    if (!proofButton) return;
+
+    const row = proofButton.closest('.proof-row');
+    const src = proofButton.dataset.proofSrc;
+    if (proofImage) {
+      proofImage.src = src || '';
+      proofImage.alt = 'Payment proof';
+    }
+    if (downloadProof) {
+      downloadProof.href = src || '#';
+    }
+    if (modalPaymentId && row) {
+      modalPaymentId.textContent = row.querySelector('.payment-id-cell')?.textContent.trim() || '-';
+    }
+    openModal(proofModal);
   });
 
   const handleCopy = async () => {
@@ -273,7 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (selectAll) {
     selectAll.addEventListener('change', () => {
-      rowChecks.forEach((checkbox) => {
+      getRowChecks().forEach((checkbox) => {
         if (checkbox.closest('.proof-row')?.style.display === 'none') return;
         checkbox.checked = selectAll.checked;
       });
@@ -281,15 +390,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  rowChecks.forEach((checkbox) => {
-    checkbox.addEventListener('change', () => {
-      if (!selectAll) return;
-      const visibleChecks = rowChecks.filter((item) => item.closest('.proof-row')?.style.display !== 'none');
-      const checked = visibleChecks.filter((item) => item.checked).length;
-      selectAll.checked = checked === visibleChecks.length && visibleChecks.length > 0;
-      selectAll.indeterminate = checked > 0 && checked < visibleChecks.length;
-      updateBulkButtons();
-    });
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('.proof-check')) return;
+    syncSelectAllState();
+    updateBulkButtons();
   });
 
   [bulkApprove, bulkReject, bulkRequest].forEach((button) => {
@@ -391,6 +495,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  window.addEventListener('admin:payment-proof-notifications', (event) => {
+    const proofs = event.detail?.proofs;
+    if (!Array.isArray(proofs) || proofs.length === 0) {
+      return;
+    }
+
+    mergeIncomingProofs(proofs);
+  });
+
   updateBulkButtons();
+  renumberRows();
+  refreshMethodOptions();
   applyFilters();
 });

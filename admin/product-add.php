@@ -8,17 +8,12 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 require_once __DIR__ . '/../database/catalog.php';
 require_once __DIR__ . '/../database/admin/catalog_management.php';
 
-$setFlash = static function (string $message, string $type = 'success'): void {
-    $_SESSION['admin_product_add_flash'] = [
-        'message' => $message,
-        'type' => $type,
-    ];
-};
-
-$consumeFlash = static function (): ?array {
-    $flash = $_SESSION['admin_product_add_flash'] ?? null;
-    unset($_SESSION['admin_product_add_flash']);
-    return is_array($flash) ? $flash : null;
+$isAjaxRequest = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
+$respondJson = static function (array $payload, int $status = 200): void {
+    http_response_code($status);
+    header('Content-Type: application/json; charset=UTF-8');
+    echo json_encode($payload, JSON_UNESCAPED_SLASHES);
+    exit;
 };
 
 $old = [
@@ -38,18 +33,35 @@ $old = [
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $old = array_merge($old, $_POST);
     try {
-        admin_product_create($_POST, $_FILES);
-        $setFlash('Product added successfully.');
-        $_SESSION['admin_products_flash'] = $_SESSION['admin_product_add_flash'];
-        unset($_SESSION['admin_product_add_flash']);
+        $productId = admin_product_create($_POST, $_FILES);
+        if ($isAjaxRequest) {
+            $respondJson([
+                'success' => true,
+                'message' => 'Product added successfully.',
+                'product_id' => $productId,
+                'edit_url' => app_path('/admin/product-edit.php?id=' . $productId),
+            ]);
+        }
+
         header('Location: ' . app_path('/admin/products.php'));
         exit;
     } catch (Throwable $exception) {
-        $setFlash($exception->getMessage(), 'error');
+        if ($isAjaxRequest) {
+            $respondJson([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
+
+        $_SESSION['admin_product_add_flash'] = [
+            'message' => $exception->getMessage(),
+            'type' => 'error',
+        ];
     }
 }
 
-$flash = $consumeFlash();
+$flash = $_SESSION['admin_product_add_flash'] ?? null;
+unset($_SESSION['admin_product_add_flash']);
 $brands = catalog_fetch_brand_options();
 $categories = catalog_fetch_category_options();
 $subCategories = catalog_fetch_sub_category_options();
@@ -71,7 +83,7 @@ $subCategories = catalog_fetch_sub_category_options();
             <h1>Add New Product</h1>
         </header>
 
-        <form class="product-form" action="<?php echo htmlspecialchars(app_path('/admin/product-add.php')); ?>" method="post" enctype="multipart/form-data">
+        <form id="productForm" class="product-form" action="<?php echo htmlspecialchars(app_path('/admin/product-add.php')); ?>" method="post" enctype="multipart/form-data" data-skip-loader>
             <input type="hidden" name="primary_image_index" id="primaryImageIndex" value="0">
             <div class="form-grid">
                 <div class="form-left">
@@ -235,15 +247,16 @@ $subCategories = catalog_fetch_sub_category_options();
                 </div>
             </div>
 
-            <div class="form-footer">
-                <div class="unsaved-note">Unsaved data will be deleted</div>
-                <div class="footer-actions">
-                    <button type="submit" class="btn-footer save">Add</button>
-                    <button type="button" class="btn-footer discard">Discard</button>
-                </div>
-            </div>
         </form>
     </main>
+
+    <div class="form-footer">
+        <div class="unsaved-note">Unsaved data will be deleted</div>
+        <div class="footer-actions">
+            <button type="submit" form="productForm" class="btn-footer save">Add</button>
+            <button type="button" class="btn-footer discard">Discard</button>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>

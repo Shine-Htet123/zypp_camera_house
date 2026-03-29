@@ -14,31 +14,46 @@ if ($productId <= 0) {
     exit;
 }
 
-$setFlash = static function (string $message, string $type = 'success'): void {
-    $_SESSION['admin_product_edit_flash'] = [
-        'message' => $message,
-        'type' => $type,
-    ];
-};
-
-$consumeFlash = static function (): ?array {
-    $flash = $_SESSION['admin_product_edit_flash'] ?? null;
-    unset($_SESSION['admin_product_edit_flash']);
-    return is_array($flash) ? $flash : null;
+$isAjaxRequest = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
+$respondJson = static function (array $payload, int $status = 200): void {
+    http_response_code($status);
+    header('Content-Type: application/json; charset=UTF-8');
+    echo json_encode($payload, JSON_UNESCAPED_SLASHES);
+    exit;
 };
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         admin_product_update($productId, $_POST, $_FILES);
-        $setFlash('Product updated successfully.');
+        if ($isAjaxRequest) {
+            $updatedImages = catalog_fetch_product_images($productId);
+            $respondJson([
+                'success' => true,
+                'message' => 'Product updated successfully.',
+                'product_id' => $productId,
+                'images' => $updatedImages,
+            ]);
+        }
+
         header('Location: ' . app_path('/admin/product-edit.php?id=' . $productId));
         exit;
     } catch (Throwable $exception) {
-        $setFlash($exception->getMessage(), 'error');
+        if ($isAjaxRequest) {
+            $respondJson([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
+
+        $_SESSION['admin_product_edit_flash'] = [
+            'message' => $exception->getMessage(),
+            'type' => 'error',
+        ];
     }
 }
 
-$flash = $consumeFlash();
+$flash = $_SESSION['admin_product_edit_flash'] ?? null;
+unset($_SESSION['admin_product_edit_flash']);
 $product = fetch_product_by_id($productId, true);
 if (!$product) {
     header('Location: ' . app_path('/admin/products.php'));
@@ -71,7 +86,7 @@ $primaryImageKey = !empty($images[0]['image_id']) ? 'existing:' . $images[0]['im
             <h1>Edit Product</h1>
         </header>
 
-        <form class="product-form" action="<?php echo htmlspecialchars(app_path('/admin/product-edit.php?id=' . $productId)); ?>" method="post" enctype="multipart/form-data">
+        <form id="productForm" class="product-form" action="<?php echo htmlspecialchars(app_path('/admin/product-edit.php?id=' . $productId)); ?>" method="post" enctype="multipart/form-data" data-skip-loader>
             <input type="hidden" name="product_id" value="<?php echo $productId; ?>">
             <input type="hidden" name="primary_image_key" id="primaryImageKey" value="<?php echo htmlspecialchars($primaryImageKey); ?>">
             <div id="deletedImageInputs"></div>
@@ -251,15 +266,16 @@ $primaryImageKey = !empty($images[0]['image_id']) ? 'existing:' . $images[0]['im
                 </div>
             </div>
 
-            <div class="form-footer">
-                <div class="unsaved-note">Unsaved data will be deleted</div>
-                <div class="footer-actions">
-                    <button type="submit" class="btn-footer save">Save</button>
-                    <button type="button" class="btn-footer discard">Discard</button>
-                </div>
-            </div>
         </form>
     </main>
+
+    <div class="form-footer">
+        <div class="unsaved-note">Unsaved data will be deleted</div>
+        <div class="footer-actions">
+            <button type="submit" form="productForm" class="btn-footer save">Save</button>
+            <button type="button" class="btn-footer discard">Discard</button>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>

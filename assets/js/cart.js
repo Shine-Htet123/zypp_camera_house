@@ -15,7 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const subtotalEl = form.querySelector('[data-cart-subtotal]');
+  const itemsTotalEl = form.querySelector('[data-cart-items-total]');
   const discountEl = form.querySelector('[data-cart-discount]');
+  const hasBundlePricing = form.dataset.cartHasBundlePricing === '1';
 
   const formatNumber = (value) => Number(value || 0).toLocaleString();
 
@@ -51,6 +53,10 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const updateRow = (row) => {
+    if (hasBundlePricing) {
+      return;
+    }
+
     const qtyInput = row.querySelector('[data-qty-input]');
 
     if (!qtyInput) {
@@ -64,37 +70,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const quantity = clampQuantity(qtyInput.value, Math.max(stock, 1));
     const subtotal = unitPrice * quantity;
     const lineDiscount = calculateRowDiscount(subtotal, discountValue, discountType, quantity);
-    const subtotalEl = row.querySelector('[data-line-subtotal]');
-    const discountValueEl = row.querySelector('[data-discount-value]');
-    const discountUnitEl = row.querySelector('[data-discount-unit]');
+    const lineTotal = Math.max(subtotal - lineDiscount, 0);
+    const lineTotalEl = row.querySelector('[data-line-total]');
+    const discountTextEl = row.querySelector('[data-discount-text]');
 
     qtyInput.value = quantity;
 
-    if (subtotalEl) {
-      subtotalEl.textContent = formatNumber(subtotal);
+    if (lineTotalEl) {
+      lineTotalEl.textContent = formatNumber(lineTotal);
     }
 
-    if (discountValueEl) {
-      discountValueEl.textContent = formatNumber(discountValue);
-    }
-
-    if (discountUnitEl) {
-      discountUnitEl.textContent = discountType === 'fixed' ? 'MMK' : '%';
+    if (discountTextEl) {
+      discountTextEl.textContent = `- ${formatNumber(discountValue)} ${discountType === 'fixed' ? 'MMK' : '%'} each`;
     }
 
     row.dataset.lineDiscount = String(lineDiscount);
     row.dataset.lineSubtotal = String(subtotal);
+    row.dataset.lineTotal = String(lineTotal);
     syncStockNote(row);
   };
 
   const updateTotals = () => {
+    if (hasBundlePricing) {
+      return;
+    }
+
+    let itemsTotal = 0;
     let subtotal = 0;
     let discount = 0;
 
     form.querySelectorAll('[data-cart-row]').forEach((row) => {
-      subtotal += Number.parseInt(row.dataset.lineSubtotal || '0', 10);
+      itemsTotal += Number.parseInt(row.dataset.lineSubtotal || '0', 10);
+      subtotal += Number.parseInt(row.dataset.lineTotal || '0', 10);
       discount += Number.parseInt(row.dataset.lineDiscount || '0', 10);
     });
+
+    if (itemsTotalEl) {
+      itemsTotalEl.textContent = formatNumber(itemsTotal);
+    }
 
     if (subtotalEl) {
       subtotalEl.textContent = formatNumber(subtotal);
@@ -145,6 +158,11 @@ document.addEventListener('DOMContentLoaded', () => {
       product_id: productId,
     });
 
+    if (hasBundlePricing || payload.requires_refresh) {
+      window.location.reload();
+      return;
+    }
+
     row.remove();
     updateTotals();
     syncNavbarCount(payload.cart_count);
@@ -179,11 +197,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  form.querySelectorAll('[data-cart-row]').forEach((row) => {
-    updateRow(row);
-  });
+  if (!hasBundlePricing) {
+    form.querySelectorAll('[data-cart-row]').forEach((row) => {
+      updateRow(row);
+    });
 
-  updateTotals();
+    updateTotals();
+  }
 
   form.addEventListener('click', (event) => {
     const actionButton = event.target.closest('[data-qty-action]');
@@ -210,13 +230,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const next = actionButton.dataset.qtyAction === 'increase' ? current + 1 : current - 1;
 
     qtyInput.value = clampQuantity(next, max);
-    updateRow(row);
-    updateTotals();
+    if (!hasBundlePricing) {
+      updateRow(row);
+      updateTotals();
+    }
     postCartAction({
       action: 'update_item',
       product_id: row.dataset.productId || '',
       quantity: qtyInput.value,
     }).then((payload) => {
+      if (hasBundlePricing || payload.requires_refresh) {
+        window.location.reload();
+        return;
+      }
       syncNavbarCount(payload.cart_count);
     }).catch((error) => {
       if (typeof Swal !== 'undefined') {
@@ -236,13 +262,19 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    updateRow(row);
-    updateTotals();
+    if (!hasBundlePricing) {
+      updateRow(row);
+      updateTotals();
+    }
     postCartAction({
       action: 'update_item',
       product_id: row.dataset.productId || '',
       quantity: event.target.value,
     }).then((payload) => {
+      if (hasBundlePricing || payload.requires_refresh) {
+        window.location.reload();
+        return;
+      }
       syncNavbarCount(payload.cart_count);
     }).catch((error) => {
       if (typeof Swal !== 'undefined') {

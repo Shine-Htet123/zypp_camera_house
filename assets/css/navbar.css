@@ -347,10 +347,10 @@
     align-items: center;
 }
 
-.search-bar-content .search-loading .search-loading-video {
-    width: 200px;
-    height: auto;
-    object-fit: cover;
+.search-bar-content .search-loading .orbit-loader {
+    --orbit-loader-size: 126px;
+    --orbit-loader-ring-width: 3px;
+    --orbit-loader-core-size: 54px;
 }
 
 .search-bar-content .search-empty {
@@ -447,9 +447,13 @@
     color: var(--color-danger);
 }
 
+.result-item .price-container .discounted-price:only-child {
+    color: var(--brand-primary);
+}
+
 .result-item .price-container .original-price {
     text-decoration: line-through;
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 .result-item .price-container .discount {
@@ -582,9 +586,9 @@
         transform: none;
     }
 
-    .search-bar-container .search-bar-content .search-loading .search-loading-video {
-        width: 150px;
-        height: auto;
+    .search-bar-container .search-bar-content .search-loading .orbit-loader {
+        --orbit-loader-size: 102px;
+        --orbit-loader-core-size: 46px;
     }
 
     .search-bar-container .search-bar-content .search-loading {
@@ -1163,6 +1167,73 @@ body.home-page .top {
 
 .menu-container .user-menu .nav-menu .search-bar-container .search-box input{
     width: 100%;
+}
+
+@media (max-width: 650px) {
+    .menu-container .user-menu {
+        padding: 38px 24px 28px;
+    }
+
+    .user-menu .nav-menu {
+        gap: 16px;
+        margin-top: 32px;
+    }
+
+    .user-menu .nav-menu .nav-links {
+        gap: 14px;
+        width: 100%;
+    }
+
+    .user-menu .nav-menu .nav-links .category-container {
+        height: auto;
+        gap: 6px;
+    }
+
+    .user-menu .nav-menu .nav-links .support-dropdown {
+        gap: 10px;
+        padding: 0 0 0 14px;
+    }
+
+    .menu-container .user-menu .nav-menu .search-bar-container {
+        flex: 0 0 auto;
+        width: min(100%, 520px);
+        align-self: center;
+        margin-top: 12px;
+    }
+
+    .menu-container .user-menu .nav-menu .search-bar-container .search-box {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        align-items: center;
+        min-height: 56px;
+        padding: 8px 14px 8px 18px;
+        border-radius: 24px;
+        gap: 8px;
+    }
+
+    .menu-container .user-menu .nav-menu .search-bar-container .search-box input,
+    .menu-container .user-menu .nav-menu .search-bar-container .search-box input::placeholder {
+        font-size: 1rem;
+    }
+
+    .menu-container .user-menu .nav-menu .search-bar-container .search-box input {
+        width: auto;
+        height: auto;
+        min-width: 0;
+        line-height: 1.2;
+    }
+
+    .menu-container .user-menu .nav-menu .search-bar-container .search-box .search,
+    .menu-container .user-menu .nav-menu .search-bar-container .search-box .resetbtn {
+        width: 30px;
+        height: 30px;
+        justify-self: center;
+    }
+
+    .menu-container .user-menu .nav-menu .search-bar-container .search-box .search i,
+    .menu-container .user-menu .nav-menu .search-bar-container .search-box .resetbtn i {
+        font-size: 1.05rem;
+    }
 }
 
 @keyframes slideUp {

@@ -22,16 +22,22 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedImageIndex = 0;
   let formDirty = false;
 
-  const showWarning = (message) => {
+  const showAlert = async (options) => {
     if (window.Swal) {
-      Swal.fire({
-        icon: 'warning',
-        text: message,
-        confirmButtonColor: '#3b2615',
-      });
-      return;
+      return Swal.fire(options);
     }
-    alert(message);
+
+    const message = options?.text || options?.title || '';
+    if (message) alert(message);
+    return null;
+  };
+
+  const showWarning = (message) => {
+    showAlert({
+      icon: 'warning',
+      text: message,
+      confirmButtonColor: '#3b2615',
+    });
   };
 
   const validateForm = () => {
@@ -61,6 +67,11 @@ document.addEventListener('DOMContentLoaded', () => {
     formFooter?.classList.add('is-visible');
   };
 
+  const clearDirty = () => {
+    formDirty = false;
+    formFooter?.classList.remove('is-visible');
+  };
+
   const syncSubCategories = () => {
     if (!categorySelect || !subCategorySelect) return;
     const categoryId = categorySelect.value;
@@ -75,20 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
       subCategorySelect.value = '';
     }
   };
-
-  if (productForm) {
-    productForm.addEventListener('input', (event) => {
-      if (event.target?.classList?.contains('spec-edit-input')) return;
-      setDirty();
-    });
-    productForm.addEventListener('change', setDirty);
-    productForm.addEventListener('submit', (event) => {
-      const message = validateForm();
-      if (!message) return;
-      event.preventDefault();
-      showWarning(message);
-    });
-  }
 
   const buildListItem = (value, inputName, editLabel) => {
     const li = document.createElement('li');
@@ -221,6 +218,104 @@ document.addEventListener('DOMContentLoaded', () => {
     updatePrimarySelection(primaryIndex);
   };
 
+  const resetDynamicLists = () => {
+    [specList, colorList, sizeList].forEach((list) => {
+      if (list) {
+        list.innerHTML = '';
+      }
+    });
+  };
+
+  const resetImageState = () => {
+    imageFiles = new DataTransfer();
+    selectedImageIndex = 0;
+
+    if (uploadInput) {
+      uploadInput.value = '';
+      delete uploadInput.dataset.replaceIndex;
+    }
+
+    if (primaryImageIndex) {
+      primaryImageIndex.value = '0';
+    }
+
+    syncFilesToInput();
+    refreshTiles();
+  };
+
+  const resetProductForm = () => {
+    productForm?.reset();
+    resetDynamicLists();
+    resetImageState();
+    syncSubCategories();
+    clearDirty();
+  };
+
+  const submitProductForm = async () => {
+    if (!productForm) return;
+
+    const formData = new FormData(productForm);
+    window.AdminLoading?.show('Saving product...');
+    let loaderVisible = true;
+
+    try {
+      const response = await fetch(productForm.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          Accept: 'application/json',
+        },
+      });
+
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.message || 'Failed to save product.');
+      }
+
+      resetProductForm();
+      window.AdminLoading?.reset?.();
+      loaderVisible = false;
+      await showAlert({
+        icon: 'success',
+        text: result.message || 'Product added successfully.',
+        confirmButtonColor: '#3b2615',
+      });
+    } catch (error) {
+      window.AdminLoading?.reset?.();
+      loaderVisible = false;
+      await showAlert({
+        icon: 'error',
+        title: 'Save failed',
+        text: error.message || 'Failed to save product.',
+        confirmButtonColor: '#3b2615',
+      });
+    } finally {
+      if (loaderVisible) {
+        window.AdminLoading?.reset?.();
+      }
+    }
+  };
+
+  if (productForm) {
+    productForm.addEventListener('input', (event) => {
+      if (event.target?.classList?.contains('spec-edit-input')) return;
+      setDirty();
+    });
+    productForm.addEventListener('change', setDirty);
+    productForm.addEventListener('submit', async (event) => {
+      const message = validateForm();
+      event.preventDefault();
+
+      if (message) {
+        showWarning(message);
+        return;
+      }
+
+      await submitProductForm();
+    });
+  }
+
   [
     { input: specInput, button: specAdd, list: specList, name: 'spec_names[]', label: 'specification' },
     { input: colorInput, button: colorAdd, list: colorList, name: 'color_names[]', label: 'color' },
@@ -326,12 +421,12 @@ document.addEventListener('DOMContentLoaded', () => {
   syncSubCategories();
 
   discardBtn?.addEventListener('click', () => {
-    window.location.reload();
+    resetProductForm();
   });
 
-  if (window.adminProductAddFlash && window.Swal) {
+  if (window.adminProductAddFlash && window.adminProductAddFlash.type === 'error' && window.Swal) {
     Swal.fire({
-      icon: window.adminProductAddFlash.type === 'error' ? 'error' : 'success',
+      icon: 'error',
       text: window.adminProductAddFlash.message || '',
       timer: 2200,
       showConfirmButton: false,

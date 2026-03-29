@@ -41,15 +41,15 @@ $reuploadRequested = !empty($order['reupload_requested']);
                         <span class="cell"><?php echo $index + 1; ?></span>
                         <span class="cell"><?php echo htmlspecialchars((string) $item['name']); ?></span>
                         <span class="cell"><?php echo (int) $item['qty']; ?></span>
-                        <span class="cell"><?php echo checkout_format_mmk((float) $item['final_price']); ?> MMK</span>
+                        <span class="cell"><?php echo checkout_format_mmk((float) ($item['line_subtotal'] ?? $item['final_price'])); ?> MMK</span>
                     </div>
                 <?php endforeach; ?>
                 <div class="summary-total">
                     <span class="cell label">Subtotal</span>
-                    <span class="cell value"><?php echo checkout_format_mmk((float) $order['subtotal']); ?> MMK</span>
+                    <span class="cell value"><?php echo checkout_format_mmk((float) ($order['subtotal'] ?? 0)); ?> MMK</span>
                 </div>
                 <div class="summary-total">
-                    <span class="cell label">Discount</span>
+                    <span class="cell label">Total Discount</span>
                     <span class="cell value discount">-<?php echo checkout_format_mmk((float) $order['total_discount']); ?> MMK</span>
                 </div>
                 <div class="summary-total">
@@ -106,7 +106,15 @@ $reuploadRequested = !empty($order['reupload_requested']);
 
             <div class="order-actions">
                 <a href="<?php echo htmlspecialchars(app_path('/user-profile.php#orders')); ?>">Go Back to Profile</a>
-                <button type="button" class="download-btn">Download E-receipt</button>
+                <a
+                    class="download-btn"
+                    style="color: var(--text-inverse);"
+                    href="<?php echo htmlspecialchars(app_path('/receipt.php?order=' . rawurlencode((string) $order['public_order_id']))); ?>"
+                    target="_blank"
+                    rel="noopener"
+                >
+                    Download E-receipt
+                </a>
             </div>
         </section>
     </main>

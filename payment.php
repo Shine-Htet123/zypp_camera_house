@@ -54,13 +54,22 @@ try {
 
 $paymentFlash = checkout_flash_consume();
 $draft = $paymentView['draft'];
+$paymentMethod = is_array($paymentView['payment_method'] ?? null) ? $paymentView['payment_method'] : [];
 $orderItems = $paymentView['items'];
 $subtotal = $paymentView['subtotal'];
 $discount = $paymentView['total_discount'];
 $grandTotal = $paymentView['grand_total'];
 $hasFreeDelivery = $paymentView['has_free_delivery'];
 $requiresPaymentProof = $paymentView['requires_payment_proof'];
-$paymentQrCardImage = app_path('/storage/uploads/contents/logo.png');
+$paymentQrCardImage = site_content_image_url((string) ($paymentMethod['qr_image'] ?? ''), '');
+$paymentInstructions = array_values(array_filter(array_map(
+    static fn ($line): string => trim((string) $line),
+    (array) ($paymentMethod['instructions'] ?? [])
+)));
+$paymentAccountNumber = trim((string) ($paymentMethod['account_number'] ?? ''));
+$paymentAccountName = trim((string) ($paymentMethod['account_name'] ?? ''));
+$paymentPhone = trim((string) ($paymentMethod['phone'] ?? ''));
+$paymentMethodLabel = trim((string) ($paymentMethod['label'] ?? ($draft['payment_method_label'] ?? 'Payment')));
 $displayOrderNo = '#Pending';
 $displayOrderDate = date('d/m/Y');
 $displayOrderTime = date('H:i:s');
@@ -182,7 +191,15 @@ $displayOrderTime = date('H:i:s');
                     your order is confirmed.
                 </div>
                 <div class="payment-confirmed-actions">
-                    <a class="pay-btn receipt-btn" href="<?php echo htmlspecialchars(app_path('/check-order.php')); ?>" data-receipt-link>Download E-receipt</a>
+                    <a
+                        class="pay-btn receipt-btn"
+                        href="<?php echo htmlspecialchars(app_path('/receipt.php')); ?>"
+                        target="_blank"
+                        rel="noopener"
+                        data-receipt-link
+                    >
+                        Download E-receipt
+                    </a>
                     <a class="continue-shopping-link" href="<?php echo htmlspecialchars(app_path('/products.php')); ?>">Continue Shopping</a>
                 </div>
             </div>
@@ -196,30 +213,49 @@ $displayOrderTime = date('H:i:s');
                 <i class="fa-solid fa-xmark"></i>
             </button>
 
-            <h2 id="paymentModalTitle" class="payment-modal-title">Pay Here</h2>
+            <h2 id="paymentModalTitle" class="payment-modal-title">Pay with <?php echo htmlspecialchars($paymentMethodLabel); ?></h2>
 
-            <div class="payment-qr-card">
-                <img src="<?php echo htmlspecialchars($paymentQrCardImage); ?>" alt="Payment card">
-            </div>
+            <?php if ($paymentQrCardImage !== ''): ?>
+                <div class="payment-qr-card">
+                    <img src="<?php echo htmlspecialchars($paymentQrCardImage); ?>" alt="<?php echo htmlspecialchars($paymentMethodLabel); ?>">
+                </div>
+            <?php endif; ?>
 
-            <div class="payment-account-meta">
-                <div class="payment-account-row">
-                    <span class="label">Account No.</span>
-                    <span class="value">09123456789</span>
+            <?php if ($paymentAccountNumber !== '' || $paymentAccountName !== '' || $paymentPhone !== ''): ?>
+                <div class="payment-account-meta">
+                    <?php if ($paymentAccountNumber !== ''): ?>
+                        <div class="payment-account-row">
+                            <span class="label">Account No.</span>
+                            <span class="value"><?php echo htmlspecialchars($paymentAccountNumber); ?></span>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ($paymentAccountName !== ''): ?>
+                        <div class="payment-account-row">
+                            <span class="label">Account Name.</span>
+                            <span class="value"><?php echo htmlspecialchars($paymentAccountName); ?></span>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ($paymentPhone !== ''): ?>
+                        <div class="payment-account-row">
+                            <span class="label">Phone Number.</span>
+                            <span class="value"><?php echo htmlspecialchars($paymentPhone); ?></span>
+                        </div>
+                    <?php endif; ?>
                 </div>
-                <div class="payment-account-row">
-                    <span class="label">Account Name.</span>
-                    <span class="value">Shine Htet</span>
-                </div>
-            </div>
+            <?php endif; ?>
 
             <div class="payment-upload-section">
                 <h3>Note</h3>
-                <p>
-                    Please transfer the exact amount and upload your payment proof.
-                    Our team will verify the payment before confirming your order.
-                </p>
-                <p class="payment-phone"><strong>Phone Number:</strong> 09123456789</p>
+                <?php if ($paymentInstructions !== []): ?>
+                    <?php foreach ($paymentInstructions as $instruction): ?>
+                        <p><?php echo htmlspecialchars($instruction); ?></p>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p>Please transfer the exact amount and upload your payment proof.</p>
+                <?php endif; ?>
+                <?php if ($paymentPhone !== ''): ?>
+                    <p class="payment-phone"><strong>Phone Number:</strong> <?php echo htmlspecialchars($paymentPhone); ?></p>
+                <?php endif; ?>
 
                 <h3>Upload Payment Proof</h3>
 

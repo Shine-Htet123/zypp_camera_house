@@ -175,4 +175,19 @@ document.addEventListener("keydown", (event) => {
 });
 
 renderUnboxing();
-setTab("unboxing");
+
+const initialTab = (() => {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const tab = (params.get("tab") || "").toLowerCase();
+        if (tab === "unboxing" || tab === "influencer") {
+            return tab;
+        }
+    } catch (error) {
+        return "unboxing";
+    }
+
+    return "unboxing";
+})();
+
+setTab(initialTab);

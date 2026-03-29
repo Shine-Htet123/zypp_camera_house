@@ -1,9 +1,17 @@
 <?php
 require_once __DIR__ . '/config/app.php';
+require_once __DIR__ . '/app/services/customer_auth.php';
 require_once __DIR__ . '/database/site_content.php';
 
 $footerContent = site_content_get_footer();
 $footerImageUrl = site_content_image_url((string) ($footerContent['footer_image'] ?? ''), app_path('/storage/uploads/contents/logo.png'));
+$currentCustomer = customer_auth_current_user();
+$unboxingVideosUrl = app_path('/unboxing-influencers.php?tab=unboxing');
+$influencersReviewsUrl = app_path('/unboxing-influencers.php?tab=influencer');
+$facebookUrl = trim((string) ($footerContent['facebook_url'] ?? ''));
+$tiktokUrl = trim((string) ($footerContent['tiktok_url'] ?? ''));
+$telegramUrl = trim((string) ($footerContent['telegram_url'] ?? ''));
+$instagramUrl = trim((string) ($footerContent['instagram_url'] ?? ''));
 ?>
 <footer class="footer">
     <div class="footer-logo" aria-hidden="true">
@@ -30,8 +38,8 @@ $footerImageUrl = site_content_image_url((string) ($footerContent['footer_image'
 
         <div class="footer-col">
             <h3>Media</h3>
-            <a href="#">Unboxing Videos</a>
-            <a href="#">Influencers’ Reviews</a>
+            <a href="<?php echo htmlspecialchars($unboxingVideosUrl); ?>">Unboxing Videos</a>
+            <a href="<?php echo htmlspecialchars($influencersReviewsUrl); ?>">Influencers' Reviews</a>
         </div>
 
         <div class="footer-col contact">
@@ -58,27 +66,35 @@ $footerImageUrl = site_content_image_url((string) ($footerContent['footer_image'
 
 
             <div class="social-icons">
-                <a href="<?php echo htmlspecialchars((string) (($footerContent['facebook_url'] ?? '') !== '' ? $footerContent['facebook_url'] : '#')); ?>" class="social-link fb" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
-                    <i class="fab fa-facebook-f"></i>
-                </a>
+                <?php if ($facebookUrl !== ''): ?>
+                    <a href="<?php echo htmlspecialchars($facebookUrl); ?>" class="social-link fb" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                <?php endif; ?>
 
-                <a href="<?php echo htmlspecialchars((string) (($footerContent['tiktok_url'] ?? '') !== '' ? $footerContent['tiktok_url'] : '#')); ?>" class="social-link tt" aria-label="TikTok" target="_blank" rel="noopener noreferrer">
-                    <i class="fab fa-tiktok"></i>
-                </a>
+                <?php if ($tiktokUrl !== ''): ?>
+                    <a href="<?php echo htmlspecialchars($tiktokUrl); ?>" class="social-link tt" aria-label="TikTok" target="_blank" rel="noopener noreferrer">
+                        <i class="fab fa-tiktok"></i>
+                    </a>
+                <?php endif; ?>
 
-                <a href="<?php echo htmlspecialchars((string) (($footerContent['telegram_url'] ?? '') !== '' ? $footerContent['telegram_url'] : '#')); ?>" class="social-link tg" aria-label="Telegram" target="_blank" rel="noopener noreferrer">
-                    <i class="fas fa-paper-plane"></i>
-                </a>
+                <?php if (is_array($currentCustomer) && $telegramUrl !== ''): ?>
+                    <a href="<?php echo htmlspecialchars($telegramUrl); ?>" class="social-link tg" aria-label="Telegram" target="_blank" rel="noopener noreferrer">
+                        <i class="fas fa-paper-plane"></i>
+                    </a>
+                <?php endif; ?>
 
-                <a href="<?php echo htmlspecialchars((string) (($footerContent['instagram_url'] ?? '') !== '' ? $footerContent['instagram_url'] : '#')); ?>" class="social-link ig" aria-label="Instagram" target="_blank" rel="noopener noreferrer">
-                    <i class="fab fa-instagram"></i>
-                </a>
+                <?php if ($instagramUrl !== ''): ?>
+                    <a href="<?php echo htmlspecialchars($instagramUrl); ?>" class="social-link ig" aria-label="Instagram" target="_blank" rel="noopener noreferrer">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                <?php endif; ?>
             </div>
         </div>
 
     </div>
 
     <div class="footer-bottom">
-        © ZYPP Camera House
+        &copy; ZYPP Camera House
     </div>
 </footer>

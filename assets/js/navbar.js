@@ -246,15 +246,13 @@ document
         const divider = searchContainer.querySelector("hr");
         const endpointUrl = searchForm?.dataset.searchEndpoint || "search-products.php";
         const productsUrl = searchForm?.dataset.productsUrl || "products.php";
+        const MIN_SEARCH_LOADING_MS = 1000;
 
         // Safety check (in case markup changes)
         if (!searchInput) return;
 
         // Loading elements
         const loadingScreen = searchContainer.querySelector(".search-loading");
-        const loadingVideo = loadingScreen
-            ? loadingScreen.querySelector("video")
-            : null;
         let debounceTimer = null;
         let activeController = null;
 
@@ -324,6 +322,7 @@ document
                                 <span>${escapeHtml(item.name)}</span>
                             </div>
                             <div class="price-container">
+                                ${item.original_price ? `<span class="original-price">${escapeHtml(item.original_price)}</span>` : ""}
                                 <span class="discounted-price">${escapeHtml(item.price)}</span>
                             </div>
                         </a>
@@ -343,15 +342,12 @@ document
             }
 
             activeController = new AbortController();
+            const loadingStartedAt = window.performance?.now ? window.performance.now() : Date.now();
             searchContainer.classList.add("show-results");
             hidePanels();
 
             if (loadingScreen) {
                 loadingScreen.style.display = "flex";
-                if (loadingVideo) {
-                    loadingVideo.currentTime = 0;
-                    loadingVideo.play().catch(() => {});
-                }
             }
 
             try {
@@ -373,17 +369,25 @@ document
                 }
 
                 const payload = await response.json();
+                const now = window.performance?.now ? window.performance.now() : Date.now();
+                const remaining = Math.max(0, MIN_SEARCH_LOADING_MS - (now - loadingStartedAt));
+                if (remaining > 0) {
+                    await new Promise((resolve) => window.setTimeout(resolve, remaining));
+                }
                 hidePanels();
                 renderResults(Array.isArray(payload.items) ? payload.items : [], query);
             } catch (error) {
                 if (error.name === "AbortError") return;
+                const now = window.performance?.now ? window.performance.now() : Date.now();
+                const remaining = Math.max(0, MIN_SEARCH_LOADING_MS - (now - loadingStartedAt));
+                if (remaining > 0) {
+                    await new Promise((resolve) => window.setTimeout(resolve, remaining));
+                }
                 hidePanels();
                 if (emptyState) {
                     emptyState.textContent = "Unable to load search results.";
                     emptyState.style.display = "flex";
                 }
-            } finally {
-                if (loadingVideo) loadingVideo.pause();
             }
         };
 
@@ -581,8 +585,8 @@ const submitAuthForm = async (form, warningElement, successTitle) => {
 if (loginFormElement) {
     loginFormElement.addEventListener("submit", async (event) => {
         event.preventDefault();
-        const emailInput = loginFormElement.querySelector('input[type="email"]');
-        const passwordInput = loginFormElement.querySelector('input[type="password"]');
+        const emailInput = loginFormElement.querySelector('input[name="email"]');
+        const passwordInput = loginFormElement.querySelector('input[name="password"]');
         const validEmail = emailInput ? emailInput.checkValidity() : false;
         const validPassword = passwordInput ? passwordInput.value.trim().length > 0 : false;
 
@@ -609,8 +613,8 @@ if (loginFormElement) {
 
     loginFormElement.addEventListener("input", () => {
         setWarning(loginWarning, "");
-        const emailInput = loginFormElement.querySelector('input[type="email"]');
-        const passwordInput = loginFormElement.querySelector('input[type="password"]');
+        const emailInput = loginFormElement.querySelector('input[name="email"]');
+        const passwordInput = loginFormElement.querySelector('input[name="password"]');
         setInvalid(emailInput, false);
         setInvalid(passwordInput, false);
     });
@@ -619,8 +623,8 @@ if (loginFormElement) {
 if (registerFormElement) {
     registerFormElement.addEventListener("submit", async (event) => {
         event.preventDefault();
-        const emailInput = registerFormElement.querySelector('input[type="email"]');
-        const passwordInput = registerFormElement.querySelector('input[type="password"]');
+        const emailInput = registerFormElement.querySelector('input[name="email"]');
+        const passwordInput = registerFormElement.querySelector('input[name="password"]');
         const validEmail = emailInput ? emailInput.checkValidity() : false;
         const passwordValue = passwordInput ? passwordInput.value.trim() : "";
         const validPassword = passwordRule.test(passwordValue);
@@ -660,8 +664,8 @@ if (registerFormElement) {
 
     registerFormElement.addEventListener("input", () => {
         setWarning(registerWarning, "");
-        const emailInput = registerFormElement.querySelector('input[type="email"]');
-        const passwordInput = registerFormElement.querySelector('input[type="password"]');
+        const emailInput = registerFormElement.querySelector('input[name="email"]');
+        const passwordInput = registerFormElement.querySelector('input[name="password"]');
         setInvalid(emailInput, false);
         setInvalid(passwordInput, false);
     });
@@ -684,6 +688,11 @@ if (forgotPasswordForm) {
             setSubmitting(forgotPasswordForm, true);
             const result = await submitJsonForm(forgotPasswordForm.action, new FormData(forgotPasswordForm));
             setWarning(forgotPasswordFeedback, result.message || "If an account matches that email, a reset link has been sent.");
+            forgotPasswordForm.reset();
+            const forgotModal = forgotPasswordForm.closest(".modal-overlay");
+            if (forgotModal) {
+                closeModal(forgotModal);
+            }
             if (typeof Swal !== "undefined") {
                 await Swal.fire({
                     icon: "success",
@@ -692,9 +701,6 @@ if (forgotPasswordForm) {
                     confirmButtonColor: "#56b356",
                 });
             }
-            forgotPasswordForm.reset();
-            const forgotModal = forgotPasswordForm.closest(".modal-overlay");
-            if (forgotModal) closeModal(forgotModal);
         } catch (error) {
             setWarning(forgotPasswordFeedback, error.message || "Unable to send reset link right now.");
         } finally {

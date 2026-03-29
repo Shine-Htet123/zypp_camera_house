@@ -7,15 +7,17 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 
 require_once __DIR__ . '/../app/services/admin_auth.php';
 
-if (admin_auth_current_admin()) {
-        header('Location: ' . admin_auth_normalize_redirect($_GET['redirect_to'] ?? app_path('/admin/index.php'), app_path('/admin/index.php')));
+$loggedInAdmin = admin_auth_current_admin();
+if ($loggedInAdmin) {
+        header('Location: ' . admin_auth_allowed_redirect_for_admin($loggedInAdmin, $_GET['redirect_to'] ?? app_path('/admin/index.php'), app_path('/admin/index.php')));
     exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        admin_auth_login($_POST);
-        header('Location: ' . admin_auth_normalize_redirect($_POST['redirect_to'] ?? app_path('/admin/index.php'), app_path('/admin/index.php')));
+        $admin = admin_auth_login($_POST);
+        $_SESSION['admin_show_fullscreen_loader_once'] = true;
+        header('Location: ' . admin_auth_allowed_redirect_for_admin($admin, $_POST['redirect_to'] ?? app_path('/admin/index.php'), app_path('/admin/index.php')));
         exit;
     } catch (Throwable $exception) {
         admin_auth_set_flash($exception->getMessage());

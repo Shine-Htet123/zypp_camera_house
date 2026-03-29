@@ -27,6 +27,19 @@ const updateValueSuffix = (modal) => {
     }
 };
 
+const syncApplyButtonState = (modal) => {
+    const applyButton = modal?.querySelector('.btn-apply');
+    const discountTypeField = modal?.querySelector('[data-field="discount-type"]');
+    if (!applyButton || !discountTypeField) return;
+
+    const isBundle = String(discountTypeField.value || '').toLowerCase() === 'bundle';
+    applyButton.classList.toggle('is-hidden', isBundle);
+    applyButton.hidden = isBundle;
+    applyButton.disabled = isBundle;
+    applyButton.style.display = isBundle ? 'none' : '';
+    applyButton.title = isBundle ? 'Bundle discounts are configured from Bundle Management.' : '';
+};
+
 const normalizeDateInput = (value) => {
     if (!value) return '';
     if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
@@ -155,6 +168,7 @@ const openModal = (modalId) => {
     modal.classList.remove('closing');
     modal.setAttribute('aria-hidden', 'false');
     updateValueSuffix(modal);
+    syncApplyButtonState(modal);
     captureState(modal);
     modal.classList.remove('dirty');
 };
@@ -180,7 +194,7 @@ document.querySelectorAll('.discount-row').forEach((row) => {
         editModal.querySelector('[data-discount-id]').textContent = row.dataset.id || '--';
 
         editModal.querySelector('[data-field="title"]').value = row.dataset.title || '';
-        editModal.querySelector('[data-field="discount-type"]').value = (row.dataset.discountType || '').toLowerCase();
+        editModal.querySelector('[data-field="discount-type"]').value = (row.dataset.discountTypeKey || row.dataset.discountType || '').toLowerCase();
         editModal.querySelector('[data-field="value-type"]').value = (row.dataset.valueType || 'Percentage').toLowerCase();
         editModal.querySelector('[data-field="value"]').value = row.dataset.value || '';
         editModal.querySelector('[data-field="start"]').value = normalizeDateInput(row.dataset.start);
@@ -192,15 +206,25 @@ document.querySelectorAll('.discount-row').forEach((row) => {
             checkbox.checked = users.includes(checkbox.value);
         });
 
+        syncApplyButtonState(editModal);
         openModal('edit-discount');
     });
 });
 
 const applyBtn = document.querySelector('.discount-modal[data-modal="edit-discount"] .btn-apply');
 applyBtn?.addEventListener('click', () => {
+    if (applyBtn.disabled) {
+        return;
+    }
     const id = editModal?.querySelector('input[name="discount_id"]')?.value?.trim() || '';
     const target = id ? `${applyDiscountsUrl}?id=${encodeURIComponent(id)}` : applyDiscountsUrl;
     window.location.href = target;
+});
+
+document.querySelectorAll('.discount-modal [data-field="discount-type"]').forEach((select) => {
+    select.addEventListener('change', () => {
+        syncApplyButtonState(select.closest('.discount-modal'));
+    });
 });
 
 const filterToggle = document.querySelector('.btn-filter');
@@ -307,6 +331,7 @@ document.addEventListener('keydown', (event) => {
 // default suffixes + binding
 document.querySelectorAll('.discount-modal').forEach((modal) => {
     updateValueSuffix(modal);
+    syncApplyButtonState(modal);
     bindDirtyTracking(modal);
     bindFooterActions(modal);
 });

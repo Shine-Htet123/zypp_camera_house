@@ -21,6 +21,17 @@ try {
         exit;
     }
 
+    if ($action === 'notifications') {
+        $since = trim((string) ($_GET['since'] ?? ''));
+        $snapshot = admin_fetch_payment_proof_notification_snapshot($since);
+
+        echo json_encode([
+            'success' => true,
+            'data' => $snapshot,
+        ], JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+
     if ($action === 'bulk-status') {
         $paymentIds = (array) ($_POST['payment_ids'] ?? []);
         $statusAction = trim((string) ($_POST['status_action'] ?? ''));

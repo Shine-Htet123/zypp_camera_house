@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (receiptLink && payload.order_public_id) {
-      receiptLink.href = `/check-order.php?order=${encodeURIComponent(payload.order_public_id)}`;
+      receiptLink.href = `/receipt.php?order=${encodeURIComponent(payload.order_public_id)}`;
     }
   };
 

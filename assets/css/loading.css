@@ -22,9 +22,9 @@
     pointer-events: none;
 }
 
-.loading-screen .loading-box video{
-    width: min(240px, 60vw);
-    height: auto;
-    display: block;
-    object-fit: contain;
+.loading-screen .loading-box {
+    width: min(260px, 64vw);
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
 }

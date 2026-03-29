@@ -1,11 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const rangeInput = document.getElementById('priceRange');
-  const rangeLabel = document.getElementById('priceMaxLabel');
-  const productGrid = document.querySelector('.product-grid');
+  const minRangeInput = document.getElementById('priceMinRange');
+  const maxRangeInput = document.getElementById('priceMaxRange');
+  const minRangeLabel = document.getElementById('priceMinLabel');
+  const maxRangeLabel = document.getElementById('priceMaxLabel');
+  const rangeFill = document.querySelector('[data-range-fill]');
   const productCards = Array.from(document.querySelectorAll('.product-card'));
   const pagination = document.querySelector('[data-pagination]');
   const loadingOverlay = document.querySelector('.product-loading');
+  const emptyState = document.querySelector('.product-empty-state');
   const itemsPerPage = 9;
+  const MIN_FILTER_LOADING_MS = 1000;
   let currentPage = 1;
   let loadingTimer = null;
 
@@ -14,9 +18,50 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${number.toLocaleString()} MMK`;
   };
 
-  const updateRangeLabel = () => {
-    if (!rangeInput || !rangeLabel) return;
-    rangeLabel.textContent = formatMMK(rangeInput.value);
+  const getRangeStep = () => {
+    if (!minRangeInput) return 1;
+    return Math.max(Number(minRangeInput.step) || 1, 1);
+  };
+
+  const syncRangeState = (activeInput = null) => {
+    if (!minRangeInput || !maxRangeInput) return;
+
+    const step = getRangeStep();
+    const maxLimit = Number(maxRangeInput.max) || 0;
+    let minValue = Number(minRangeInput.value) || 0;
+    let maxValue = Number(maxRangeInput.value) || 0;
+
+    if (activeInput === minRangeInput && minValue > maxValue - step) {
+      minValue = Math.max(0, maxValue - step);
+      minRangeInput.value = String(minValue);
+    } else if (activeInput === maxRangeInput && maxValue < minValue + step) {
+      maxValue = Math.min(maxLimit, minValue + step);
+      maxRangeInput.value = String(maxValue);
+    } else if (minValue > maxValue) {
+      minValue = maxValue;
+      minRangeInput.value = String(minValue);
+    }
+
+    if (minRangeLabel) {
+      minRangeLabel.textContent = formatMMK(minValue);
+    }
+
+    if (maxRangeLabel) {
+      maxRangeLabel.textContent = formatMMK(maxValue);
+    }
+
+    if (rangeFill && maxLimit > 0) {
+      const startPercent = (minValue / maxLimit) * 100;
+      const endPercent = (maxValue / maxLimit) * 100;
+      rangeFill.style.left = `${startPercent}%`;
+      rangeFill.style.width = `${Math.max(endPercent - startPercent, 0)}%`;
+    }
+
+    // Keep the active thumb on top so both min and max handles remain draggable.
+    if (minRangeInput && maxRangeInput) {
+      minRangeInput.style.zIndex = activeInput === minRangeInput ? '3' : '2';
+      maxRangeInput.style.zIndex = activeInput === maxRangeInput ? '3' : '2';
+    }
   };
 
   const getSelectedValues = (group) => {
@@ -30,7 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedBrands = getSelectedValues('brand');
     const selectedOptions = getSelectedValues('option');
     const selectedAvailability = getSelectedValues('availability');
-    const maxPrice = rangeInput ? Number(rangeInput.value) : Number.POSITIVE_INFINITY;
+    const minPrice = minRangeInput ? Number(minRangeInput.value) : 0;
+    const maxPrice = maxRangeInput ? Number(maxRangeInput.value) : Number.POSITIVE_INFINITY;
 
     return productCards.filter((card) => {
       const category = card.dataset.category || '';
@@ -41,12 +87,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const matchCategory =
         selectedCategories.length === 0 || selectedCategories.includes(category);
-      const matchBrand = selectedBrands.length === 0 || selectedBrands.includes(brand);
+      const matchBrand =
+        selectedBrands.length === 0 || selectedBrands.includes(brand);
       const matchAvailability =
         selectedAvailability.length === 0 || selectedAvailability.includes(availability);
       const matchOptions =
         selectedOptions.length === 0 || selectedOptions.some((opt) => tags.includes(opt));
-      const matchPrice = price <= maxPrice;
+      const matchPrice = price >= minPrice && price <= maxPrice;
 
       return matchCategory && matchBrand && matchAvailability && matchOptions && matchPrice;
     });
@@ -54,6 +101,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const renderPagination = (totalItems) => {
     if (!pagination) return;
+
+    if (totalItems <= 0) {
+      pagination.innerHTML = '';
+      pagination.hidden = true;
+      return;
+    }
+
+    pagination.hidden = false;
     const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
     if (currentPage > totalPages) currentPage = 1;
 
@@ -98,6 +153,10 @@ document.addEventListener('DOMContentLoaded', () => {
       card.style.display = 'flex';
     });
 
+    if (emptyState) {
+      emptyState.hidden = visibleCards.length > 0;
+    }
+
     renderPagination(totalItems);
   };
 
@@ -113,16 +172,25 @@ document.addEventListener('DOMContentLoaded', () => {
       if (loadingOverlay) {
         loadingOverlay.classList.remove('active');
       }
-    }, 250);
+    }, MIN_FILTER_LOADING_MS);
   };
 
-  updateRangeLabel();
-  if (rangeInput) {
-    rangeInput.addEventListener('input', () => {
-      updateRangeLabel();
+  syncRangeState();
+
+  [minRangeInput, maxRangeInput].forEach((rangeInput) => {
+    rangeInput?.addEventListener('input', () => {
+      syncRangeState(rangeInput);
       applyWithLoading();
     });
-  }
+
+    rangeInput?.addEventListener('mousedown', () => {
+      syncRangeState(rangeInput);
+    });
+
+    rangeInput?.addEventListener('touchstart', () => {
+      syncRangeState(rangeInput);
+    }, { passive: true });
+  });
 
   document.querySelectorAll('input[data-filter-group]').forEach((input) => {
     input.addEventListener('change', applyWithLoading);

@@ -29,5 +29,8 @@ function get_database_connection(): PDO
         ]
     );
 
+    $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_general_ci");
+    $pdo->exec("SET collation_connection = 'utf8mb4_general_ci'");
+
     return $pdo;
 }

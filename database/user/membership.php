@@ -21,7 +21,8 @@ function membership_fetch_user_total_spent(int $userId): float
         'SELECT COALESCE(SUM(grand_total), 0)
          FROM orders
          WHERE user_id = :user_id
-           AND status IN ("confirmed", "shipped", "delivered")'
+           AND status = "delivered"
+           AND LOWER(COALESCE(payment_status, "")) = "paid"'
     );
     $statement->execute([':user_id' => $userId]);
 
@@ -44,6 +45,11 @@ function membership_find_tier_for_spent(array $tiers, float $spent): ?array
     }
 
     return $matched;
+}
+
+function membership_resolve_tier_for_spent(float $spent, ?array $tiers = null): ?array
+{
+    return membership_find_tier_for_spent($tiers ?? membership_fetch_tiers(), $spent);
 }
 
 function membership_find_next_tier(array $tiers, float $spent): ?array
@@ -77,9 +83,9 @@ function membership_fetch_user_summary(int $userId): array
         throw new RuntimeException('User not found.');
     }
 
-    $tiers = membership_fetch_tiers();
     $spent = membership_fetch_user_total_spent($userId);
-    $currentTier = membership_find_tier_for_spent($tiers, $spent);
+    $tiers = membership_fetch_tiers();
+    $currentTier = membership_resolve_tier_for_spent($spent, $tiers);
     $storedTierId = $user['membership_tier_id'] !== null ? (int) $user['membership_tier_id'] : null;
     $resolvedTierId = $currentTier !== null ? (int) $currentTier['id'] : null;
 

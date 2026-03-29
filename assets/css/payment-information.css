@@ -9,12 +9,21 @@
     text-align: center;
 }
 
-.payment-info-header h1 {
+.payment-info-header h1,
+.payment-info-header h2 {
     margin: 0;
     font-size: clamp(1.25rem, 2.4vw + 0.8rem, 2rem);
     line-height: 1.2;
     font-weight: 800;
     color: #111111;
+}
+
+.payment-info-header p {
+    margin: 12px auto 0;
+    max-width: 720px;
+    font-size: clamp(0.95rem, 0.35vw + 0.9rem, 1rem);
+    line-height: 1.55;
+    color: #3a332d;
 }
 
 .payment-info-card {
@@ -82,6 +91,43 @@
     color: #111111;
 }
 
+.payment-method-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 18px;
+}
+
+.payment-method-info-card {
+    padding: 16px 18px;
+    border-radius: 16px;
+    background: #fff;
+    border: 1px solid #ece4db;
+    box-shadow: 0 10px 28px rgba(36, 23, 10, 0.06);
+}
+
+.payment-method-info-card h3 {
+    margin: 0 0 10px;
+    font-size: 1rem;
+    color: #111111;
+}
+
+.payment-method-info-card p {
+    margin: 0 0 8px;
+    line-height: 1.45;
+    color: #222222;
+}
+
+.payment-method-info-card ul {
+    margin: 10px 0 0;
+    padding-left: 18px;
+}
+
+.payment-method-info-card li {
+    margin-bottom: 6px;
+    line-height: 1.45;
+}
+
 @media (max-width: 900px) {
     .payment-info-page {
         padding-top: 34px;
@@ -108,6 +154,10 @@
         padding: 24px 0 12px;
     }
 
+    .payment-method-info-grid {
+        grid-template-columns: 1fr;
+    }
+
     .payment-logo-badge {
         min-height: 86px;
         padding: 10px;
@@ -119,7 +169,8 @@
 }
 
 @media (max-width: 420px) {
-    .payment-info-header h1 {
+    .payment-info-header h1,
+    .payment-info-header h2 {
         font-size: 1.05rem;
         line-height: 1.25;
     }

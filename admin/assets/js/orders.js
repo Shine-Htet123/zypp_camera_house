@@ -125,8 +125,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     [
       ['Subtotal', detail.subtotal_display],
-      ['Shipping Fees', detail.shipping_fee_display],
-      ['Total', detail.total_display],
+      ['Total Discount', `-${detail.total_discount_display}`],
+      ['Grand Total', detail.grand_total_display || detail.total_display],
     ].forEach(([label, value]) => {
       const row = document.createElement('div');
       row.className = 'summary-row summary-total';
@@ -174,11 +174,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const saveRowStatuses = async (row, orderStatus) => {
+  const saveRowStatuses = async (row, orderStatus, paymentStatus = '') => {
     const formData = new FormData();
     formData.append('action', 'update-status');
     formData.append('order_id', row.dataset.orderId || '');
     formData.append('order_status', orderStatus);
+    if (paymentStatus !== '') {
+      formData.append('payment_status', paymentStatus);
+    }
 
     const response = await fetch(ordersApiUrl, {
       method: 'POST',
@@ -191,6 +194,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     row.dataset.orderStatus = payload.data.order_status;
+    if (payload.data.payment_status) {
+      row.dataset.paymentStatus = payload.data.payment_status;
+    }
     resetRow(row);
   };
 
@@ -208,7 +214,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!paymentCell || !orderCell || !actionsCell) return;
 
     const originalOrder = row.dataset.orderStatus || orderCell.textContent.trim();
+    const originalPayment = row.dataset.paymentStatus || paymentCell.textContent.trim();
+    const canEditPaymentStatus = row.dataset.canEditPaymentStatus === '1';
 
+    paymentCell.innerHTML = '';
     orderCell.innerHTML = '';
     actionsCell.innerHTML = '';
 
@@ -216,8 +225,26 @@ document.addEventListener('DOMContentLoaded', () => {
       ['Pending', 'Cancelled', 'Confirmed', 'Delivered', 'Shipped'],
       originalOrder
     );
+    let paymentSelect = null;
+    if (canEditPaymentStatus) {
+      paymentSelect = createStatusSelect(['Unpaid', 'Paid', 'Pending'], originalPayment);
+      paymentCell.appendChild(paymentSelect);
+    } else {
+      applyStatusClass(paymentCell, 'payment', originalPayment);
+    }
 
     orderCell.appendChild(orderSelect);
+
+    const syncOrderStatusFromPayment = () => {
+      if (!paymentSelect || paymentSelect.value !== 'Paid') return;
+      if (orderSelect.value === 'Pending' || orderSelect.value === 'Confirmed') {
+        orderSelect.value = 'Confirmed';
+      }
+    };
+
+    paymentSelect?.addEventListener('change', syncOrderStatusFromPayment);
+    syncOrderStatusFromPayment();
+
     actionsCell.innerHTML = `
       <i class="fa-solid fa-check status-confirm"></i>
       <i class="fa-solid fa-xmark status-cancel"></i>
@@ -226,13 +253,13 @@ document.addEventListener('DOMContentLoaded', () => {
     actionsCell.querySelector('.status-confirm')?.addEventListener('click', async (event) => {
       event.stopPropagation();
       try {
-        await saveRowStatuses(row, orderSelect.value);
+        await saveRowStatuses(row, orderSelect.value, paymentSelect?.value || '');
         currentlyEditingRow = null;
         if (typeof Swal !== 'undefined') {
           Swal.fire({
             icon: 'success',
             title: 'Updated',
-            text: 'Order status has been updated.',
+            text: canEditPaymentStatus ? 'Order and payment statuses have been updated.' : 'Order status has been updated.',
             timer: 1400,
             showConfirmButton: false,
           });

@@ -13,6 +13,21 @@ if ($discountId <= 0) {
     exit;
 }
 
+$discount = admin_fetch_discount_row($discountId);
+if (!$discount) {
+    header('Location: ' . app_path('/admin/discounts.php'));
+    exit;
+}
+
+if (strtolower((string) ($discount['discount_type'] ?? '')) === 'bundle') {
+    $_SESSION['admin_discounts_flash'] = [
+        'message' => 'Bundle discounts are assigned from Bundle Management, not Apply Discounts.',
+        'type' => 'error',
+    ];
+    header('Location: ' . app_path('/admin/discounts.php'));
+    exit;
+}
+
 $setFlash = static function (string $message, string $type = 'success'): void {
     $_SESSION['admin_apply_discounts_flash'] = [
         'message' => $message,
@@ -40,12 +55,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $flash = $consumeFlash();
-$discount = admin_fetch_discount_row($discountId);
-if (!$discount) {
-    header('Location: ' . app_path('/admin/discounts.php'));
-    exit;
-}
-
 $conditions = admin_fetch_discount_conditions_grouped($discountId);
 $targets = admin_fetch_discount_apply_targets();
 $categorySubMap = [];

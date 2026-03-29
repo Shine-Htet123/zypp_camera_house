@@ -101,11 +101,15 @@ $maxPrice = $maxPrice > 0 ? (int) ceil($maxPrice / 100000) * 100000 : 1000000;
 
                 <div class="filter-group">
                     <h3>Price Range</h3>
-                    <div class="range-row">
-                        <input type="range" id="priceRange" min="0" max="<?php echo $maxPrice; ?>" value="<?php echo $maxPrice; ?>" step="100000">
+                    <div class="range-row range-row-double" data-price-range>
+                        <div class="range-track">
+                            <span class="range-track-fill" data-range-fill></span>
+                        </div>
+                        <input type="range" id="priceMinRange" min="0" max="<?php echo $maxPrice; ?>" value="0" step="100000">
+                        <input type="range" id="priceMaxRange" min="0" max="<?php echo $maxPrice; ?>" value="<?php echo $maxPrice; ?>" step="100000">
                     </div>
                     <div class="range-labels">
-                        <span>0 MMK</span>
+                        <span id="priceMinLabel">0 MMK</span>
                         <span id="priceMaxLabel"><?php echo htmlspecialchars(number_format($maxPrice) . ' MMK'); ?></span>
                     </div>
                 </div>
@@ -142,15 +146,29 @@ $maxPrice = $maxPrice > 0 ? (int) ceil($maxPrice / 100000) * 100000 : 1000000;
                             <?php endif; ?>
                             <span class="price"><?php echo htmlspecialchars($product['price']); ?></span>
                         </div>
-                        <?php if (!empty($product['discount'])): ?>
-                            <div class="discount-pill"><?php echo htmlspecialchars($product['discount']); ?></div>
-                        <?php endif; ?>
+                        <div class="discount-pill-slot">
+                            <?php if (!empty($product['discount'])): ?>
+                                <div class="discount-pill"><?php echo htmlspecialchars($product['discount']); ?></div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="sale-duration-slot">
+                            <?php if (!empty($product['limited_time_sale_label'])): ?>
+                                <p class="sale-duration"><?php echo htmlspecialchars($product['limited_time_sale_label']); ?></p>
+                            <?php endif; ?>
+                        </div>
                         <a class="btn-add" href="<?php echo htmlspecialchars($productDetailsPath . '?id=' . (int) $product['product_id']); ?>">View Detail</a>
                     </article>
                 <?php endforeach; ?>
+                <div class="product-empty-state"<?php echo $products === [] ? '' : ' hidden'; ?>>
+                    <h3>No products found</h3>
+                    <p>Try changing the filters or search terms to see more items.</p>
+                </div>
                 <div class="product-loading" aria-hidden="true">
-                    <div class="spinner" aria-hidden="true"></div>
-                    <span>Loading...</span>
+                    <div class="orbit-loader orbit-loader--filter" aria-hidden="true">
+                        <span class="orbit-loader__core">
+                            <img src="<?php echo htmlspecialchars(app_path('/storage/uploads/contents/logo.png')); ?>" alt="ZYPP Camera House">
+                        </span>
+                    </div>
                 </div>
             </section>
         </div>

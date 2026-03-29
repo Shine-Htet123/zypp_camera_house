@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/app/services/checkout.php';
+require_once __DIR__ . '/database/site_content.php';
 
 customer_auth_require_login('/delivery.php');
 
@@ -34,6 +35,28 @@ $checkoutFlash = checkout_flash_consume();
 $prefill = checkout_get_prefill();
 $deliveryMethods = checkout_fetch_delivery_methods();
 $paymentMethods = checkout_get_payment_methods();
+$deliveryLocations = site_content_get_delivery_locations();
+$stateOptions = (array) ($deliveryLocations['states'] ?? []);
+$selectedState = trim((string) ($prefill['state'] ?? ''));
+$selectedCity = trim((string) ($prefill['city'] ?? ''));
+$selectedTownship = trim((string) ($prefill['township'] ?? ''));
+$cityOptions = [];
+$townshipOptions = [];
+
+foreach ($stateOptions as $stateOption) {
+    if (trim((string) ($stateOption['name'] ?? '')) !== $selectedState) {
+        continue;
+    }
+
+    $cityOptions = (array) ($stateOption['cities'] ?? []);
+    foreach ($cityOptions as $cityOption) {
+        if (trim((string) ($cityOption['name'] ?? '')) === $selectedCity) {
+            $townshipOptions = (array) ($cityOption['townships'] ?? []);
+            break;
+        }
+    }
+    break;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -96,9 +119,9 @@ $paymentMethods = checkout_get_payment_methods();
                                 <span class="select-arrow"></span>
                             </button>
                             <ul class="select-options">
-                                <li data-value="Yangon">Yangon</li>
-                                <li data-value="Mandalay">Mandalay</li>
-                                <li data-value="Nay Pyi Taw">Nay Pyi Taw</li>
+                                <?php foreach ($stateOptions as $stateOption): ?>
+                                    <li data-value="<?php echo htmlspecialchars((string) ($stateOption['name'] ?? '')); ?>"><?php echo htmlspecialchars((string) ($stateOption['name'] ?? '')); ?></li>
+                                <?php endforeach; ?>
                             </ul>
                             <input type="hidden" name="state" value="<?php echo htmlspecialchars((string) ($prefill['state'] ?? '')); ?>">
                         </div>
@@ -110,9 +133,9 @@ $paymentMethods = checkout_get_payment_methods();
                                 <span class="select-arrow"></span>
                             </button>
                             <ul class="select-options">
-                                <li data-value="Yangon">Yangon</li>
-                                <li data-value="Mandalay">Mandalay</li>
-                                <li data-value="Nay Pyi Taw">Nay Pyi Taw</li>
+                                <?php foreach ($cityOptions as $cityOption): ?>
+                                    <li data-value="<?php echo htmlspecialchars((string) ($cityOption['name'] ?? '')); ?>"><?php echo htmlspecialchars((string) ($cityOption['name'] ?? '')); ?></li>
+                                <?php endforeach; ?>
                             </ul>
                             <input type="hidden" name="city" value="<?php echo htmlspecialchars((string) ($prefill['city'] ?? '')); ?>">
                         </div>
@@ -126,10 +149,9 @@ $paymentMethods = checkout_get_payment_methods();
                                 <span class="select-arrow"></span>
                             </button>
                             <ul class="select-options">
-                                <li data-value="Hlaing">Hlaing</li>
-                                <li data-value="Mayangone">Mayangone</li>
-                                <li data-value="Bahan">Bahan</li>
-                                <li data-value="Lanmadaw">Lanmadaw</li>
+                                <?php foreach ($townshipOptions as $townshipOption): ?>
+                                    <li data-value="<?php echo htmlspecialchars((string) $townshipOption); ?>"><?php echo htmlspecialchars((string) $townshipOption); ?></li>
+                                <?php endforeach; ?>
                             </ul>
                             <input type="hidden" name="township" value="<?php echo htmlspecialchars((string) ($prefill['township'] ?? '')); ?>">
                         </div>
@@ -223,6 +245,9 @@ $paymentMethods = checkout_get_payment_methods();
     <?php if ($checkoutFlash): ?>
         <script>window.__checkoutFlash = <?php echo json_encode($checkoutFlash, JSON_UNESCAPED_SLASHES); ?>;</script>
     <?php endif; ?>
+    <script>
+        window.__deliveryLocations = <?php echo json_encode($deliveryLocations, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+    </script>
     <script src="./assets/js/delivery.js"></script>
 </body>
 </html>

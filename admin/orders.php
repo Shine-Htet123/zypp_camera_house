@@ -91,6 +91,7 @@ $orders = admin_fetch_orders();
                                 data-payment="<?php echo htmlspecialchars((string) $order['payment_method_label']); ?>"
                                 data-payment-status="<?php echo htmlspecialchars((string) $order['payment_status_label']); ?>"
                                 data-order-status="<?php echo htmlspecialchars((string) $order['order_status_label']); ?>"
+                                data-can-edit-payment-status="<?php echo !empty($order['can_edit_payment_status']) ? '1' : '0'; ?>"
                                 data-order-time="<?php echo htmlspecialchars((string) $order['time_display']); ?>"
                             >
                                 <td class="order-link order-id-link"><?php echo htmlspecialchars((string) $order['order_no_display']); ?></td>

@@ -22,8 +22,7 @@ try {
         $result = profile_save_address_card($userId, $addressId, $_POST);
         customer_auth_json([
             'success' => true,
-            'message' => 'Profile card updated.',
-            'user' => $result['user'],
+            'message' => 'Address saved.',
             'address' => $result['address'],
         ]);
     }
@@ -32,10 +31,10 @@ try {
         $result = profile_delete_address_card($userId, $addressId);
         customer_auth_json([
             'success' => true,
-            'message' => $result['mode'] === 'reset_blank' ? 'Address removed. The card has been reset.' : 'Address removed.',
-            'mode' => $result['mode'],
+            'message' => 'Address removed.',
             'deleted_address_id' => $result['deleted_address_id'],
             'next_default_address_id' => $result['next_default_address_id'],
+            'remaining_count' => $result['remaining_count'],
         ]);
     }
 
