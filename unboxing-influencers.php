@@ -1,3 +1,22 @@
+<?php
+require_once __DIR__ . '/database/media.php';
+require_once __DIR__ . '/database/site_content.php';
+
+$mediaData = media_fetch_customer_filter_options();
+$pageContent = site_content_get_unboxing_influencers();
+$categories = $mediaData['categories'];
+$brands = $mediaData['brands'];
+$unboxingVideos = $mediaData['unboxing'];
+$influencerVideos = $mediaData['influencer'];
+$unboxingTabTitle = trim((string) ($pageContent['unboxing_tab_title'] ?? ''));
+$unboxingBannerText = trim((string) ($pageContent['unboxing_banner_text'] ?? ''));
+$influencerTabTitle = trim((string) ($pageContent['influencer_tab_title'] ?? ''));
+$influencerBannerText = trim((string) ($pageContent['influencer_banner_text'] ?? ''));
+$seoTitle = 'Unboxing Videos & Influencer Reviews';
+$seoDescription = $unboxingBannerText !== '' ? $unboxingBannerText : 'Watch creator unboxings and influencer reviews featuring products from ZYPP Camera House.';
+$seoCanonical = app_url('/unboxing-influencers.php');
+$seoImage = '/storage/uploads/contents/logo.png';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,22 +25,6 @@
 </head>
 <body>
     <?php include('navbar.php'); ?>
-
-    <?php
-        require_once __DIR__ . '/database/media.php';
-        require_once __DIR__ . '/database/site_content.php';
-
-        $mediaData = media_fetch_customer_filter_options();
-        $pageContent = site_content_get_unboxing_influencers();
-        $categories = $mediaData['categories'];
-        $brands = $mediaData['brands'];
-        $unboxingVideos = $mediaData['unboxing'];
-        $influencerVideos = $mediaData['influencer'];
-        $unboxingTabTitle = trim((string) ($pageContent['unboxing_tab_title'] ?? ''));
-        $unboxingBannerText = trim((string) ($pageContent['unboxing_banner_text'] ?? ''));
-        $influencerTabTitle = trim((string) ($pageContent['influencer_tab_title'] ?? ''));
-        $influencerBannerText = trim((string) ($pageContent['influencer_banner_text'] ?? ''));
-    ?>
 
     <main class="media-page">
         <div class="media-tabs">

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/app/services/customer_auth.php';
+require_once __DIR__ . '/app/services/seo.php';
 require_once __DIR__ . '/database/home.php';
 require_once __DIR__ . '/database/site_content.php';
 
@@ -16,6 +17,40 @@ $trustBadges = (array) ($homeContent['trust_badges'] ?? []);
 $bestSellersSeeMoreUrl = app_path('/products.php?' . http_build_query([
     'option' => ['Best Sellers'],
 ]));
+$footerContent = site_content_get_footer();
+$seoTitle = 'Cameras, Creator Gear & Accessories';
+$seoDescription = 'Explore cameras, lenses, creator gear, bundles, and accessories at ZYPP Camera House.';
+$seoCanonical = app_url('/');
+$seoImage = site_content_image_url((string) ($heroSlides[0]['image'] ?? ''), '/storage/uploads/contents/logo.png');
+$sameAsLinks = array_values(array_filter([
+    trim((string) ($footerContent['facebook_url'] ?? '')),
+    trim((string) ($footerContent['tiktok_url'] ?? '')),
+    trim((string) ($footerContent['telegram_url'] ?? '')),
+    trim((string) ($footerContent['instagram_url'] ?? '')),
+]));
+$seoStructuredData = [
+    array_filter([
+        '@context' => 'https://schema.org',
+        '@type' => 'Store',
+        'name' => 'ZYPP Camera House',
+        'url' => app_url('/'),
+        'image' => seo_abs_url($seoImage),
+        'telephone' => trim((string) ($footerContent['phone'] ?? '')),
+        'email' => trim((string) ($footerContent['email'] ?? '')),
+        'sameAs' => $sameAsLinks !== [] ? $sameAsLinks : null,
+    ], static fn ($value): bool => $value !== null && $value !== ''),
+    [
+        '@context' => 'https://schema.org',
+        '@type' => 'WebSite',
+        'name' => 'ZYPP Camera House',
+        'url' => app_url('/'),
+        'potentialAction' => [
+            '@type' => 'SearchAction',
+            'target' => app_url('/products.php?q={search_term_string}'),
+            'query-input' => 'required name=search_term_string',
+        ],
+    ],
+];
 
 $buildHeroButton = static function (array $slide, string $buttonKey): ?array {
     $text = trim((string) ($slide[$buttonKey . '_text'] ?? ''));
@@ -113,7 +148,7 @@ $buildHeroButton = static function (array $slide, string $buttonKey): ?array {
                             </div>
                         <?php endif; ?>
                     </div>
-                    <img class="hero-img" src="<?php echo htmlspecialchars(site_content_image_url((string) ($slide['image'] ?? ''), '')); ?>" alt="Hero Image">
+                    <img class="hero-img" src="<?php echo htmlspecialchars(site_content_image_url((string) ($slide['image'] ?? ''), '')); ?>" alt="<?php echo htmlspecialchars((string) ($slide['title'] ?? 'ZYPP Camera House featured product')); ?>">
                 </div>
             <?php endforeach; ?>
         </div>

@@ -1,3 +1,9 @@
+<?php require_once __DIR__ . '/config/app.php'; ?>
+<?php
+$seoTitle = 'Wholesale';
+$seoDescription = 'Submit a wholesale inquiry to buy ZYPP Camera House products for your business, studio, or retail store.';
+$seoCanonical = app_url('/wholesale.php');
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>

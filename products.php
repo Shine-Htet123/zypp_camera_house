@@ -43,6 +43,24 @@ $products = catalog_fetch_customer_products([
 $productsCssPath = app_path('/assets/css/products.css');
 $productsJsPath = app_path('/assets/js/products.js');
 $productDetailsPath = app_path('/product-details.php');
+$hasProductFilters = $selectedCategory !== ''
+    || $selectedBrand !== ''
+    || $selectedSubCategory !== ''
+    || $searchQuery !== ''
+    || $selectedOptions !== [];
+$seoTitle = 'Products';
+if ($selectedSubCategory !== '') {
+    $seoTitle = $selectedSubCategory . ' Products';
+} elseif ($selectedCategory !== '') {
+    $seoTitle = $selectedCategory . ' Products';
+} elseif ($selectedBrand !== '') {
+    $seoTitle = $selectedBrand . ' Products';
+} elseif ($searchQuery !== '') {
+    $seoTitle = 'Search Results';
+}
+$seoDescription = 'Browse cameras, lenses, accessories, and creator gear available at ZYPP Camera House.';
+$seoCanonical = app_url('/products.php');
+$seoNoIndex = $hasProductFilters;
 
 $maxPrice = 0;
 foreach ($products as $product) {

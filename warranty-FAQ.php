@@ -5,6 +5,10 @@ $warrantyContent = site_content_get_warranty_faq();
 $generalFaqs = (array) ($warrantyContent['general_faqs'] ?? []);
 $warrantyCategories = (array) ($warrantyContent['categories'] ?? []);
 $defaultCategory = (string) (($warrantyCategories[0]['key'] ?? 'camera'));
+$seoTitle = 'Warranty & FAQs';
+$seoDescription = (string) ($warrantyContent['hero_subtitle'] ?? 'Read warranty information and common questions for products from ZYPP Camera House.');
+$seoCanonical = app_url('/warranty-FAQ.php');
+$seoImage = site_content_image_url((string) (($warrantyCategories[0]['image'] ?? '') ?: ''), '/storage/uploads/contents/logo.png');
 ?>
 <!DOCTYPE html>
 <html lang="en">

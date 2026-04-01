@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/app/services/products.php';
+require_once __DIR__ . '/app/services/seo.php';
 require_once __DIR__ . '/database/site_content.php';
 
 $productId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
@@ -15,6 +16,86 @@ if (!$product) {
 
 $relatedProducts = $product ? fetch_related_products($product['product_id'], $product['category_id'], 6, $currentCustomerId) : [];
 $uniqueSellingPoints = catalog_fetch_unique_selling_points_for_product_detail();
+$seoCanonical = $product
+    ? app_url('/product-details.php?id=' . (int) $product['product_id'])
+    : app_url('/product-details.php');
+$seoImage = $product ? (string) ($product['image_url'] ?? '/storage/uploads/contents/logo.png') : '/storage/uploads/contents/logo.png';
+$seoType = $product ? 'product' : 'website';
+$seoNoIndex = !$product;
+
+if (!$product) {
+    $seoTitle = 'Product Not Found';
+    $seoDescription = 'The product you requested is unavailable or hidden from the shop.';
+} else {
+    $seoTitle = (string) $product['name'];
+    $seoDescription = trim((string) ($product['description'] ?? '')) !== ''
+        ? (string) $product['description']
+        : $product['name'] . ' by ' . $product['brand_name'] . ' at ZYPP Camera House.';
+
+    $productImageUrls = [];
+    foreach ((array) ($product['images'] ?? []) as $image) {
+        $imageUrl = trim((string) ($image['url'] ?? ''));
+        if ($imageUrl !== '') {
+            $productImageUrls[] = seo_abs_url($imageUrl);
+        }
+    }
+
+    $seoStructuredData = [
+        [
+            '@context' => 'https://schema.org',
+            '@type' => 'Product',
+            'name' => (string) $product['name'],
+            'image' => $productImageUrls,
+            'description' => seo_clean_text((string) ($product['description'] ?? ''), 500),
+            'sku' => (string) $product['product_id'],
+            'brand' => [
+                '@type' => 'Brand',
+                'name' => (string) $product['brand_name'],
+            ],
+            'category' => (string) $product['category_name'],
+            'offers' => [
+                '@type' => 'Offer',
+                'priceCurrency' => 'MMK',
+                'price' => number_format((float) ($product['discounted_price_value'] ?? $product['price'] ?? 0), 2, '.', ''),
+                'availability' => (int) ($product['stock_quantity'] ?? 0) > 0
+                    ? 'https://schema.org/InStock'
+                    : 'https://schema.org/OutOfStock',
+                'itemCondition' => 'https://schema.org/NewCondition',
+                'url' => $seoCanonical,
+            ],
+        ],
+        [
+            '@context' => 'https://schema.org',
+            '@type' => 'BreadcrumbList',
+            'itemListElement' => array_values(array_filter([
+                [
+                    '@type' => 'ListItem',
+                    'position' => 1,
+                    'name' => 'Home',
+                    'item' => app_url('/'),
+                ],
+                [
+                    '@type' => 'ListItem',
+                    'position' => 2,
+                    'name' => 'Products',
+                    'item' => app_url('/products.php'),
+                ],
+                !empty($product['category_name']) ? [
+                    '@type' => 'ListItem',
+                    'position' => 3,
+                    'name' => (string) $product['category_name'],
+                    'item' => app_url('/products.php?category=' . rawurlencode((string) $product['category_name'])),
+                ] : null,
+                [
+                    '@type' => 'ListItem',
+                    'position' => !empty($product['category_name']) ? 4 : 3,
+                    'name' => (string) $product['name'],
+                    'item' => $seoCanonical,
+                ],
+            ])),
+        ],
+    ];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">

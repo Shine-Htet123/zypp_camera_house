@@ -15,6 +15,10 @@ foreach (site_content_get_payment_method_definitions(true) as $method) {
 
     $paymentMethodsBySection[$sectionKey][] = $method;
 }
+$seoTitle = (string) ($paymentContent['page_title'] ?? 'Payment Information');
+$seoDescription = 'See available payment methods, account details, and payment instructions for ZYPP Camera House orders.';
+$seoCanonical = app_url('/payment-information.php');
+$seoImage = '/storage/uploads/contents/logo.png';
 ?>
 <!DOCTYPE html>
 <html lang="en">

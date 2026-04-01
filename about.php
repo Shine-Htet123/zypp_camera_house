@@ -9,6 +9,10 @@ $facebookUrl = trim((string) ($aboutContent['facebook_url'] ?? ''));
 $tiktokUrl = trim((string) ($aboutContent['tiktok_url'] ?? ''));
 $telegramUrl = trim((string) ($aboutContent['telegram_url'] ?? ''));
 $instagramUrl = trim((string) ($aboutContent['instagram_url'] ?? ''));
+$seoTitle = 'About';
+$seoDescription = (string) ($aboutContent['hero_body'] ?? 'Learn more about ZYPP Camera House, our story, and how to contact us.');
+$seoCanonical = app_url('/about.php');
+$seoImage = site_content_image_url((string) ($aboutSections[0]['image'] ?? ''), '/storage/uploads/contents/logo.png');
 ?>
 <!DOCTYPE html>
 <html lang="en">

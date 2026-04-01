@@ -11,6 +11,17 @@ $bundleId = (int) ($_GET['id'] ?? 0);
 $currentCustomer = customer_auth_current_user();
 $currentCustomerId = isset($currentCustomer['id']) ? (int) $currentCustomer['id'] : null;
 $bundle = bundle_fetch_customer_bundle($bundleId, $currentCustomerId);
+$seoCanonical = $bundle ? app_url('/bundle-details.php?id=' . (int) $bundle['id']) : app_url('/bundle-details.php');
+$seoImage = (string) ($bundle['image_url'] ?? '/storage/uploads/contents/logo.png');
+$seoNoIndex = !$bundle;
+
+if ($bundle) {
+    $seoTitle = (string) $bundle['bundle_name'];
+    $seoDescription = 'Bundle offer with ' . (int) $bundle['product_count'] . ' products and savings of ' . (string) $bundle['discount_amount_label'] . ' at ZYPP Camera House.';
+} else {
+    $seoTitle = 'Bundle Not Found';
+    $seoDescription = 'This bundle is unavailable or no longer active.';
+}
 
 if (!$bundle) {
     http_response_code(404);

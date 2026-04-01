@@ -2,6 +2,10 @@
 require_once __DIR__ . '/database/site_content.php';
 
 $deliveryContent = site_content_get_delivery_policy();
+$seoTitle = (string) ($deliveryContent['title'] ?? 'Delivery Information');
+$seoDescription = 'Read delivery coverage, process, and shipping expectations for orders placed with ZYPP Camera House.';
+$seoCanonical = app_url('/delivery-policy.php');
+$seoImage = site_content_image_url((string) ($deliveryContent['image'] ?? ''), '/storage/uploads/contents/logo.png');
 ?>
 <!DOCTYPE html>
 <html lang="en">

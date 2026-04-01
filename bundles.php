@@ -10,6 +10,10 @@ header('Expires: 0');
 $currentCustomer = customer_auth_current_user();
 $currentCustomerId = isset($currentCustomer['id']) ? (int) $currentCustomer['id'] : null;
 $bundles = bundle_fetch_customer_bundles($currentCustomerId);
+$seoTitle = 'Bundle Offers';
+$seoDescription = 'Browse curated product bundles and creator kits with ready-made discounts from ZYPP Camera House.';
+$seoCanonical = app_url('/bundles.php');
+$seoImage = (string) ($bundles[0]['image_url'] ?? '/storage/uploads/contents/logo.png');
 ?>
 <!DOCTYPE html>
 <html lang="en">

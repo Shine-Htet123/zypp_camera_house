@@ -2,6 +2,9 @@
 require_once __DIR__ . '/database/site_content.php';
 
 $reservationContent = site_content_get_reservation_policy();
+$seoTitle = (string) ($reservationContent['title'] ?? 'Reservation Policy');
+$seoDescription = 'Review reservation rules and booking expectations before reserving products from ZYPP Camera House.';
+$seoCanonical = app_url('/reservation-policy.php');
 ?>
 <!DOCTYPE html>
 <html lang="en">
