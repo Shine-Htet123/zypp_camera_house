@@ -13,6 +13,9 @@ $featuredCategories = home_fetch_featured_categories();
 $bestSellers = home_fetch_best_sellers($currentCustomerId);
 $latestReviews = home_fetch_latest_reviews();
 $trustBadges = (array) ($homeContent['trust_badges'] ?? []);
+$bestSellersSeeMoreUrl = app_path('/products.php?' . http_build_query([
+    'option' => ['Best Sellers'],
+]));
 
 $buildHeroButton = static function (array $slide, string $buttonKey): ?array {
     $text = trim((string) ($slide[$buttonKey . '_text'] ?? ''));
@@ -235,7 +238,7 @@ $buildHeroButton = static function (array $slide, string $buttonKey): ?array {
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>
-            <a href="<?= htmlspecialchars(app_path('/products.php')) ?>" class="see-more">See More</a>
+            <a href="<?= htmlspecialchars($bestSellersSeeMoreUrl) ?>" class="see-more">See More</a>
         </div>
     </section>
 

@@ -401,179 +401,529 @@ if (nativeFetch) {
     };
 }
 
-const paymentProofNotificationButton = document.querySelector("[data-admin-proof-notifications]");
-const paymentProofNotificationBadge = paymentProofNotificationButton?.querySelector(".badge") || null;
-const PAYMENT_PROOF_NOTIFICATIONS_POLL_MS = 15000;
-let paymentProofNotificationMarker = paymentProofNotificationButton?.dataset.initialMarker || "";
-let paymentProofNotificationTimer = null;
-let paymentProofNotificationRequest = null;
-let paymentProofToastTimer = null;
+const adminNotificationRoot = document.querySelector("[data-admin-notifications]");
+const adminNotificationToggle = adminNotificationRoot?.querySelector("[data-admin-notification-toggle]") || null;
+const adminNotificationDropdown = adminNotificationRoot?.querySelector("[data-admin-notification-dropdown]") || null;
+const adminNotificationList = adminNotificationRoot?.querySelector("[data-admin-notification-list]") || null;
+const adminNotificationBadge = adminNotificationToggle?.querySelector(".badge") || null;
+const adminNotificationInitialToastsNode = document.querySelector("[data-admin-notification-initial-toasts]");
+const ADMIN_NOTIFICATIONS_POLL_MS = 12000;
+const ADMIN_NOTIFICATION_SEEN_TOASTS_KEY = "admin-notification-seen-toasts";
+let adminNotificationMarker = adminNotificationRoot?.dataset.initialMarker || "";
+let adminNotificationTimer = null;
+let adminNotificationRequest = null;
+let adminNotificationAudioContext = null;
+let adminNotificationSoundPending = false;
+const shownAdminNotificationToastIds = (() => {
+    try {
+        const raw = window.sessionStorage.getItem(ADMIN_NOTIFICATION_SEEN_TOASTS_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(parsed)) {
+            return new Set();
+        }
 
-const updatePaymentProofBadge = (count) => {
-    if (!paymentProofNotificationBadge) {
+        return new Set(
+            parsed
+                .map((value) => Number(value || 0))
+                .filter((value) => value > 0)
+        );
+    } catch (_) {
+        return new Set();
+    }
+})();
+
+const escapeHtml = (value) => String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const persistShownAdminNotificationToastIds = () => {
+    try {
+        window.sessionStorage.setItem(
+            ADMIN_NOTIFICATION_SEEN_TOASTS_KEY,
+            JSON.stringify(Array.from(shownAdminNotificationToastIds).slice(-200))
+        );
+    } catch (_) {
+        // Ignore storage errors.
+    }
+};
+
+const updateAdminNotificationBadge = (count) => {
+    if (!adminNotificationBadge) {
         return;
     }
 
     const normalizedCount = Math.max(0, Number(count) || 0);
-    paymentProofNotificationBadge.textContent = String(normalizedCount);
-    paymentProofNotificationBadge.hidden = normalizedCount <= 0;
+    adminNotificationBadge.textContent = String(Math.min(normalizedCount, 99));
+    adminNotificationBadge.hidden = normalizedCount <= 0;
 };
 
-const pulsePaymentProofBell = () => {
-    if (!paymentProofNotificationButton) {
+const getAdminNotificationBadgeCount = () => {
+    if (!adminNotificationBadge || adminNotificationBadge.hidden) {
+        return 0;
+    }
+
+    return Math.max(0, Number(adminNotificationBadge.textContent || "0") || 0);
+};
+
+const adjustAdminNotificationBadge = (delta) => {
+    updateAdminNotificationBadge(getAdminNotificationBadgeCount() + delta);
+};
+
+const pulseAdminNotificationBell = () => {
+    if (!adminNotificationToggle) {
         return;
     }
 
-    paymentProofNotificationButton.classList.remove("is-live");
+    adminNotificationToggle.classList.remove("is-live");
     window.requestAnimationFrame(() => {
-        paymentProofNotificationButton.classList.add("is-live");
+        adminNotificationToggle.classList.add("is-live");
         window.setTimeout(() => {
-            paymentProofNotificationButton.classList.remove("is-live");
+            adminNotificationToggle.classList.remove("is-live");
         }, 1600);
     });
 };
 
-const ensurePaymentProofToastContainer = () => {
-    let container = document.querySelector("[data-admin-proof-toast-container]");
+const createAdminNotificationMarkup = (notification) => {
+    const notificationId = Number(notification?.notification_id || 0);
+    const title = escapeHtml(notification?.title || "Notification");
+    const body = escapeHtml(notification?.body || "");
+    const targetUrl = escapeHtml(notification?.target_url || "/admin/index.php");
+    const time = escapeHtml(notification?.created_at_display || "");
+    const unreadClass = notification?.is_unread ? " is-unread" : "";
+
+    return `
+        <article class="admin-notification-item${unreadClass}" data-notification-id="${notificationId}">
+            <a class="admin-notification-item__link" href="${targetUrl}">
+                <span class="admin-notification-item__dot" aria-hidden="true"></span>
+                <strong>${title}</strong>
+                <span>${body}</span>
+                <time>${time}</time>
+            </a>
+            <button type="button" class="admin-notification-item__delete" aria-label="Delete notification" data-admin-notification-delete>&times;</button>
+        </article>
+    `;
+};
+
+const renderAdminNotificationList = (notifications) => {
+    if (!adminNotificationList) {
+        return;
+    }
+
+    if (!Array.isArray(notifications) || notifications.length === 0) {
+        adminNotificationList.innerHTML = `<div class="admin-notification-empty" data-admin-notification-empty>No notifications yet.</div>`;
+        return;
+    }
+
+    adminNotificationList.innerHTML = notifications.map(createAdminNotificationMarkup).join("");
+};
+
+const setAdminNotificationDropdownOpen = (open) => {
+    if (!adminNotificationRoot || !adminNotificationToggle || !adminNotificationDropdown) {
+        return;
+    }
+
+    adminNotificationRoot.classList.toggle("is-open", open);
+    adminNotificationToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    adminNotificationDropdown.hidden = !open;
+};
+
+const markNotificationItemReadInUi = (notificationId) => {
+    const item = adminNotificationList?.querySelector(`[data-notification-id="${notificationId}"]`);
+    if (!item || !item.classList.contains("is-unread")) {
+        return;
+    }
+
+    item.classList.remove("is-unread");
+    adjustAdminNotificationBadge(-1);
+};
+
+const ensureAdminNotificationToastContainer = () => {
+    let container = document.querySelector("[data-admin-notification-toast-container]");
     if (container) {
         return container;
     }
 
     container = document.createElement("div");
-    container.className = "admin-proof-toast-stack";
-    container.setAttribute("data-admin-proof-toast-container", "true");
+    container.className = "admin-notification-toast-stack";
+    container.setAttribute("data-admin-notification-toast-container", "true");
     document.body.appendChild(container);
     return container;
 };
 
-const dismissPaymentProofToast = () => {
-    const existingToast = document.querySelector("[data-admin-proof-toast]");
-    if (!existingToast) {
+const dismissAdminNotificationToast = (toast) => {
+    if (!(toast instanceof HTMLElement)) {
         return;
     }
 
-    existingToast.classList.remove("is-visible");
+    toast.classList.remove("is-visible");
     window.setTimeout(() => {
-        existingToast.remove();
+        toast.remove();
     }, 220);
 };
 
-const showPaymentProofToast = (count) => {
-    const destination = paymentProofNotificationButton?.getAttribute("href") || "/admin/payment-proof-uploads.php";
-    const container = ensurePaymentProofToastContainer();
-    dismissPaymentProofToast();
+const ensureAdminNotificationAudio = async () => {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) {
+        return null;
+    }
 
+    if (!adminNotificationAudioContext) {
+        adminNotificationAudioContext = new AudioContextClass();
+    }
+
+    if (adminNotificationAudioContext.state === "suspended") {
+        try {
+            await adminNotificationAudioContext.resume();
+        } catch (_) {
+            return null;
+        }
+    }
+
+    return adminNotificationAudioContext;
+};
+
+const playAdminNotificationSound = async () => {
+    const context = await ensureAdminNotificationAudio();
+    if (!context) {
+        adminNotificationSoundPending = true;
+        return false;
+    }
+
+    const nowAt = context.currentTime;
+    [0, 0.16].forEach((offset, index) => {
+        const oscillator = context.createOscillator();
+        const gainNode = context.createGain();
+        oscillator.type = "triangle";
+        oscillator.frequency.value = index === 0 ? 920 : 1280;
+        gainNode.gain.setValueAtTime(0.0001, nowAt + offset);
+        gainNode.gain.exponentialRampToValueAtTime(0.13, nowAt + offset + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, nowAt + offset + 0.26);
+        oscillator.connect(gainNode);
+        gainNode.connect(context.destination);
+        oscillator.start(nowAt + offset);
+        oscillator.stop(nowAt + offset + 0.28);
+    });
+
+    adminNotificationSoundPending = false;
+    return true;
+};
+
+const showAdminNotificationToast = (notification) => {
+    const notificationId = Number(notification?.notification_id || 0);
+    if (notificationId > 0 && shownAdminNotificationToastIds.has(notificationId)) {
+        return;
+    }
+    if (notificationId > 0) {
+        shownAdminNotificationToastIds.add(notificationId);
+        persistShownAdminNotificationToastIds();
+    }
+
+    const container = ensureAdminNotificationToastContainer();
     const toast = document.createElement("aside");
-    toast.className = "admin-proof-toast";
-    toast.setAttribute("data-admin-proof-toast", "true");
+    toast.className = "admin-notification-toast";
+    toast.setAttribute("data-notification-id", String(notificationId));
     toast.innerHTML = `
-        <div class="admin-proof-toast__copy">
-            <strong>${count === 1 ? "New payment proof uploaded" : `${count} new payment proofs uploaded`}</strong>
-            <span>Open the review queue to approve, reject, or request a re-upload.</span>
-        </div>
-        <div class="admin-proof-toast__actions">
-            <a class="admin-proof-toast__link" href="${destination}">Review</a>
-            <button type="button" class="admin-proof-toast__close" aria-label="Dismiss notification">&times;</button>
-        </div>
+        <a class="admin-notification-toast__link" href="${escapeHtml(notification?.target_url || "/admin/index.php")}">
+            <strong>${escapeHtml(notification?.title || "Notification")}</strong>
+            <span>${escapeHtml(notification?.body || "")}</span>
+        </a>
+        <button type="button" class="admin-notification-toast__close" aria-label="Dismiss notification">&times;</button>
     `;
 
     container.appendChild(toast);
+    const visibleToasts = Array.from(container.querySelectorAll(".admin-notification-toast"));
+    visibleToasts.slice(0, Math.max(0, visibleToasts.length - 5)).forEach((oldToast) => {
+        dismissAdminNotificationToast(oldToast);
+    });
+
     window.requestAnimationFrame(() => {
         toast.classList.add("is-visible");
     });
 
-    toast.querySelector(".admin-proof-toast__close")?.addEventListener("click", dismissPaymentProofToast);
+    toast.querySelector(".admin-notification-toast__close")?.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        dismissAdminNotificationToast(toast);
+    });
+    toast.querySelector(".admin-notification-toast__link")?.addEventListener("click", () => {
+        if (notificationId > 0) {
+            markAdminNotificationRead(notificationId, { useBeacon: true }).catch(() => {});
+        }
+    });
 
-    if (paymentProofToastTimer) {
-        clearTimeout(paymentProofToastTimer);
+    window.setTimeout(() => {
+        dismissAdminNotificationToast(toast);
+    }, 6500);
+
+    playAdminNotificationSound().catch(() => {
+        adminNotificationSoundPending = true;
+    });
+};
+
+const sendAdminNotificationBeacon = (action, notificationId) => {
+    if (!adminNotificationRoot || notificationId <= 0 || !navigator.sendBeacon) {
+        return false;
     }
-    paymentProofToastTimer = window.setTimeout(dismissPaymentProofToast, 6000);
+
+    const apiUrl = adminNotificationRoot.dataset.apiUrl || "";
+    if (apiUrl === "") {
+        return false;
+    }
+
+    try {
+        const payload = new URLSearchParams({
+            action,
+            notification_id: String(notificationId),
+        });
+        return navigator.sendBeacon(apiUrl, payload);
+    } catch (_) {
+        return false;
+    }
 };
 
-const dispatchPaymentProofNotificationEvent = (payload) => {
-    window.dispatchEvent(new CustomEvent("admin:payment-proof-notifications", { detail: payload }));
+const markAdminNotificationRead = async (notificationId, options = {}) => {
+    const { useBeacon = false } = options;
+    if (!adminNotificationRoot || !nativeFetch || notificationId <= 0) {
+        return false;
+    }
+
+    if (useBeacon && sendAdminNotificationBeacon("mark-read", notificationId)) {
+        markNotificationItemReadInUi(notificationId);
+        return true;
+    }
+
+    const apiUrl = adminNotificationRoot.dataset.apiUrl || "";
+    if (apiUrl === "") {
+        return false;
+    }
+
+    const response = await nativeFetch(apiUrl, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            Accept: "application/json",
+        },
+        credentials: "same-origin",
+        keepalive: useBeacon,
+        body: new URLSearchParams({
+            action: "mark-read",
+            notification_id: String(notificationId),
+        }).toString(),
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload?.success) {
+        throw new Error(payload?.message || "Failed to mark notification as read.");
+    }
+
+    markNotificationItemReadInUi(notificationId);
+    return true;
 };
 
-const pollPaymentProofNotifications = async ({ immediateToast = true } = {}) => {
-    if (!paymentProofNotificationButton || !nativeFetch || paymentProofNotificationRequest) {
+const pollAdminNotifications = async ({ immediateToast = true } = {}) => {
+    if (!adminNotificationRoot || !nativeFetch || adminNotificationRequest) {
         return;
     }
 
-    const apiUrl = paymentProofNotificationButton.dataset.apiUrl || "";
+    const apiUrl = adminNotificationRoot.dataset.apiUrl || "";
     if (apiUrl === "") {
         return;
     }
 
     const requestUrl = new URL(apiUrl, window.location.href);
-    requestUrl.searchParams.set("action", "notifications");
-    if (paymentProofNotificationMarker) {
-        requestUrl.searchParams.set("since", paymentProofNotificationMarker);
+    requestUrl.searchParams.set("action", "snapshot");
+    if (adminNotificationMarker) {
+        requestUrl.searchParams.set("since", adminNotificationMarker);
     }
 
-    paymentProofNotificationRequest = nativeFetch(requestUrl.href, {
+    adminNotificationRequest = nativeFetch(requestUrl.href, {
         headers: { Accept: "application/json" },
         credentials: "same-origin",
     });
 
     try {
-        const response = await paymentProofNotificationRequest;
+        const response = await adminNotificationRequest;
         const payload = await response.json().catch(() => null);
         if (!response.ok || !payload?.success) {
-            throw new Error(payload?.message || "Failed to load payment proof notifications.");
+            throw new Error(payload?.message || "Failed to load notifications.");
         }
 
         const data = payload.data || {};
-        updatePaymentProofBadge(data.pending_count ?? 0);
+        updateAdminNotificationBadge(data.unread_count ?? 0);
+        renderAdminNotificationList(data.notifications || []);
 
         if (typeof data.latest_marker === "string" && data.latest_marker !== "") {
-            paymentProofNotificationMarker = data.latest_marker;
+            adminNotificationMarker = data.latest_marker;
         }
 
-        const newCount = Math.max(0, Number(data.new_count) || 0);
-        if (newCount > 0) {
-            pulsePaymentProofBell();
+        const newNotifications = Array.isArray(data.new_notifications)
+            ? data.new_notifications.filter((notification) => {
+                const notificationId = Number(notification?.notification_id || 0);
+                return notification?.is_unread && (notificationId <= 0 || !shownAdminNotificationToastIds.has(notificationId));
+            })
+            : [];
+        if (newNotifications.length > 0) {
+            pulseAdminNotificationBell();
             if (immediateToast) {
-                showPaymentProofToast(newCount);
+                newNotifications.slice(0, 5).reverse().forEach((notification) => {
+                    showAdminNotificationToast(notification);
+                });
             }
-            dispatchPaymentProofNotificationEvent(data);
         }
     } catch (_) {
         // Fail silently and try again on the next poll.
     } finally {
-        paymentProofNotificationRequest = null;
+        adminNotificationRequest = null;
     }
 };
 
-const schedulePaymentProofPolling = () => {
-    if (!paymentProofNotificationButton) {
+const deleteAdminNotification = async (notificationId) => {
+    if (!adminNotificationRoot || !nativeFetch || notificationId <= 0) {
         return;
     }
 
-    if (paymentProofNotificationTimer) {
-        clearInterval(paymentProofNotificationTimer);
+    const apiUrl = adminNotificationRoot.dataset.apiUrl || "";
+    if (apiUrl === "") {
+        return;
     }
 
-    updatePaymentProofBadge(paymentProofNotificationButton.dataset.initialCount || 0);
-    paymentProofNotificationTimer = window.setInterval(() => {
+    const response = await nativeFetch(apiUrl, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            Accept: "application/json",
+        },
+        credentials: "same-origin",
+        body: new URLSearchParams({
+            action: "delete",
+            notification_id: String(notificationId),
+        }).toString(),
+    });
+
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload?.success) {
+        throw new Error(payload?.message || "Failed to delete notification.");
+    }
+
+    await pollAdminNotifications({ immediateToast: false });
+};
+
+const scheduleAdminNotificationPolling = () => {
+    if (!adminNotificationRoot) {
+        return;
+    }
+
+    if (adminNotificationTimer) {
+        clearInterval(adminNotificationTimer);
+    }
+
+    updateAdminNotificationBadge(adminNotificationRoot.dataset.initialCount || 0);
+    adminNotificationTimer = window.setInterval(() => {
         if (document.visibilityState === "hidden") {
             return;
         }
-        pollPaymentProofNotifications();
-    }, PAYMENT_PROOF_NOTIFICATIONS_POLL_MS);
+        pollAdminNotifications();
+    }, ADMIN_NOTIFICATIONS_POLL_MS);
 };
 
-if (paymentProofNotificationButton) {
-    schedulePaymentProofPolling();
+if (adminNotificationRoot && adminNotificationToggle && adminNotificationDropdown) {
+    scheduleAdminNotificationPolling();
 
-    document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "visible") {
-            pollPaymentProofNotifications({ immediateToast: true });
+    adminNotificationToggle.addEventListener("click", (event) => {
+        event.preventDefault();
+        const shouldOpen = adminNotificationDropdown.hidden;
+        setAdminNotificationDropdownOpen(shouldOpen);
+    });
+
+    adminNotificationList?.addEventListener("click", (event) => {
+        const deleteButton = event.target.closest("[data-admin-notification-delete]");
+        if (!deleteButton) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        const item = deleteButton.closest("[data-notification-id]");
+        const notificationId = Number(item?.getAttribute("data-notification-id") || 0);
+        if (notificationId <= 0) {
+            return;
+        }
+
+        deleteAdminNotification(notificationId).catch(() => {});
+    });
+
+    adminNotificationList?.addEventListener("click", (event) => {
+        const notificationLink = event.target.closest(".admin-notification-item__link");
+        if (!notificationLink) {
+            return;
+        }
+
+        const item = notificationLink.closest("[data-notification-id]");
+        const notificationId = Number(item?.getAttribute("data-notification-id") || 0);
+        if (notificationId <= 0) {
+            return;
+        }
+
+        markAdminNotificationRead(notificationId, { useBeacon: true }).catch(() => {});
+    });
+
+    document.addEventListener("click", (event) => {
+        if (!adminNotificationRoot.contains(event.target)) {
+            setAdminNotificationDropdownOpen(false);
         }
     });
 
-    window.AdminPaymentProofNotifications = {
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            setAdminNotificationDropdownOpen(false);
+        }
+    });
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+            pollAdminNotifications({ immediateToast: true });
+        }
+    });
+
+    const unlockNotificationAudio = () => {
+        ensureAdminNotificationAudio()
+            .then(() => {
+                if (adminNotificationSoundPending && document.querySelector(".admin-notification-toast")) {
+                    return playAdminNotificationSound();
+                }
+                return null;
+            })
+            .catch(() => {});
+        document.removeEventListener("pointerdown", unlockNotificationAudio);
+        document.removeEventListener("keydown", unlockNotificationAudio);
+    };
+
+    document.addEventListener("pointerdown", unlockNotificationAudio, { once: true });
+    document.addEventListener("keydown", unlockNotificationAudio, { once: true });
+
+    try {
+        const initialToastPayload = JSON.parse(adminNotificationInitialToastsNode?.textContent || "[]");
+        if (Array.isArray(initialToastPayload) && initialToastPayload.length > 0) {
+            initialToastPayload
+                .filter((notification) => {
+                    const notificationId = Number(notification?.notification_id || 0);
+                    return notificationId <= 0 || !shownAdminNotificationToastIds.has(notificationId);
+                })
+                .slice(0, 5)
+                .reverse()
+                .forEach((notification) => {
+                showAdminNotificationToast(notification);
+            });
+        }
+    } catch (_) {
+        // Ignore malformed initial notification payloads.
+    }
+
+    window.AdminNotifications = {
         refresh() {
-            return pollPaymentProofNotifications({ immediateToast: false });
+            return pollAdminNotifications({ immediateToast: false });
         },
     };
 }

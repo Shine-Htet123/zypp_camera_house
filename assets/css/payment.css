@@ -348,14 +348,16 @@ body .swal2-container {
 
 .payment-account-row {
     display: grid;
-    grid-template-columns: 98px auto;
+    grid-template-columns: minmax(132px, max-content) minmax(0, 1fr);
     gap: 18px;
+    align-items: start;
     color: #121212;
     font-size: 14px;
 }
 
 .payment-account-row .label {
     font-weight: 700;
+    white-space: nowrap;
 }
 
 .payment-upload-section {

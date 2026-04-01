@@ -1148,23 +1148,34 @@ body.modal-open {
 
 .benefits-tier-head {
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 160px;
 }
 
 .benefits-tier-head h3 {
     margin: 0 0 8px;
-    font-size: 1.6rem;
+    font-size: clamp(1.1rem, 0.9rem + 0.55vw, 1.45rem);
+    line-height: 1.15;
+    white-space: nowrap;
+    letter-spacing: -0.02em;
 }
 
 .benefits-tier-range {
     margin: 0 0 16px;
     color: var(--text-secondary);
-    line-height: 1.45;
+    line-height: 1.35;
+    font-size: clamp(0.78rem, 0.68rem + 0.45vw, 0.96rem);
+    white-space: nowrap;
+    letter-spacing: -0.01em;
 }
 
 .benefits-tier-status {
     display: inline-grid;
     place-items: center;
-    min-width: 126px;
+    width: min(100%, 164px);
+    min-width: 164px;
     padding: 10px 18px;
     border-radius: 999px;
     font-size: 0.95rem;
@@ -1173,6 +1184,7 @@ body.modal-open {
     overflow: hidden;
     text-decoration: none;
     cursor: pointer;
+    margin-top: auto;
     transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 

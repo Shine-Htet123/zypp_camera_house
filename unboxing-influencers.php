@@ -9,22 +9,33 @@
 
     <?php
         require_once __DIR__ . '/database/media.php';
+        require_once __DIR__ . '/database/site_content.php';
 
         $mediaData = media_fetch_customer_filter_options();
+        $pageContent = site_content_get_unboxing_influencers();
         $categories = $mediaData['categories'];
         $brands = $mediaData['brands'];
         $unboxingVideos = $mediaData['unboxing'];
         $influencerVideos = $mediaData['influencer'];
+        $unboxingTabTitle = trim((string) ($pageContent['unboxing_tab_title'] ?? ''));
+        $unboxingBannerText = trim((string) ($pageContent['unboxing_banner_text'] ?? ''));
+        $influencerTabTitle = trim((string) ($pageContent['influencer_tab_title'] ?? ''));
+        $influencerBannerText = trim((string) ($pageContent['influencer_banner_text'] ?? ''));
     ?>
 
     <main class="media-page">
         <div class="media-tabs">
-            <button class="tab-btn active" data-tab="unboxing">Unboxing Videos</button>
-            <button class="tab-btn" data-tab="influencer">Influencer Reviews</button>
+            <button class="tab-btn active" data-tab="unboxing"><?php echo htmlspecialchars($unboxingTabTitle); ?></button>
+            <button class="tab-btn" data-tab="influencer"><?php echo htmlspecialchars($influencerTabTitle); ?></button>
         </div>
 
-        <div class="media-banner" id="media-banner">
-            Unbox the hype - watch creators try our products!
+        <div
+            class="media-banner"
+            id="media-banner"
+            data-unboxing-banner="<?php echo htmlspecialchars($unboxingBannerText); ?>"
+            data-influencer-banner="<?php echo htmlspecialchars($influencerBannerText); ?>"
+        >
+            <?php echo htmlspecialchars($unboxingBannerText); ?>
         </div>
 
         <section class="media-panel active" id="unboxing-panel">

@@ -237,7 +237,7 @@ $displayOrderTime = date('H:i:s');
                     <?php endif; ?>
                     <?php if ($paymentPhone !== ''): ?>
                         <div class="payment-account-row">
-                            <span class="label">Phone Number.</span>
+                            <span class="label">Phone No.</span>
                             <span class="value"><?php echo htmlspecialchars($paymentPhone); ?></span>
                         </div>
                     <?php endif; ?>
@@ -254,7 +254,7 @@ $displayOrderTime = date('H:i:s');
                     <p>Please transfer the exact amount and upload your payment proof.</p>
                 <?php endif; ?>
                 <?php if ($paymentPhone !== ''): ?>
-                    <p class="payment-phone"><strong>Phone Number:</strong> <?php echo htmlspecialchars($paymentPhone); ?></p>
+                    <p class="payment-phone"><strong>Phone No.:</strong> <?php echo htmlspecialchars($paymentPhone); ?></p>
                 <?php endif; ?>
 
                 <h3>Upload Payment Proof</h3>

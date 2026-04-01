@@ -25,6 +25,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'save_footer':
                 admin_content_management_save_footer($_POST, $_FILES);
                 break;
+            case 'save_unboxing_influencers':
+                admin_content_management_save_unboxing_influencers($_POST);
+                break;
             case 'save_about':
                 admin_content_management_save_about($_POST, $_FILES);
                 break;
@@ -60,6 +63,7 @@ $flash = admin_content_management_flash_consume();
 $homeContent = site_content_get_home();
 $homeButtonProductOptions = admin_content_management_fetch_home_button_product_options();
 $footerContent = site_content_get_footer();
+$unboxingInfluencerContent = site_content_get_unboxing_influencers();
 $aboutContent = site_content_get_about();
 $deliveryContent = site_content_get_delivery_policy();
 $deliveryLocationsContent = site_content_get_delivery_locations();
@@ -117,6 +121,142 @@ $renderImageField = static function (string $label, string $name, ?string $image
     </div>
     <?php
 };
+
+$renderHomeHeroSlideEditor = static function (array $slide, $index, array $productOptions) use ($renderImageField): void {
+    $safeIndex = htmlspecialchars((string) $index);
+    $slideTitle = trim((string) ($slide['title'] ?? ''));
+    $slideSubtitle = trim((string) ($slide['subtitle'] ?? ''));
+    $previewId = 'hero_preview_' . (string) $index;
+    ?>
+    <article class="cms-card hero-slide-panel" data-hero-slide-panel>
+        <input type="hidden" name="hero_existing_image[]" value="<?php echo htmlspecialchars((string) ($slide['image'] ?? '')); ?>">
+        <div class="hero-slide-panel-head">
+            <div>
+                <h4 data-hero-slide-heading>Slide</h4>
+                <p class="content-field-note">Edit one slide at a time, then switch from the slide list on the left.</p>
+            </div>
+            <button type="button" class="hero-slide-remove" data-hero-slide-remove>Remove Slide</button>
+        </div>
+
+        <div class="hero-slide-overview">
+            <div class="hero-slide-overview-copy">
+                <strong data-hero-slide-summary-title><?php echo htmlspecialchars($slideTitle !== '' ? $slideTitle : 'Untitled slide'); ?></strong>
+                <span data-hero-slide-summary-subtitle><?php echo htmlspecialchars($slideSubtitle !== '' ? $slideSubtitle : 'No subtitle yet'); ?></span>
+            </div>
+            <span class="hero-slide-badge">Home Hero</span>
+        </div>
+
+        <?php $renderImageField('Image', 'hero_image_' . (string) $index, $slide['image'] ?? '', $previewId); ?>
+
+        <div class="content-grid">
+            <div class="content-field">
+                <label>Title</label>
+                <input type="text" name="hero_title[]" value="<?php echo htmlspecialchars((string) ($slide['title'] ?? '')); ?>" data-hero-slide-title-input>
+            </div>
+            <div class="content-field">
+                <label>Title Color</label>
+                <input type="color" name="hero_title_color[]" value="<?php echo htmlspecialchars((string) ($slide['title_color'] ?? '#2f2419')); ?>">
+            </div>
+            <div class="content-field">
+                <label>Subtitle</label>
+                <input type="text" name="hero_subtitle[]" value="<?php echo htmlspecialchars((string) ($slide['subtitle'] ?? '')); ?>" data-hero-slide-subtitle-input>
+            </div>
+            <div class="content-field">
+                <label>Subtitle Color</label>
+                <input type="color" name="hero_subtitle_color[]" value="<?php echo htmlspecialchars((string) ($slide['subtitle_color'] ?? '#2f2419')); ?>">
+            </div>
+            <div class="content-field">
+                <label>Button 1 Text</label>
+                <input type="text" name="hero_button1_text[]" value="<?php echo htmlspecialchars((string) ($slide['button1_text'] ?? '')); ?>">
+            </div>
+            <div class="content-field">
+                <label>Button 1 Action</label>
+                <select name="hero_button1_action[]" data-home-button-action="button1">
+                    <option value="link" <?php echo (($slide['button1_action'] ?? 'link') === 'link') ? 'selected' : ''; ?>>Link URL</option>
+                    <option value="add_to_cart" <?php echo (($slide['button1_action'] ?? 'link') === 'add_to_cart') ? 'selected' : ''; ?>>Add to Cart</option>
+                </select>
+            </div>
+            <div class="content-field" data-home-button-url-field="button1">
+                <label>Button 1 URL</label>
+                <input type="text" name="hero_button1_url[]" value="<?php echo htmlspecialchars((string) ($slide['button1_url'] ?? '')); ?>">
+                <p class="content-field-note">Used when action is set to Link URL.</p>
+            </div>
+            <div class="content-field" data-home-button-product-field="button1">
+                <label>Button 1 Product</label>
+                <select name="hero_button1_product_id[]">
+                    <option value="0">Select Product</option>
+                    <?php foreach ($productOptions as $productOption): ?>
+                        <?php
+                        $productId = (int) ($productOption['product_id'] ?? 0);
+                        $brandName = trim((string) ($productOption['brand_name'] ?? ''));
+                        $productLabel = trim((string) ($productOption['name'] ?? ''));
+                        if ($brandName !== '') {
+                            $productLabel .= ' (' . $brandName . ')';
+                        }
+                        ?>
+                        <option value="<?php echo $productId; ?>" <?php echo $productId === (int) ($slide['button1_product_id'] ?? 0) ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($productLabel); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <p class="content-field-note">Used when action is set to Add to Cart.</p>
+            </div>
+            <div class="content-field">
+                <label>Button 1 Background</label>
+                <input type="color" name="hero_button1_background_color[]" value="<?php echo htmlspecialchars((string) ($slide['button1_background_color'] ?? '#6b5241')); ?>">
+            </div>
+            <div class="content-field">
+                <label>Button 1 Text Color</label>
+                <input type="color" name="hero_button1_text_color[]" value="<?php echo htmlspecialchars((string) ($slide['button1_text_color'] ?? '#ffffff')); ?>">
+            </div>
+            <div class="content-field">
+                <label>Button 2 Text</label>
+                <input type="text" name="hero_button2_text[]" value="<?php echo htmlspecialchars((string) ($slide['button2_text'] ?? '')); ?>">
+            </div>
+            <div class="content-field">
+                <label>Button 2 Action</label>
+                <select name="hero_button2_action[]" data-home-button-action="button2">
+                    <option value="link" <?php echo (($slide['button2_action'] ?? 'link') === 'link') ? 'selected' : ''; ?>>Link URL</option>
+                    <option value="add_to_cart" <?php echo (($slide['button2_action'] ?? 'link') === 'add_to_cart') ? 'selected' : ''; ?>>Add to Cart</option>
+                </select>
+            </div>
+            <div class="content-field" data-home-button-url-field="button2">
+                <label>Button 2 URL</label>
+                <input type="text" name="hero_button2_url[]" value="<?php echo htmlspecialchars((string) ($slide['button2_url'] ?? '')); ?>">
+                <p class="content-field-note">Used when action is set to Link URL.</p>
+            </div>
+            <div class="content-field" data-home-button-product-field="button2">
+                <label>Button 2 Product</label>
+                <select name="hero_button2_product_id[]">
+                    <option value="0">Select Product</option>
+                    <?php foreach ($productOptions as $productOption): ?>
+                        <?php
+                        $productId = (int) ($productOption['product_id'] ?? 0);
+                        $brandName = trim((string) ($productOption['brand_name'] ?? ''));
+                        $productLabel = trim((string) ($productOption['name'] ?? ''));
+                        if ($brandName !== '') {
+                            $productLabel .= ' (' . $brandName . ')';
+                        }
+                        ?>
+                        <option value="<?php echo $productId; ?>" <?php echo $productId === (int) ($slide['button2_product_id'] ?? 0) ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($productLabel); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <p class="content-field-note">Used when action is set to Add to Cart.</p>
+            </div>
+            <div class="content-field">
+                <label>Button 2 Background</label>
+                <input type="color" name="hero_button2_background_color[]" value="<?php echo htmlspecialchars((string) ($slide['button2_background_color'] ?? '#ffffff')); ?>">
+            </div>
+            <div class="content-field">
+                <label>Button 2 Text Color</label>
+                <input type="color" name="hero_button2_text_color[]" value="<?php echo htmlspecialchars((string) ($slide['button2_text_color'] ?? '#6b5241')); ?>">
+            </div>
+        </div>
+    </article>
+    <?php
+};
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -156,120 +296,60 @@ $renderImageField = static function (string $label, string $name, ?string $image
 
                 <div class="content-card">
                     <h3>Hero Section</h3>
-                    <p class="content-note">Images are required. Texts and buttons are optional.</p>
-                    <div class="cms-stack">
-                        <?php foreach (($homeContent['hero_slides'] ?? []) as $index => $slide): ?>
-                            <div class="cms-card">
-                                <h4>Slide <?php echo $index + 1; ?></h4>
-                                <?php $renderImageField('Image', 'hero_image_' . $index, $slide['image'] ?? '', 'hero_preview_' . $index); ?>
-                                <div class="content-grid">
-                                    <div class="content-field">
-                                        <label>Title</label>
-                                        <input type="text" name="hero_title[]" value="<?php echo htmlspecialchars((string) ($slide['title'] ?? '')); ?>">
-                                    </div>
-                                    <div class="content-field">
-                                        <label>Title Color</label>
-                                        <input type="color" name="hero_title_color[]" value="<?php echo htmlspecialchars((string) ($slide['title_color'] ?? '#2f2419')); ?>">
-                                    </div>
-                                    <div class="content-field">
-                                        <label>Subtitle</label>
-                                        <input type="text" name="hero_subtitle[]" value="<?php echo htmlspecialchars((string) ($slide['subtitle'] ?? '')); ?>">
-                                    </div>
-                                    <div class="content-field">
-                                        <label>Subtitle Color</label>
-                                        <input type="color" name="hero_subtitle_color[]" value="<?php echo htmlspecialchars((string) ($slide['subtitle_color'] ?? '#2f2419')); ?>">
-                                    </div>
-                                    <div class="content-field">
-                                        <label>Button 1 Text</label>
-                                        <input type="text" name="hero_button1_text[]" value="<?php echo htmlspecialchars((string) ($slide['button1_text'] ?? '')); ?>">
-                                    </div>
-                                    <div class="content-field">
-                                        <label>Button 1 Action</label>
-                                        <select name="hero_button1_action[]" data-home-button-action="button1">
-                                            <option value="link" <?php echo (($slide['button1_action'] ?? 'link') === 'link') ? 'selected' : ''; ?>>Link URL</option>
-                                            <option value="add_to_cart" <?php echo (($slide['button1_action'] ?? 'link') === 'add_to_cart') ? 'selected' : ''; ?>>Add to Cart</option>
-                                        </select>
-                                    </div>
-                                    <div class="content-field" data-home-button-url-field="button1">
-                                        <label>Button 1 URL</label>
-                                        <input type="text" name="hero_button1_url[]" value="<?php echo htmlspecialchars((string) ($slide['button1_url'] ?? '')); ?>">
-                                        <p class="content-field-note">Used when action is set to Link URL.</p>
-                                    </div>
-                                    <div class="content-field" data-home-button-product-field="button1">
-                                        <label>Button 1 Product</label>
-                                        <select name="hero_button1_product_id[]">
-                                            <option value="0">Select Product</option>
-                                            <?php foreach ($homeButtonProductOptions as $productOption): ?>
-                                                <?php
-                                                $productId = (int) ($productOption['product_id'] ?? 0);
-                                                $brandName = trim((string) ($productOption['brand_name'] ?? ''));
-                                                $productLabel = trim((string) ($productOption['name'] ?? ''));
-                                                if ($brandName !== '') {
-                                                    $productLabel .= ' (' . $brandName . ')';
-                                                }
-                                                ?>
-                                                <option value="<?php echo $productId; ?>" <?php echo $productId === (int) ($slide['button1_product_id'] ?? 0) ? 'selected' : ''; ?>>
-                                                    <?php echo htmlspecialchars($productLabel); ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                        <p class="content-field-note">Used when action is set to Add to Cart.</p>
-                                    </div>
-                                    <div class="content-field">
-                                        <label>Button 1 Background</label>
-                                        <input type="color" name="hero_button1_background_color[]" value="<?php echo htmlspecialchars((string) ($slide['button1_background_color'] ?? '#6b5241')); ?>">
-                                    </div>
-                                    <div class="content-field">
-                                        <label>Button 1 Text Color</label>
-                                        <input type="color" name="hero_button1_text_color[]" value="<?php echo htmlspecialchars((string) ($slide['button1_text_color'] ?? '#ffffff')); ?>">
-                                    </div>
-                                    <div class="content-field">
-                                        <label>Button 2 Text</label>
-                                        <input type="text" name="hero_button2_text[]" value="<?php echo htmlspecialchars((string) ($slide['button2_text'] ?? '')); ?>">
-                                    </div>
-                                    <div class="content-field">
-                                        <label>Button 2 Action</label>
-                                        <select name="hero_button2_action[]" data-home-button-action="button2">
-                                            <option value="link" <?php echo (($slide['button2_action'] ?? 'link') === 'link') ? 'selected' : ''; ?>>Link URL</option>
-                                            <option value="add_to_cart" <?php echo (($slide['button2_action'] ?? 'link') === 'add_to_cart') ? 'selected' : ''; ?>>Add to Cart</option>
-                                        </select>
-                                    </div>
-                                    <div class="content-field" data-home-button-url-field="button2">
-                                        <label>Button 2 URL</label>
-                                        <input type="text" name="hero_button2_url[]" value="<?php echo htmlspecialchars((string) ($slide['button2_url'] ?? '')); ?>">
-                                        <p class="content-field-note">Used when action is set to Link URL.</p>
-                                    </div>
-                                    <div class="content-field" data-home-button-product-field="button2">
-                                        <label>Button 2 Product</label>
-                                        <select name="hero_button2_product_id[]">
-                                            <option value="0">Select Product</option>
-                                            <?php foreach ($homeButtonProductOptions as $productOption): ?>
-                                                <?php
-                                                $productId = (int) ($productOption['product_id'] ?? 0);
-                                                $brandName = trim((string) ($productOption['brand_name'] ?? ''));
-                                                $productLabel = trim((string) ($productOption['name'] ?? ''));
-                                                if ($brandName !== '') {
-                                                    $productLabel .= ' (' . $brandName . ')';
-                                                }
-                                                ?>
-                                                <option value="<?php echo $productId; ?>" <?php echo $productId === (int) ($slide['button2_product_id'] ?? 0) ? 'selected' : ''; ?>>
-                                                    <?php echo htmlspecialchars($productLabel); ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                        <p class="content-field-note">Used when action is set to Add to Cart.</p>
-                                    </div>
-                                    <div class="content-field">
-                                        <label>Button 2 Background</label>
-                                        <input type="color" name="hero_button2_background_color[]" value="<?php echo htmlspecialchars((string) ($slide['button2_background_color'] ?? '#ffffff')); ?>">
-                                    </div>
-                                    <div class="content-field">
-                                        <label>Button 2 Text Color</label>
-                                        <input type="color" name="hero_button2_text_color[]" value="<?php echo htmlspecialchars((string) ($slide['button2_text_color'] ?? '#6b5241')); ?>">
-                                    </div>
+                    <p class="content-note">Add as many slides as you need. Images are required; text and buttons stay optional.</p>
+                    <div class="hero-slide-workspace" data-hero-slide-editor>
+                        <aside class="hero-slide-sidebar">
+                            <div class="hero-slide-sidebar-head">
+                                <div>
+                                    <h4>Slide Navigator</h4>
+                                    <p>Switch between slides without scrolling through every form.</p>
+                                </div>
+                                <span class="hero-slide-count" data-hero-slide-count>0 slides</span>
+                            </div>
+                            <div class="hero-slide-tab-list" data-hero-slide-tabs></div>
+                            <button type="button" class="hero-slide-add" data-hero-slide-add>Add New Slide</button>
+                        </aside>
+
+                        <div class="hero-slide-panel-shell">
+                            <div class="hero-slide-panel-list" data-hero-slide-panels>
+                                <?php foreach (($homeContent['hero_slides'] ?? []) as $index => $slide): ?>
+                                    <?php $renderHomeHeroSlideEditor($slide, $index, $homeButtonProductOptions); ?>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-card">
+                    <h3>Video Redirect Sections</h3>
+                    <div class="cms-stack cms-stack--compact">
+                        <div class="cms-card">
+                            <h4>Home Page</h4>
+                            <div class="content-grid">
+                                <div class="content-field">
+                                    <label>Title</label>
+                                    <input type="text" name="home_video_title" value="<?php echo htmlspecialchars((string) (($homeContent['video_sections']['home']['title'] ?? ''))); ?>">
+                                </div>
+                                <div class="content-field content-field--full">
+                                    <label>Description</label>
+                                    <textarea name="home_video_description"><?php echo htmlspecialchars((string) (($homeContent['video_sections']['home']['description'] ?? ''))); ?></textarea>
                                 </div>
                             </div>
-                        <?php endforeach; ?>
+                        </div>
+
+                        <div class="cms-card">
+                            <h4>Product Details Page</h4>
+                            <div class="content-grid">
+                                <div class="content-field">
+                                    <label>Title</label>
+                                    <input type="text" name="product_video_title" value="<?php echo htmlspecialchars((string) (($homeContent['video_sections']['product_details']['title'] ?? ''))); ?>">
+                                </div>
+                                <div class="content-field content-field--full">
+                                    <label>Description</label>
+                                    <textarea name="product_video_description"><?php echo htmlspecialchars((string) (($homeContent['video_sections']['product_details']['description'] ?? ''))); ?></textarea>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -328,6 +408,47 @@ $renderImageField = static function (string $label, string $name, ?string $image
                         <div class="content-field">
                             <label>Instagram URL</label>
                             <input type="text" name="instagram_url" value="<?php echo htmlspecialchars((string) ($footerContent['instagram_url'] ?? '')); ?>">
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+        </section>
+
+        <section class="content-section <?php echo $selectedPage === 'unboxing_influencers' ? 'is-active' : ''; ?>" data-page="unboxing_influencers">
+            <form class="content-form" method="post" data-content-form>
+                <input type="hidden" name="action" value="save_unboxing_influencers">
+                <input type="hidden" name="page" value="unboxing_influencers">
+
+                <div class="content-card">
+                    <h3>Tab Labels and Banner Text</h3>
+                    <div class="cms-stack cms-stack--compact">
+                        <div class="cms-card">
+                            <h4>Unboxing Tab</h4>
+                            <div class="content-grid">
+                                <div class="content-field">
+                                    <label>Tab Title</label>
+                                    <input type="text" name="unboxing_tab_title" value="<?php echo htmlspecialchars((string) ($unboxingInfluencerContent['unboxing_tab_title'] ?? '')); ?>">
+                                </div>
+                                <div class="content-field content-field--full">
+                                    <label>Banner Text</label>
+                                    <textarea name="unboxing_banner_text"><?php echo htmlspecialchars((string) ($unboxingInfluencerContent['unboxing_banner_text'] ?? '')); ?></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="cms-card">
+                            <h4>Influencer Tab</h4>
+                            <div class="content-grid">
+                                <div class="content-field">
+                                    <label>Tab Title</label>
+                                    <input type="text" name="influencer_tab_title" value="<?php echo htmlspecialchars((string) ($unboxingInfluencerContent['influencer_tab_title'] ?? '')); ?>">
+                                </div>
+                                <div class="content-field content-field--full">
+                                    <label>Banner Text</label>
+                                    <textarea name="influencer_banner_text"><?php echo htmlspecialchars((string) ($unboxingInfluencerContent['influencer_banner_text'] ?? '')); ?></textarea>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -866,7 +987,7 @@ $renderImageField = static function (string $label, string $name, ?string $image
                                         <input type="text" name="payment_method_account_name[]" value="<?php echo htmlspecialchars((string) ($method['account_name'] ?? '')); ?>">
                                     </div>
                                     <div class="content-field">
-                                        <label>Account Number</label>
+                                        <label>Account No.</label>
                                         <input type="text" name="payment_method_account_number[]" value="<?php echo htmlspecialchars((string) ($method['account_number'] ?? '')); ?>">
                                     </div>
                                     <div class="content-field content-field--full">
@@ -890,6 +1011,10 @@ $renderImageField = static function (string $label, string $name, ?string $image
                         <?php endforeach; ?>
                     </div>
                 </div>
+
+                <template id="home-hero-slide-template">
+                    <?php $renderHomeHeroSlideEditor([], '__INDEX__', $homeButtonProductOptions); ?>
+                </template>
 
             </form>
         </section>
@@ -945,7 +1070,7 @@ $renderImageField = static function (string $label, string $name, ?string $image
                         <input type="text" data-payment-method-account-name>
                     </div>
                     <div class="content-field">
-                        <label>Account Number</label>
+                        <label>Account No.</label>
                         <input type="text" data-payment-method-account-number>
                     </div>
                     <div class="content-field content-field--full">

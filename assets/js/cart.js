@@ -21,6 +21,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const formatNumber = (value) => Number(value || 0).toLocaleString();
 
+  const formatDiscountSummary = (discountValue, discountType) => {
+    if (Number(discountValue || 0) <= 0) {
+      return 'No discount';
+    }
+
+    return `- ${formatNumber(discountValue)} ${discountType === 'fixed' ? 'MMK' : '%'} each`;
+  };
+
   const calculateRowDiscount = (subtotal, discountValue, discountType, quantity) => {
     if (discountType === 'fixed') {
       return Math.min(discountValue * quantity, subtotal);
@@ -81,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (discountTextEl) {
-      discountTextEl.textContent = `- ${formatNumber(discountValue)} ${discountType === 'fixed' ? 'MMK' : '%'} each`;
+      discountTextEl.textContent = formatDiscountSummary(discountValue, discountType);
     }
 
     row.dataset.lineDiscount = String(lineDiscount);

@@ -1,10 +1,13 @@
 <?php
 
 require_once __DIR__ . '/app/services/products.php';
+require_once __DIR__ . '/database/site_content.php';
 
 $productId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 $currentCustomerId = products_current_customer_id();
 $product = $productId > 0 ? fetch_product_by_id($productId, false, $currentCustomerId) : null;
+$homeContent = site_content_get_home();
+$productVideoSection = (array) ($homeContent['video_sections']['product_details'] ?? []);
 
 if (!$product) {
     http_response_code(404);
@@ -158,8 +161,8 @@ $uniqueSellingPoints = catalog_fetch_unique_selling_points_for_product_detail();
                         <i class="fa-solid fa-photo-film"></i>
                     </div>
                     <div class="video-link-text">
-                        <h4>Unboxing & Influencers Videos</h4>
-                        <p>Experience our products through influencer reviews and unboxings.</p>
+                        <h4><?php echo htmlspecialchars((string) ($productVideoSection['title'] ?? 'Unboxing & Influencers Videos')); ?></h4>
+                        <p><?php echo htmlspecialchars((string) ($productVideoSection['description'] ?? 'Experience our products through influencer reviews and unboxings.')); ?></p>
                     </div>
                     <div class="video-link-btn">
                                 <a href="<?php echo htmlspecialchars(app_path('/unboxing-influencers.php')); ?>">Discover More</a>

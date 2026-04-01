@@ -138,11 +138,119 @@ function mailer_wrap_html(\PHPMailer\PHPMailer\PHPMailer $mail, string $html, st
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
     <title>' . $safeSubject . '</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            supported-color-schemes: light dark;
+        }
+
+        body,
+        table,
+        td,
+        div,
+        p,
+        a {
+            font-family: Arial, Helvetica, sans-serif !important;
+        }
+
+        .email-shell {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 32px 28px;
+            box-shadow: 0 10px 28px rgba(72,45,22,0.10);
+        }
+
+        .dm-bg {
+            background-color: #1b1b20 !important;
+            background: #1b1b20 !important;
+        }
+
+        .dm-surface {
+            background-color: #121317 !important;
+            background: #121317 !important;
+        }
+
+        .dm-badge {
+            background-color: #6f594f !important;
+            background: #6f594f !important;
+        }
+
+        .dm-button {
+            background-color: #e0bb97 !important;
+            background: #e0bb97 !important;
+            color: #211814 !important;
+            -webkit-text-fill-color: #211814 !important;
+        }
+
+        .force-white,
+        .force-white * {
+            color: #fff8f2 !important;
+            -webkit-text-fill-color: #fff8f2 !important;
+        }
+
+        .force-muted,
+        .force-muted * {
+            color: #ead9cb !important;
+            -webkit-text-fill-color: #ead9cb !important;
+        }
+
+        .force-soft,
+        .force-soft * {
+            color: #dbc8ba !important;
+            -webkit-text-fill-color: #dbc8ba !important;
+        }
+
+        .force-accent,
+        .force-accent * {
+            color: #ffd7a8 !important;
+            -webkit-text-fill-color: #ffd7a8 !important;
+        }
+
+        .force-label,
+        .force-label * {
+            color: #d8c0ab !important;
+            -webkit-text-fill-color: #d8c0ab !important;
+        }
+
+        .force-dim,
+        .force-dim * {
+            color: #bda999 !important;
+            -webkit-text-fill-color: #bda999 !important;
+        }
+
+        [data-ogsc] .email-shell,
+        [data-ogsb] .email-shell {
+            background: #ffffff !important;
+        }
+
+        [data-ogsc] .dm-bg,
+        [data-ogsb] .dm-bg {
+            background: #1b1b20 !important;
+        }
+
+        [data-ogsc] .dm-surface,
+        [data-ogsb] .dm-surface {
+            background: #121317 !important;
+        }
+
+        [data-ogsc] .dm-badge,
+        [data-ogsb] .dm-badge {
+            background: #6f594f !important;
+        }
+
+        [data-ogsc] .dm-button,
+        [data-ogsb] .dm-button {
+            background: #e0bb97 !important;
+            color: #211814 !important;
+        }
+    </style>
 </head>
-<body style="margin:0;padding:32px 16px;background:#f4f1ed;font-family:Arial,Helvetica,sans-serif;color:#2d241d;">
+<body bgcolor="#f4f1ed" style="margin:0;padding:32px 16px;background:#f4f1ed;font-family:Arial,Helvetica,sans-serif;color:#2d241d;">
     <div style="max-width:640px;margin:0 auto;">
-        <div style="background:#ffffff;border-radius:20px;padding:32px 28px;box-shadow:0 10px 28px rgba(72,45,22,0.10);">
+        <div class="email-shell" bgcolor="#ffffff" style="background:#ffffff;border-radius:20px;padding:32px 28px;box-shadow:0 10px 28px rgba(72,45,22,0.10);">
             ' . $logoMarkup . '
             <div style="font-size:15px;line-height:1.65;color:#3d3128;">
                 ' . $html . '

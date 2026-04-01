@@ -86,6 +86,8 @@ if ($membershipTierCards === []) {
 $currentTierId = isset($membershipSummary['current_tier']['id']) ? (int) $membershipSummary['current_tier']['id'] : null;
 $currentTierTitle = strtolower(trim((string) ($membershipSummary['current_title'] ?? '')));
 $currentTierIndex = 0;
+$userProfileCssVersion = @filemtime(__DIR__ . '/assets/css/user-profile.css') ?: time();
+$userProfileJsVersion = @filemtime(__DIR__ . '/assets/js/user-profile.js') ?: time();
 
 foreach ($membershipTierCards as $index => $tierCard) {
     $tierId = isset($tierCard['id']) ? (int) $tierCard['id'] : 0;
@@ -101,7 +103,7 @@ foreach ($membershipTierCards as $index => $tierCard) {
 <html lang="en">
 <head>
     <?php include 'head.php'; ?>
-    <link rel="stylesheet" href="./assets/css/user-profile.css">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/assets/css/user-profile.css?v=' . (int) $userProfileCssVersion)); ?>">
 </head>
 <body>
     <?php include 'navbar.php'; ?>
@@ -619,7 +621,15 @@ foreach ($membershipTierCards as $index => $tierCard) {
     </div>
 
     <?php include('./footer.php') ?>
-
-    <script src="./assets/js/user-profile.js"></script>
+    <?php if (!empty($membershipSummary['just_upgraded'])): ?>
+        <script>
+            window.__membershipUpgrade = <?php echo json_encode([
+                'previous_title' => (string) ($membershipSummary['previous_title'] ?? ''),
+                'current_title' => (string) ($membershipSummary['current_title'] ?? ''),
+                'total_spent' => number_format((float) ($membershipSummary['total_spent'] ?? 0)) . ' MMK',
+            ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+        </script>
+    <?php endif; ?>
+    <script src="<?php echo htmlspecialchars(app_path('/assets/js/user-profile.js?v=' . (int) $userProfileJsVersion)); ?>"></script>
 </body>
 </html>

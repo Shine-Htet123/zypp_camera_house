@@ -2,6 +2,7 @@
     <?php
     require_once __DIR__ . '/../config/app.php';
     require_once __DIR__ . '/../database/admin/my_account.php';
+    require_once __DIR__ . '/../database/admin/notifications.php';
     require_once __DIR__ . '/../database/admin/orders.php';
 
     $authAdmin = isset($currentAdmin) && is_array($currentAdmin) ? $currentAdmin : admin_auth_current_admin();
@@ -42,11 +43,21 @@
     $showDiscountGroup = $canManageDiscounts || $canManageDiscountRules;
     $showUsersGroup = $canManageAdmins || $canManageCustomers;
     $showTidioDashboard = in_array($adminRoleKey, ['super_admin', 'admin'], true);
-    $paymentProofNotificationSnapshot = $canManagePaymentProofs
-        ? admin_fetch_payment_proof_notification_snapshot()
-        : ['pending_count' => 0, 'latest_marker' => ''];
-    $pendingPaymentProofCount = (int) ($paymentProofNotificationSnapshot['pending_count'] ?? 0);
-    $pendingPaymentProofMarker = (string) ($paymentProofNotificationSnapshot['latest_marker'] ?? '');
+    $visibleNotificationPermissions = array_values(array_filter([
+        $canManageOrders ? 'manage_orders' : '',
+        $canManagePaymentProofs ? 'manage_payment_proofs' : '',
+        $canManageWholesale ? 'manage_wholesale' : '',
+    ]));
+    $notificationSnapshot = $visibleNotificationPermissions !== []
+        ? admin_notifications_fetch_snapshot($visibleNotificationPermissions, (int) ($authAdmin['id'] ?? 0), null, 12)
+        : ['unread_count' => 0, 'latest_marker' => '', 'notifications' => [], 'recent_unread_notifications' => []];
+    $notificationCount = (int) ($notificationSnapshot['unread_count'] ?? 0);
+    $notificationMarker = (string) ($notificationSnapshot['latest_marker'] ?? '');
+    $notificationItems = (array) ($notificationSnapshot['notifications'] ?? []);
+    $notificationToastSeed = json_encode(
+        (array) ($notificationSnapshot['recent_unread_notifications'] ?? []),
+        JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+    );
 
     $showFullscreenLoader = !empty($_SESSION['admin_show_fullscreen_loader_once']);
     unset($_SESSION['admin_show_fullscreen_loader_once']);
@@ -73,19 +84,48 @@
             <img src="<?php echo htmlspecialchars(app_path('/storage/uploads/contents/logo.png')); ?>" alt="ZYPP Camera House">
         </div>
         <div class="admin-actions">
-            <?php if ($canManagePaymentProofs): ?>
-                <a
-                    href="<?php echo htmlspecialchars(app_path('/admin/payment-proof-uploads.php')); ?>"
-                    class="icon-btn notification-btn"
-                    aria-label="Notifications"
-                    data-admin-proof-notifications
-                    data-api-url="<?php echo htmlspecialchars(app_path('/admin/payment-proof-api.php')); ?>"
-                    data-initial-count="<?php echo $pendingPaymentProofCount; ?>"
-                    data-initial-marker="<?php echo htmlspecialchars($pendingPaymentProofMarker); ?>"
+            <?php if ($visibleNotificationPermissions !== []): ?>
+                <div
+                    class="admin-notification-shell"
+                    data-admin-notifications
+                    data-api-url="<?php echo htmlspecialchars(app_path('/admin/notifications-api.php')); ?>"
+                    data-initial-count="<?php echo $notificationCount; ?>"
+                    data-initial-marker="<?php echo htmlspecialchars($notificationMarker); ?>"
                 >
-                    <i class="fa-solid fa-bell"></i>
-                    <span class="badge" <?php echo $pendingPaymentProofCount > 0 ? '' : 'hidden'; ?>><?php echo $pendingPaymentProofCount; ?></span>
-                </a>
+                    <button
+                        type="button"
+                        class="icon-btn notification-btn"
+                        aria-label="Notifications"
+                        aria-expanded="false"
+                        data-admin-notification-toggle
+                    >
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="badge" <?php echo $notificationCount > 0 ? '' : 'hidden'; ?>><?php echo $notificationCount; ?></span>
+                    </button>
+                    <div class="admin-notification-dropdown" data-admin-notification-dropdown hidden>
+                        <div class="admin-notification-dropdown__head">
+                            <strong>Notifications</strong>
+                        </div>
+                        <div class="admin-notification-list" data-admin-notification-list>
+                            <?php if ($notificationItems === []): ?>
+                                <div class="admin-notification-empty" data-admin-notification-empty>No notifications yet.</div>
+                            <?php else: ?>
+                                <?php foreach ($notificationItems as $notification): ?>
+                                    <article class="admin-notification-item<?php echo !empty($notification['is_unread']) ? ' is-unread' : ''; ?>" data-notification-id="<?php echo (int) ($notification['notification_id'] ?? 0); ?>">
+                                        <a class="admin-notification-item__link" href="<?php echo htmlspecialchars((string) ($notification['target_url'] ?? app_path('/admin/index.php'))); ?>">
+                                            <span class="admin-notification-item__dot" aria-hidden="true"></span>
+                                            <strong><?php echo htmlspecialchars((string) ($notification['title'] ?? 'Notification')); ?></strong>
+                                            <span><?php echo htmlspecialchars((string) ($notification['body'] ?? '')); ?></span>
+                                            <time><?php echo htmlspecialchars((string) ($notification['created_at_display'] ?? '')); ?></time>
+                                        </a>
+                                        <button type="button" class="admin-notification-item__delete" aria-label="Delete notification" data-admin-notification-delete>&times;</button>
+                                    </article>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+                <script type="application/json" data-admin-notification-initial-toasts><?php echo $notificationToastSeed ?: '[]'; ?></script>
             <?php endif; ?>
             <a href="<?php echo htmlspecialchars(app_path('/admin/my-account.php')); ?>" class="admin-user" aria-label="My account">
                 <div class="avatar">
@@ -137,6 +177,10 @@
 
                     <?php if ($canManageOrders): ?>
                         <a href="<?php echo htmlspecialchars(app_path('/admin/orders.php')); ?>" class="nav-link">Orders</a>
+                    <?php endif; ?>
+
+                    <?php if ($canManagePaymentProofs): ?>
+                        <a href="<?php echo htmlspecialchars(app_path('/admin/payment-proof-uploads.php')); ?>" class="nav-link">Payment Proof Uploads</a>
                     <?php endif; ?>
 
                     <?php if ($canManageDeliveryMethods): ?>

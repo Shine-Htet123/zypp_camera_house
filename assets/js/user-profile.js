@@ -630,6 +630,60 @@ const flashSectionHeader = (hash) => {
     );
 };
 
+const showMembershipUpgradePopup = async () => {
+    const upgrade = window.__membershipUpgrade || null;
+    if (!upgrade || typeof Swal === "undefined") {
+        return;
+    }
+
+    const escapeHtml = (value) =>
+        String(value || "").replace(/[&<>"']/g, (char) => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+        }[char]));
+
+    const currentTitle = String(upgrade.current_title || "New Tier").trim();
+    const previousTitle = String(upgrade.previous_title || "").trim();
+    const totalSpent = String(upgrade.total_spent || "").trim();
+    const previousTitleLine = previousTitle
+        ? `<p style="margin:0 0 8px;color:#7b6558;font-size:14px;">From <strong>${escapeHtml(previousTitle)}</strong></p>`
+        : "";
+    const totalSpentLine = totalSpent
+        ? `<p style="margin:10px 0 0;color:#3f3128;font-size:14px;">Eligible spend: <strong>${escapeHtml(totalSpent)}</strong></p>`
+        : "";
+
+    const result = await Swal.fire({
+        icon: "success",
+        title: "Membership Upgraded",
+        html: `
+            <div style="padding-top:4px;">
+                <div style="display:inline-block;padding:6px 12px;border-radius:999px;background:#f4e0c9;color:#7a5134;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">
+                    Congratulations
+                </div>
+                <h3 style="margin:14px 0 8px;font-size:28px;line-height:1.15;color:#2c211b;">${escapeHtml(currentTitle)}</h3>
+                ${previousTitleLine}
+                <p style="margin:0;color:#4b3d34;font-size:15px;line-height:1.65;">
+                    You have unlocked a new ZYPP membership tier. Your profile and benefits are now updated.
+                </p>
+                ${totalSpentLine}
+            </div>
+        `,
+        confirmButtonText: "View Benefits",
+        showCancelButton: true,
+        cancelButtonText: "Close",
+        confirmButtonColor: "#5d4e47",
+        cancelButtonColor: "#c3b7ad",
+        width: 420,
+    });
+
+    if (result.isConfirmed) {
+        openMembershipBenefitsModal();
+    }
+};
+
 navLinks.forEach((link) => {
     link.addEventListener("click", () => {
         const hash = link.getAttribute("href");
@@ -641,6 +695,10 @@ navLinks.forEach((link) => {
 if (window.location.hash) {
     window.setTimeout(() => flashSectionHeader(window.location.hash), 300);
 }
+
+window.addEventListener("load", () => {
+    showMembershipUpgradePopup();
+}, { once: true });
 
 document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;

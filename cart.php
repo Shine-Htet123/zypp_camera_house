@@ -45,12 +45,14 @@ $cartItems = $cartData['items'];
 $itemsTotal = $cartData['items_total'];
 $totalDiscount = $cartData['total_discount'];
 $cartFlash = customer_cart_consume_flash();
+$cartCssVersion = @filemtime(__DIR__ . '/assets/css/cart.css') ?: time();
+$cartJsVersion = @filemtime(__DIR__ . '/assets/js/cart.js') ?: time();
 ?>
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <?php include __DIR__ . '/head.php'; ?>
-    <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/assets/css/cart.css')); ?>">
+    <head>
+        <?php include __DIR__ . '/head.php'; ?>
+        <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/assets/css/cart.css?v=' . (int) $cartCssVersion)); ?>">
 </head>
 <body>
     <?php include __DIR__ . '/navbar.php'; ?>
@@ -90,6 +92,22 @@ $cartFlash = customer_cart_consume_flash();
                 </div>
 
                 <?php foreach ($cartItems as $item): ?>
+                    <?php
+                        $discountSummary = trim((string) ($item['discount_summary'] ?? ''));
+                        $discountValue = (float) ($item['discount_value'] ?? 0);
+                        $discountType = (string) ($item['discount_type'] ?? 'percentage');
+                        $lineDiscount = (int) ($item['line_discount'] ?? 0);
+
+                        if ($discountSummary === '') {
+                            if ($discountValue > 0) {
+                                $discountSummary = '- ' . customer_cart_format_mmk((int) $discountValue) . ' ' . ($discountType === 'fixed' ? 'MMK' : '%') . ' each';
+                            } elseif ($lineDiscount > 0) {
+                                $discountSummary = '- ' . customer_cart_format_mmk($lineDiscount) . ' MMK total';
+                            } else {
+                                $discountSummary = 'No discount';
+                            }
+                        }
+                    ?>
                     <div
                         class="summary-row cart-row"
                         data-cart-row
@@ -116,7 +134,7 @@ $cartFlash = customer_cart_consume_flash();
                         </div>
                         <div class="quantity-cell summary-cell">
                             <div class="qty-stack">
-                                <button type="button" class="qty-btn" data-qty-action="increase">+</button>
+                                <button type="button" class="qty-btn" data-qty-action="decrease">-</button>
                                 <input
                                     type="number"
                                     class="qty-value"
@@ -127,22 +145,27 @@ $cartFlash = customer_cart_consume_flash();
                                     inputmode="numeric"
                                     data-qty-input
                                 >
-                                <button type="button" class="qty-btn" data-qty-action="decrease">-</button>
+                                <button type="button" class="qty-btn" data-qty-action="increase">+</button>
                             </div>
                             <span class="qty-note<?php echo $item['show_low_stock'] ? '' : ' is-hidden'; ?>" data-stock-note>
                                 Hurry! Only <span data-stock-count><?php echo (int) $item['stock']; ?></span> Left!
                             </span>
                         </div>
-                        <span class="cell summary-cell">
-                            <span data-price-value><?php echo customer_cart_format_mmk($item['unit_price']); ?></span> MMK
-                        </span>
-                        <span class="cell summary-cell">
-                            <span data-discount-text><?php echo htmlspecialchars((string) ($item['discount_summary'] ?? '')); ?></span>
-                            <span class="discount-detail"><?php echo htmlspecialchars((string) ($item['discount_detail'] ?? '')); ?></span>
-                        </span>
-                        <span class="cell summary-cell">
-                            <span data-line-total><?php echo customer_cart_format_mmk($item['line_total']); ?></span> MMK
-                        </span>
+                        <div class="cell summary-cell">
+                            <span class="money-line">
+                                <span data-price-value><?php echo customer_cart_format_mmk($item['unit_price']); ?></span>
+                                <span class="currency-unit">MMK</span>
+                            </span>
+                        </div>
+                        <div class="cell summary-cell discount-cell">
+                            <span class="discount-main" data-discount-text><?php echo htmlspecialchars($discountSummary); ?></span>
+                        </div>
+                        <div class="cell summary-cell">
+                            <span class="money-line">
+                                <span data-line-total><?php echo customer_cart_format_mmk($item['line_total']); ?></span>
+                                <span class="currency-unit">MMK</span>
+                            </span>
+                        </div>
                         <div class="action-cell summary-cell">
                             <button type="button" class="delete-btn" aria-label="Remove" data-remove-row>
                                 <i class="fa-regular fa-trash-can"></i>
@@ -185,6 +208,6 @@ $cartFlash = customer_cart_consume_flash();
             window.__cartFlash = <?php echo json_encode($cartFlash, JSON_UNESCAPED_SLASHES); ?>;
         </script>
     <?php endif; ?>
-    <script src="<?php echo htmlspecialchars(app_path('/assets/js/cart.js')); ?>"></script>
+    <script src="<?php echo htmlspecialchars(app_path('/assets/js/cart.js?v=' . (int) $cartJsVersion)); ?>"></script>
 </body>
 </html>

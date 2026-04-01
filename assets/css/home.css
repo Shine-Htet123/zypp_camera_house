@@ -631,7 +631,8 @@
 
 .review-container .review-list {
     display: grid;
-    grid-template-columns: repeat(4, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 320px));
+    justify-content: center;
     gap: 25px;
     width: 90%;
 }
@@ -777,15 +778,10 @@
     transform: translateY(-1px);
 }
 
-@media (max-width: 1200px) {
-    .review-container .review-list {
-        grid-template-columns: repeat(2, minmax(220px, 1fr));
-    }
-}
-
 @media (max-width: 700px) {
     .review-container .review-list {
         grid-template-columns: 1fr;
+        max-width: 420px;
     }
 }
 

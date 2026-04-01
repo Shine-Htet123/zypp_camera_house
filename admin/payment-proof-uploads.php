@@ -3,7 +3,9 @@ require_once __DIR__ . '/../config/admin_bootstrap.php';
 require_once __DIR__ . '/../database/admin/orders.php';
 
 $searchQuery = trim((string) ($_GET['q'] ?? ''));
-$proofs = admin_fetch_payment_proofs();
+$proofs = admin_fetch_payment_proofs([
+    'q' => $searchQuery,
+]);
 ?>
 <!DOCTYPE html>
 <html lang="en">

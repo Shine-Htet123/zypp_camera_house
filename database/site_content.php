@@ -90,30 +90,44 @@ function site_content_image_url(?string $path, string $fallback = ''): string
     return catalog_public_file_url($path, $fallback !== '' ? $fallback : $path);
 }
 
+function site_content_default_home_hero_slide(array $overrides = []): array
+{
+    return array_merge([
+        'image' => '',
+        'title' => '',
+        'title_color' => '#2f2419',
+        'subtitle' => '',
+        'subtitle_color' => '#2f2419',
+        'button1_text' => '',
+        'button1_action' => 'link',
+        'button1_url' => '',
+        'button1_product_id' => 0,
+        'button1_background_color' => '#6b5241',
+        'button1_text_color' => '#ffffff',
+        'button2_text' => '',
+        'button2_action' => 'link',
+        'button2_url' => '',
+        'button2_product_id' => 0,
+        'button2_background_color' => '#ffffff',
+        'button2_text_color' => '#6b5241',
+    ], $overrides);
+}
+
 function site_content_default_home(): array
 {
     return [
         'hero_slides' => [
-            [
+            site_content_default_home_hero_slide([
                 'image' => '/storage/uploads/contents/hero-img.png',
                 'title' => 'Vintage Canon AE-1 Program',
-                'title_color' => '#2f2419',
                 'subtitle' => '700,000 MMK',
-                'subtitle_color' => '#2f2419',
                 'button1_text' => 'ADD TO CART',
                 'button1_action' => 'link',
-                'button1_url' => '',
-                'button1_product_id' => 0,
-                'button1_background_color' => '#6b5241',
-                'button1_text_color' => '#ffffff',
                 'button2_text' => 'VIEW MORE',
                 'button2_action' => 'link',
                 'button2_url' => '/products.php',
-                'button2_product_id' => 0,
-                'button2_background_color' => '#ffffff',
-                'button2_text_color' => '#6b5241',
-            ],
-            [
+            ]),
+            site_content_default_home_hero_slide([
                 'image' => '/storage/uploads/contents/hero-img-2.png',
                 'title' => 'Canon EOS R6 Mark II',
                 'title_color' => '#1f1f1f',
@@ -122,17 +136,11 @@ function site_content_default_home(): array
                 'button1_text' => 'SHOP NOW',
                 'button1_action' => 'link',
                 'button1_url' => '/products.php?brand=Canon',
-                'button1_product_id' => 0,
-                'button1_background_color' => '#6b5241',
-                'button1_text_color' => '#ffffff',
                 'button2_text' => 'VIEW MORE',
                 'button2_action' => 'link',
                 'button2_url' => '/products.php?brand=Canon',
-                'button2_product_id' => 0,
-                'button2_background_color' => '#ffffff',
-                'button2_text_color' => '#6b5241',
-            ],
-            [
+            ]),
+            site_content_default_home_hero_slide([
                 'image' => '/storage/uploads/contents/hero-img-3.png',
                 'title' => 'Pro Creator Kits',
                 'title_color' => '#1f1f1f',
@@ -140,17 +148,10 @@ function site_content_default_home(): array
                 'subtitle_color' => '#1f1f1f',
                 'button1_text' => '',
                 'button1_action' => 'link',
-                'button1_url' => '',
-                'button1_product_id' => 0,
-                'button1_background_color' => '#6b5241',
-                'button1_text_color' => '#ffffff',
                 'button2_text' => 'VIEW MORE',
                 'button2_action' => 'link',
                 'button2_url' => '/products.php',
-                'button2_product_id' => 0,
-                'button2_background_color' => '#ffffff',
-                'button2_text_color' => '#6b5241',
-            ],
+            ]),
         ],
         'trust_badges' => [
             [
@@ -170,6 +171,16 @@ function site_content_default_home(): array
                 'title' => 'Excellent Support',
             ],
         ],
+        'video_sections' => [
+            'home' => [
+                'title' => 'Unboxing & Influencers Videos',
+                'description' => 'Experience our products through influencer reviews & unboxings.',
+            ],
+            'product_details' => [
+                'title' => 'Unboxing & Influencers Videos',
+                'description' => 'Experience our products through influencer reviews and unboxings.',
+            ],
+        ],
     ];
 }
 
@@ -184,6 +195,16 @@ function site_content_default_footer(): array
         'tiktok_url' => '',
         'telegram_url' => '',
         'instagram_url' => '',
+    ];
+}
+
+function site_content_default_unboxing_influencers(): array
+{
+    return [
+        'unboxing_tab_title' => 'Unboxing Videos',
+        'unboxing_banner_text' => 'Unbox the hype - watch creators try our products!',
+        'influencer_tab_title' => 'Influencer Reviews',
+        'influencer_banner_text' => 'Real reviews. Real unboxings. Real results.',
     ];
 }
 
@@ -784,9 +805,17 @@ function site_content_get_home(): array
     }
 
     $slides = [];
-    foreach (($defaultContent['hero_slides'] ?? []) as $index => $defaultSlide) {
-        $storedSlide = (array) ($content['hero_slides'][$index] ?? []);
-        $slides[] = array_merge($defaultSlide, $storedSlide);
+    $storedSlides = array_values(array_filter(
+        array_map(static fn ($slide): array => is_array($slide) ? $slide : [], (array) ($content['hero_slides'] ?? [])),
+        static fn (array $slide): bool => $slide !== []
+    ));
+    if ($storedSlides === []) {
+        $slides = (array) ($defaultContent['hero_slides'] ?? []);
+    } else {
+        foreach ($storedSlides as $index => $storedSlide) {
+            $defaultSlide = (array) (($defaultContent['hero_slides'][$index] ?? null) ?: site_content_default_home_hero_slide());
+            $slides[] = array_merge($defaultSlide, $storedSlide);
+        }
     }
 
     $badges = [];
@@ -795,9 +824,16 @@ function site_content_get_home(): array
         $badges[] = array_merge($defaultBadge, $storedBadge);
     }
 
+    $videoSections = [];
+    foreach (($defaultContent['video_sections'] ?? []) as $sectionKey => $defaultSection) {
+        $storedSection = (array) ($content['video_sections'][$sectionKey] ?? []);
+        $videoSections[$sectionKey] = array_merge($defaultSection, $storedSection);
+    }
+
     return [
         'hero_slides' => $slides,
         'trust_badges' => $badges,
+        'video_sections' => $videoSections,
     ];
 }
 
@@ -812,6 +848,13 @@ function site_content_get_about(): array
 {
     $content = site_content_fetch_raw('about');
     return is_array($content) ? $content : site_content_default_about();
+}
+
+function site_content_get_unboxing_influencers(): array
+{
+    $content = site_content_fetch_raw('unboxing_influencers');
+    $defaultContent = site_content_default_unboxing_influencers();
+    return is_array($content) ? array_merge($defaultContent, $content) : $defaultContent;
 }
 
 function site_content_get_delivery_policy(): array

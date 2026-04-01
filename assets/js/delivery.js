@@ -2,8 +2,10 @@ document.addEventListener('DOMContentLoaded', () => {
 const customSelects = document.querySelectorAll('.custom-select');
 const deliveryMethodField = document.querySelector('[data-delivery-method-field]');
 const deliveryTypeInputs = document.querySelectorAll('input[name="delivery_type"]');
+const form = document.querySelector('.delivery-form');
 const flash = window.__checkoutFlash || null;
 const deliveryLocations = window.__deliveryLocations || { states: [] };
+const savedAddresses = Array.isArray(window.__savedAddresses) ? window.__savedAddresses : [];
 
 const getSelectParts = (select) => ({
     trigger: select.querySelector('.select-trigger'),
@@ -37,6 +39,7 @@ const renderSelectOptions = (select, values) => {
 const stateSelect = document.querySelector('.custom-select[data-name="state"]');
 const citySelect = document.querySelector('.custom-select[data-name="city"]');
 const townshipSelect = document.querySelector('.custom-select[data-name="township"]');
+const savedAddressSelect = document.querySelector('.custom-select[data-address-select]');
 
 const findState = (stateName) => {
     return (deliveryLocations.states || []).find(
@@ -51,6 +54,55 @@ const findCity = (stateName, cityName) => {
     return (state.cities || []).find(
         (city) => String(city.name || '').trim() === String(cityName || '').trim()
     ) || null;
+};
+
+const findStateForAddress = (cityName, townshipName) => {
+    const normalizedCity = String(cityName || '').trim();
+    const normalizedTownship = String(townshipName || '').trim();
+
+    if (normalizedCity === '') {
+        return '';
+    }
+
+    const matchedState = (deliveryLocations.states || []).find((state) =>
+        (state.cities || []).some((city) => {
+            const sameCity = String(city.name || '').trim() === normalizedCity;
+            if (!sameCity) {
+                return false;
+            }
+
+            const townships = (city.townships || []).map((township) => String(township).trim());
+            return normalizedTownship === '' || townships.length === 0 || townships.includes(normalizedTownship);
+        })
+    );
+
+    return String(matchedState?.name || '').trim();
+};
+
+const setInputValue = (name, value) => {
+    const input = form?.querySelector(`[name="${name}"]`);
+    if (input) {
+        input.value = String(value || '').trim();
+    }
+};
+
+const applySavedAddress = (addressId) => {
+    const id = Number.parseInt(String(addressId || '0'), 10);
+    const address = savedAddresses.find((item) => Number.parseInt(String(item.address_id || '0'), 10) === id);
+    if (!address) {
+        return;
+    }
+
+    setInputValue('phone', address.phone || '');
+    setInputValue('address', address.street || '');
+    setInputValue('postal_code', address.postal_code || '');
+
+    const stateValue = String(address.state || '').trim() || findStateForAddress(address.city, address.township);
+    setSelectValue(stateSelect, stateValue, 'State/Province');
+    syncLocationSelects('state');
+    setSelectValue(citySelect, address.city || '', 'City');
+    syncLocationSelects('city');
+    setSelectValue(townshipSelect, address.township || '', 'Township');
 };
 
 const syncLocationSelects = (changed = null) => {
@@ -110,6 +162,8 @@ customSelects.forEach((select) => {
             syncLocationSelects('state');
         } else if (select.dataset.name === 'city') {
             syncLocationSelects('city');
+        } else if (select.dataset.name === 'selected_address_id') {
+            applySavedAddress(value);
         }
     });
 });

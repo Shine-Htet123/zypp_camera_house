@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/catalog.php';
 require_once __DIR__ . '/media.php';
+require_once __DIR__ . '/site_content.php';
 require_once __DIR__ . '/user/cart.php';
 require_once __DIR__ . '/user/auth.php';
 
@@ -55,7 +56,8 @@ function home_fetch_featured_categories(int $limit = 10): array
     $statement = $pdo->prepare(
         'SELECT category_id, name, category_img, featured
          FROM categories
-         ORDER BY featured DESC, category_id ASC
+         WHERE featured = 1
+         ORDER BY category_id ASC
          LIMIT :limit'
     );
     $statement->bindValue(':limit', max(1, $limit), PDO::PARAM_INT);
@@ -72,25 +74,14 @@ function home_fetch_featured_categories(int $limit = 10): array
 
 function home_fetch_unboxing_summary(): array
 {
-    $summary = [
-        'title' => 'Unboxing & Influencers Videos',
-        'description' => 'Experience our products through influencer reviews & unboxings.',
+    $homeContent = site_content_get_home();
+    $section = (array) ($homeContent['video_sections']['home'] ?? []);
+
+    return [
+        'title' => trim((string) ($section['title'] ?? 'Unboxing & Influencers Videos')),
+        'description' => trim((string) ($section['description'] ?? 'Experience our products through influencer reviews & unboxings.')),
         'href' => app_path('/unboxing-influencers.php'),
     ];
-
-    $counts = media_fetch_summary_counts();
-    $totalCount = (int) ($counts['unboxing_count'] ?? 0) + (int) ($counts['influencer_count'] ?? 0);
-    if ($totalCount <= 0) {
-        return $summary;
-    }
-
-    $summary['description'] = sprintf(
-        'Explore %s published unboxing and influencer video%s from our catalog.',
-        number_format($totalCount),
-        $totalCount === 1 ? '' : 's'
-    );
-
-    return $summary;
 }
 
 function home_fetch_latest_reviews(int $limit = 4): array
@@ -184,16 +175,13 @@ function home_fetch_best_sellers(int $currentUserId = 0, int $limit = 8): array
                 ORDER BY pi.is_primary DESC, pi.image_id ASC
                 LIMIT 1
             ) AS image_file,
-            COALESCE(SUM(
-                CASE
-                    WHEN o.status IN ("confirmed", "shipped", "delivered") THEN oi.qty
-                    ELSE 0
-                END
-            ), 0) AS sold_qty
-         FROM products p
+            COALESCE(SUM(oi.qty), 0) AS sold_qty
+         FROM order_items oi
+         INNER JOIN orders o
+            ON o.id = oi.order_id
+           AND o.status IN ("confirmed", "shipped", "delivered")
+         INNER JOIN products p ON p.product_id = oi.product_id
          INNER JOIN brands b ON b.brand_id = p.brand_id
-         LEFT JOIN order_items oi ON oi.product_id = p.product_id
-         LEFT JOIN orders o ON o.id = oi.order_id
          WHERE p.visibility = 1
          GROUP BY
             p.product_id,

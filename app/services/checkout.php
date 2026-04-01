@@ -4,6 +4,7 @@ require_once __DIR__ . '/customer_auth.php';
 require_once __DIR__ . '/cart.php';
 require_once __DIR__ . '/mailer.php';
 require_once __DIR__ . '/../../database/site_content.php';
+require_once __DIR__ . '/../../database/admin/notifications.php';
 require_once __DIR__ . '/../../database/user/checkout.php';
 require_once __DIR__ . '/../../database/user/profile.php';
 
@@ -67,6 +68,105 @@ function checkout_split_name(string $fullName): array
     ];
 }
 
+function checkout_prefill_string(array $draft, string $key, string $fallback = ''): string
+{
+    if (!array_key_exists($key, $draft)) {
+        return $fallback;
+    }
+
+    $value = trim((string) $draft[$key]);
+    return $value !== '' ? $value : $fallback;
+}
+
+function checkout_prefill_int(array $draft, string $key, int $fallback = 0): int
+{
+    if (!array_key_exists($key, $draft)) {
+        return $fallback;
+    }
+
+    return (int) $draft[$key];
+}
+
+function checkout_infer_state_from_address(string $city, string $township = ''): string
+{
+    $city = trim($city);
+    $township = trim($township);
+    if ($city === '') {
+        return '';
+    }
+
+    $locations = site_content_get_delivery_locations();
+    foreach ((array) ($locations['states'] ?? []) as $state) {
+        $stateName = trim((string) ($state['name'] ?? ''));
+        foreach ((array) ($state['cities'] ?? []) as $cityOption) {
+            $cityName = trim((string) ($cityOption['name'] ?? ''));
+            if (mb_strtolower($cityName) !== mb_strtolower($city)) {
+                continue;
+            }
+
+            $townships = array_map(
+                static fn ($value): string => trim((string) $value),
+                (array) ($cityOption['townships'] ?? [])
+            );
+
+            if ($township === '' || $townships === [] || in_array($township, $townships, true)) {
+                return $stateName;
+            }
+        }
+    }
+
+    return '';
+}
+
+function checkout_normalize_saved_address(array $address): array
+{
+    $city = trim((string) ($address['city'] ?? ''));
+    $township = trim((string) ($address['township'] ?? ''));
+    $street = trim((string) ($address['street'] ?? ''));
+    $state = trim((string) ($address['state'] ?? ''));
+
+    if ($state === '') {
+        $state = checkout_infer_state_from_address($city, $township);
+    }
+
+    $labelParts = array_values(array_filter([
+        $street,
+        $township,
+        $city,
+    ], static fn ($value): bool => trim((string) $value) !== ''));
+
+    return [
+        'address_id' => (int) ($address['address_id'] ?? 0),
+        'city' => $city,
+        'township' => $township,
+        'street' => $street,
+        'phone' => trim((string) ($address['phone'] ?? '')),
+        'postal_code' => trim((string) ($address['postal_code'] ?? '')),
+        'is_default' => (int) ($address['is_default'] ?? 0) === 1,
+        'state' => $state,
+        'label' => $labelParts !== [] ? implode(', ', $labelParts) : 'Saved address',
+    ];
+}
+
+function checkout_fetch_saved_addresses(int $userId): array
+{
+    return array_map(
+        static fn (array $address): array => checkout_normalize_saved_address($address),
+        profile_fetch_user_addresses($userId)
+    );
+}
+
+function checkout_find_saved_address_by_id(array $addresses, int $addressId): ?array
+{
+    foreach ($addresses as $address) {
+        if ((int) ($address['address_id'] ?? 0) === $addressId) {
+            return $address;
+        }
+    }
+
+    return null;
+}
+
 function checkout_get_prefill(): array
 {
     $user = customer_auth_current_user();
@@ -75,27 +175,35 @@ function checkout_get_prefill(): array
     }
 
     $name = checkout_split_name((string) ($user['name'] ?? ''));
+    $savedAddresses = checkout_fetch_saved_addresses((int) $user['id']);
     $defaultAddress = checkout_fetch_default_address((int) $user['id']);
+    $normalizedDefaultAddress = $defaultAddress ? checkout_normalize_saved_address($defaultAddress) : null;
     $draft = $_SESSION['checkout_draft'] ?? [];
     $draft = is_array($draft) ? $draft : [];
 
     $deliveryMethods = checkout_fetch_delivery_methods();
     $defaultDeliveryMethodId = !empty($deliveryMethods) ? (int) $deliveryMethods[0]['delivery_method_id'] : 0;
+    $defaultAddressId = (int) ($normalizedDefaultAddress['address_id'] ?? 0);
+    $selectedAddressId = checkout_prefill_int($draft, 'selected_address_id', $defaultAddressId);
+    $selectedAddress = checkout_find_saved_address_by_id($savedAddresses, $selectedAddressId);
+    $fallbackAddress = $selectedAddress ?? $normalizedDefaultAddress ?? [];
 
     return [
-        'first_name' => (string) ($draft['first_name'] ?? $name['first_name']),
-        'last_name' => (string) ($draft['last_name'] ?? $name['last_name']),
+        'first_name' => checkout_prefill_string($draft, 'first_name', $name['first_name']),
+        'last_name' => checkout_prefill_string($draft, 'last_name', $name['last_name']),
         'company' => (string) ($draft['company'] ?? ''),
-        'phone' => (string) ($draft['phone'] ?? ($defaultAddress['phone'] ?? '')),
-        'email' => (string) ($draft['email'] ?? ($user['email'] ?? '')),
-        'address' => (string) ($draft['address'] ?? ($defaultAddress['street'] ?? '')),
-        'state' => (string) ($draft['state'] ?? ''),
-        'city' => (string) ($draft['city'] ?? ($defaultAddress['city'] ?? '')),
-        'township' => (string) ($draft['township'] ?? ($defaultAddress['township'] ?? '')),
-        'postal_code' => (string) ($draft['postal_code'] ?? ($defaultAddress['postal_code'] ?? '')),
-        'delivery_type' => (string) ($draft['delivery_type'] ?? 'delivery'),
-        'delivery_method_id' => (int) ($draft['delivery_method_id'] ?? $defaultDeliveryMethodId),
-        'payment_method' => (string) ($draft['payment_method'] ?? ''),
+        'phone' => checkout_prefill_string($draft, 'phone', (string) ($fallbackAddress['phone'] ?? '')),
+        'email' => checkout_prefill_string($draft, 'email', (string) ($user['email'] ?? '')),
+        'address' => checkout_prefill_string($draft, 'address', (string) ($fallbackAddress['street'] ?? '')),
+        'state' => checkout_prefill_string($draft, 'state', (string) ($fallbackAddress['state'] ?? '')),
+        'city' => checkout_prefill_string($draft, 'city', (string) ($fallbackAddress['city'] ?? '')),
+        'township' => checkout_prefill_string($draft, 'township', (string) ($fallbackAddress['township'] ?? '')),
+        'postal_code' => checkout_prefill_string($draft, 'postal_code', (string) ($fallbackAddress['postal_code'] ?? '')),
+        'delivery_type' => checkout_prefill_string($draft, 'delivery_type', 'delivery'),
+        'delivery_method_id' => checkout_prefill_int($draft, 'delivery_method_id', $defaultDeliveryMethodId),
+        'payment_method' => checkout_prefill_string($draft, 'payment_method', ''),
+        'selected_address_id' => $selectedAddress ? (int) ($selectedAddress['address_id'] ?? 0) : 0,
+        'saved_addresses' => $savedAddresses,
         'set_default' => !empty($draft['set_default']),
     ];
 }
@@ -122,6 +230,7 @@ function checkout_validate_delivery_input(array $input): array
         'delivery_type' => $deliveryType,
         'delivery_method_id' => (int) ($input['delivery_method'] ?? 0),
         'payment_method' => trim((string) ($input['payment_method'] ?? '')),
+        'selected_address_id' => (int) ($input['selected_address_id'] ?? 0),
         'set_default' => !empty($input['set_default']),
         'additional_note' => trim((string) ($_SESSION['cart_additional_note'] ?? '')),
     ];
@@ -684,6 +793,11 @@ function checkout_finalize_order(?array $proofUpload = null): array
         error_log('Order confirmation email failed for order #' . $publicOrderId . ': ' . $exception->getMessage());
     }
 
+    admin_notifications_record_new_order($confirmation, $user);
+    if (trim((string) ($confirmation['payment_proof_file'] ?? '')) !== '') {
+        admin_notifications_record_payment_proof_upload($confirmation, false);
+    }
+
     return $confirmation;
 }
 
@@ -706,5 +820,8 @@ function checkout_reupload_existing_payment_proof(string $publicOrderId, array $
         throw new RuntimeException('Please log in to continue.');
     }
 
-    return checkout_reupload_payment_proof((int) $user['id'], $publicOrderId, $proofUpload);
+    $updatedOrder = checkout_reupload_payment_proof((int) $user['id'], $publicOrderId, $proofUpload);
+    admin_notifications_record_payment_proof_upload($updatedOrder, true);
+
+    return $updatedOrder;
 }

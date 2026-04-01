@@ -697,6 +697,11 @@ function catalog_product_is_new_arrival(array $product, int $days = 30): bool
     return $createdTimestamp >= strtotime('-' . max(1, $days) . ' days');
 }
 
+function catalog_customer_product_is_best_seller(array $product): bool
+{
+    return (int) round((float) ($product['sold_qty'] ?? 0)) > 0;
+}
+
 function catalog_discount_has_limited_duration(array $product): bool
 {
     if (empty($product['has_discount'])) {
@@ -813,6 +818,14 @@ function catalog_fetch_customer_products(array $filters = []): array
             p.category_id,
             p.brand_id,
             p.sub_category_id,
+            (
+                SELECT COALESCE(SUM(oi.qty), 0)
+                FROM order_items oi
+                INNER JOIN orders o
+                    ON o.id = oi.order_id
+                   AND o.status IN ("confirmed", "shipped", "delivered")
+                WHERE oi.product_id = p.product_id
+            ) AS sold_qty,
             b.name AS brand_name,
             c.name AS category_name,
             sc.name AS sub_category_name,
@@ -870,8 +883,22 @@ function catalog_fetch_customer_products(array $filters = []): array
     $statement->execute($bindings);
     $products = $statement->fetchAll();
     $userId = isset($filters['user_id']) && (int) $filters['user_id'] > 0 ? (int) $filters['user_id'] : null;
+    $newArrivalIndexes = [];
+    $maxNewArrivals = 12;
 
-    foreach ($products as &$product) {
+    foreach ($products as $index => $product) {
+        if (count($newArrivalIndexes) >= $maxNewArrivals) {
+            break;
+        }
+
+        if (catalog_product_is_new_arrival($product)) {
+            $newArrivalIndexes[] = $index;
+        }
+    }
+
+    $newArrivalLookup = array_fill_keys($newArrivalIndexes, true);
+
+    foreach ($products as $index => &$product) {
         $product['image'] = catalog_public_file_url($product['image_file']);
         $product['brand'] = $product['brand_name'];
         $product['category'] = $product['category_name'];
@@ -879,10 +906,10 @@ function catalog_fetch_customer_products(array $filters = []): array
         $product['availability'] = (int) $product['stock_quantity'] > 0 ? 'In Stock' : 'Out of Stock';
         catalog_apply_discount_display($product, $userId);
         $product['tags'] = [];
-        if (!empty($product['is_featured'])) {
+        if (catalog_customer_product_is_best_seller($product)) {
             $product['tags'][] = 'Best Sellers';
         }
-        if (catalog_product_is_new_arrival($product)) {
+        if (isset($newArrivalLookup[$index])) {
             $product['tags'][] = 'New Arrivals';
         }
         if (catalog_discount_has_limited_duration($product)) {
@@ -894,6 +921,7 @@ function catalog_fetch_customer_products(array $filters = []): array
         $product['original'] = $product['original_price_label'];
         $product['discount'] = $product['discount_badge_label'];
     }
+    unset($product);
 
     return $products;
 }

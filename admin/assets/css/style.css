@@ -460,7 +460,119 @@ html.admin-skeleton-primed body.admin-page .admin-page-skeleton,
     }
 }
 
-.admin-proof-toast-stack {
+.admin-notification-shell {
+    position: relative;
+}
+
+.admin-notification-dropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: min(420px, calc(100vw - 32px));
+    max-height: min(70vh, 560px);
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(91, 73, 63, 0.12);
+    border-radius: 20px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+    z-index: 3200;
+}
+
+.admin-notification-dropdown__head {
+    padding: 16px 18px 14px;
+    border-bottom: 1px solid rgba(91, 73, 63, 0.08);
+}
+
+.admin-notification-dropdown__head strong {
+    font-size: 0.95rem;
+    color: #241a14;
+}
+
+.admin-notification-list {
+    max-height: min(60vh, 470px);
+    overflow-y: auto;
+}
+
+.admin-notification-empty {
+    padding: 24px 18px;
+    color: #6f6259;
+    font-size: 0.88rem;
+    text-align: center;
+}
+
+.admin-notification-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(91, 73, 63, 0.07);
+}
+
+.admin-notification-item:last-child {
+    border-bottom: none;
+}
+
+.admin-notification-item__link {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 12px minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 6px;
+    align-items: start;
+    text-decoration: none;
+}
+
+.admin-notification-item__dot {
+    grid-row: 1 / span 3;
+    align-self: center;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #d12c2c;
+    opacity: 0;
+}
+
+.admin-notification-item.is-unread .admin-notification-item__dot {
+    opacity: 1;
+}
+
+.admin-notification-item__link strong {
+    grid-column: 2;
+    color: #241a14;
+    font-size: 0.9rem;
+    line-height: 1.35;
+}
+
+.admin-notification-item__link span {
+    grid-column: 2;
+    color: #6f6259;
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.admin-notification-item__link time {
+    grid-column: 2;
+    color: #a18d80;
+    font-size: 0.74rem;
+}
+
+.admin-notification-item__delete {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 999px;
+    background: #f5efea;
+    color: #6f6259;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.admin-notification-item__delete:hover {
+    background: #ece3dc;
+}
+
+.admin-notification-toast-stack {
     position: fixed;
     top: calc(var(--admin-header-height) + 20px);
     right: 24px;
@@ -470,14 +582,15 @@ html.admin-skeleton-primed body.admin-page .admin-page-skeleton,
     pointer-events: none;
 }
 
-.admin-proof-toast {
+.admin-notification-toast {
     width: min(380px, calc(100vw - 32px));
     background: rgba(255, 255, 255, 0.98);
     border: 1px solid rgba(91, 73, 63, 0.12);
     border-radius: 18px;
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
-    padding: 16px 18px;
+    padding: 16px 18px 14px;
     display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 12px;
     opacity: 0;
     transform: translateY(-8px);
@@ -485,52 +598,38 @@ html.admin-skeleton-primed body.admin-page .admin-page-skeleton,
     pointer-events: auto;
 }
 
-.admin-proof-toast.is-visible {
+.admin-notification-toast.is-visible {
     opacity: 1;
     transform: translateY(0);
 }
 
-.admin-proof-toast__copy {
+.admin-notification-toast__link {
     display: grid;
     gap: 6px;
+    text-decoration: none;
 }
 
-.admin-proof-toast__copy strong {
+.admin-notification-toast__link strong {
     font-size: 0.95rem;
     color: #241a14;
 }
 
-.admin-proof-toast__copy span {
+.admin-notification-toast__link span {
     font-size: 0.82rem;
     color: #6f6259;
     line-height: 1.45;
 }
 
-.admin-proof-toast__actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 10px;
-}
-
-.admin-proof-toast__link,
-.admin-proof-toast__close {
+.admin-notification-toast__close {
+    width: 34px;
+    height: 34px;
     border: none;
     border-radius: 999px;
-    padding: 8px 14px;
-    font-size: 0.82rem;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.admin-proof-toast__link {
-    background: #5d4e47;
-    color: #fff;
-}
-
-.admin-proof-toast__close {
     background: #f0ebe6;
     color: #5d4e47;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
 }
 
 .admin-user {

@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../config/admin_bootstrap.php';
 require_once __DIR__ . '/../database/admin/orders.php';
+require_once __DIR__ . '/../database/admin/notifications.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -34,6 +35,14 @@ try {
         }
 
         $result = admin_update_order_statuses($orderId, $orderStatus, $paymentStatus);
+        if (!empty($result['status_changed'])) {
+            admin_notifications_record_order_status_update(
+                $orderId,
+                (string) ($result['order_status'] ?? ''),
+                isset($result['payment_status']) ? (string) $result['payment_status'] : null,
+                is_array($currentAdmin ?? null) ? $currentAdmin : []
+            );
+        }
 
         echo json_encode([
             'success' => true,

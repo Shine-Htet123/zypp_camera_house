@@ -129,6 +129,80 @@ function admin_orders_format_date(?string $value): string
     return date('d/m/Y', $timestamp);
 }
 
+function admin_orders_payment_status_color(string $paymentStatusLabel): string
+{
+    return match (strtolower(trim($paymentStatusLabel))) {
+        'paid' => '#56b356',
+        'unpaid' => '#e53935',
+        default => '#f5a623',
+    };
+}
+
+function admin_orders_build_email_invoice_html(
+    array $orderDetail,
+    string $orderNo,
+    string $orderStatusLabel,
+    string $paymentStatusLabel
+): string {
+    $itemRowsHtml = '';
+
+    foreach (($orderDetail['items'] ?? []) as $item) {
+        $qty = (int) ($item['qty'] ?? 0);
+        $name = (string) ($item['name'] ?? '');
+        $priceDisplay = (string) ($item['price_display'] ?? admin_orders_format_mmk($item['price'] ?? 0));
+
+        $itemRowsHtml .= '
+            <tr>
+                <td style="padding:18px 14px;text-align:left;color:#493a31;">' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '</td>
+                <td style="padding:18px 14px;text-align:center;color:#493a31;width:90px;">' . $qty . '</td>
+                <td style="padding:18px 14px;text-align:right;color:#493a31;font-weight:500;white-space:nowrap;">' . htmlspecialchars($priceDisplay, ENT_QUOTES, 'UTF-8') . '</td>
+            </tr>';
+    }
+
+    if ($itemRowsHtml === '') {
+        $itemRowsHtml = '
+            <tr>
+                <td colspan="3" style="padding:18px 14px;text-align:center;color:#7b6c62;">No items available.</td>
+            </tr>';
+    }
+
+    return '
+        <div style="margin-top:24px;">
+            <h3 style="margin:0 0 8px;color:#2f241f;font-size:18px;">Order No. ' . htmlspecialchars($orderNo, ENT_QUOTES, 'UTF-8') . '</h3>
+            <p style="margin:0 0 4px;color:#4b3b32;">Order Date - ' . htmlspecialchars((string) ($orderDetail['order_date_display'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</p>
+            <p style="margin:0 0 18px;color:#4b3b32;">Order Time - ' . htmlspecialchars((string) ($orderDetail['order_time_display'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</p>
+
+            <table style="width:100%;border-collapse:separate;border-spacing:0;margin:0 0 18px;background:#f9f2ec;border-radius:18px;overflow:hidden;">
+                <thead>
+                    <tr style="background:#efe5dc;">
+                        <th style="padding:16px 14px;text-align:left;color:#3d2f27;font-size:15px;">Item</th>
+                        <th style="padding:16px 14px;text-align:center;color:#3d2f27;font-size:15px;width:90px;">Qty.</th>
+                        <th style="padding:16px 14px;text-align:right;color:#3d2f27;font-size:15px;">Price</th>
+                    </tr>
+                </thead>
+                <tbody>' . $itemRowsHtml . '</tbody>
+            </table>
+
+            <div style="margin:0 0 22px;padding:22px 20px;border-radius:18px;background:#f6f1ec;color:#493a31;">
+                <p style="margin:0 0 14px;font-size:15px;"><strong>Subtotal:</strong> ' . htmlspecialchars((string) ($orderDetail['subtotal_display'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</p>
+                <p style="margin:0 0 14px;font-size:15px;"><strong>Total Discount:</strong> -' . htmlspecialchars((string) ($orderDetail['total_discount_display'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</p>
+                <p style="margin:0;font-size:15px;"><strong>Grand Total:</strong> ' . htmlspecialchars((string) ($orderDetail['total_display'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</p>
+            </div>
+
+            <div style="text-align:left;">
+                <h4 style="margin:0 0 10px;color:#2f241f;font-size:16px;">Delivery Information</h4>
+                <p style="margin:0 0 6px;color:#4b3b32;">' . htmlspecialchars((string) ($orderDetail['delivery_name'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</p>
+                <p style="margin:0 0 6px;color:#4b3b32;">' . htmlspecialchars((string) ($orderDetail['delivery_email'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</p>
+                <p style="margin:0 0 6px;color:#4b3b32;">' . htmlspecialchars((string) ($orderDetail['delivery_phone'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</p>
+                <p style="margin:0 0 18px;color:#4b3b32;">' . htmlspecialchars((string) ($orderDetail['delivery_address'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</p>
+                <p style="margin:0 0 6px;color:#4b3b32;"><strong>Order Status</strong> ' . htmlspecialchars($orderStatusLabel, ENT_QUOTES, 'UTF-8') . '</p>
+                <p style="margin:0 0 6px;color:#4b3b32;"><strong>Payment Status</strong> <span style="color:' . admin_orders_payment_status_color($paymentStatusLabel) . ';">' . htmlspecialchars($paymentStatusLabel, ENT_QUOTES, 'UTF-8') . '</span></p>
+                <p style="margin:0 0 6px;color:#4b3b32;"><strong>Additional Note</strong></p>
+                <p style="margin:0;color:#4b3b32;">' . htmlspecialchars((string) ($orderDetail['additional_note'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</p>
+            </div>
+        </div>';
+}
+
 function admin_orders_notification_delivery_email_select(): string
 {
     if (admin_orders_table_exists('order_delivery_details') && admin_orders_column_exists('order_delivery_details', 'email')) {
@@ -197,13 +271,13 @@ function admin_orders_send_confirmed_email(array $order): void
     $orderNo = '#' . (string) ($order['public_order_id'] ?? '');
     $orderStatusLabel = admin_orders_normalize_order_status((string) ($order['status'] ?? 'pending'));
     $paymentStatusLabel = admin_orders_normalize_payment_status((string) ($order['payment_status'] ?? 'pending'));
+    $paymentStatusColor = admin_orders_payment_status_color($paymentStatusLabel);
     $orderUrl = app_url('/check-order.php?order=' . rawurlencode((string) ($order['public_order_id'] ?? '')));
     $orderDetail = admin_fetch_order_detail((int) ($order['id'] ?? 0));
     $summaryHtml = '';
     $summaryText = '';
 
     if ($orderDetail) {
-        $itemRowsHtml = '';
         $itemLinesText = [];
 
         foreach (($orderDetail['items'] ?? []) as $item) {
@@ -211,46 +285,27 @@ function admin_orders_send_confirmed_email(array $order): void
             $qty = (int) ($item['qty'] ?? 0);
             $priceDisplay = (string) ($item['price_display'] ?? admin_orders_format_mmk($item['price'] ?? 0));
 
-            $itemRowsHtml .= '
-                <tr>
-                    <td style="padding:12px 10px;text-align:left;border-bottom:1px solid #eee;">' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '</td>
-                    <td style="padding:12px 10px;text-align:center;border-bottom:1px solid #eee;">' . $qty . '</td>
-                    <td style="padding:12px 10px;text-align:right;border-bottom:1px solid #eee;">' . htmlspecialchars($priceDisplay, ENT_QUOTES, 'UTF-8') . '</td>
-                </tr>';
-
             $itemLinesText[] = $name . ' | Qty: ' . $qty . ' | Price: ' . $priceDisplay;
         }
 
         $deliverySummary = implode(', ', array_filter([
             (string) ($orderDetail['delivery_name'] ?? ''),
+            (string) ($orderDetail['delivery_email'] ?? ''),
             (string) ($orderDetail['delivery_phone'] ?? ''),
             (string) ($orderDetail['delivery_address'] ?? ''),
         ]));
 
-        $summaryHtml = '
-            <table style="width:100%;border-collapse:collapse;margin:20px 0 16px;background:#fff7f1;border-radius:14px;overflow:hidden;">
-                <thead>
-                    <tr style="background:#f4ece6;">
-                        <th style="padding:12px 10px;text-align:left;">Item</th>
-                        <th style="padding:12px 10px;text-align:center;">Qty.</th>
-                        <th style="padding:12px 10px;text-align:right;">Price</th>
-                    </tr>
-                </thead>
-                <tbody>' . $itemRowsHtml . '</tbody>
-            </table>
-            <div style="margin:0 0 18px;padding:16px 18px;background:#faf6f2;border-radius:14px;">
-                <p style="margin:0 0 8px;"><strong>Subtotal:</strong> ' . htmlspecialchars((string) ($orderDetail['subtotal_display'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</p>
-                <p style="margin:0 0 8px;"><strong>Total Discount:</strong> -' . htmlspecialchars((string) ($orderDetail['total_discount_display'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</p>
-                <p style="margin:0;"><strong>Grand Total:</strong> ' . htmlspecialchars((string) ($orderDetail['total_display'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</p>
-            </div>
-            <p><strong>Delivery Information</strong><br>' . htmlspecialchars($deliverySummary !== '' ? $deliverySummary : 'Pick up at store', ENT_QUOTES, 'UTF-8') . '</p>';
+        $summaryHtml = admin_orders_build_email_invoice_html($orderDetail, $orderNo, $orderStatusLabel, $paymentStatusLabel);
 
         $summaryText = "\n\nOrder Summary\n"
             . implode("\n", $itemLinesText) . "\n"
             . 'Subtotal: ' . ((string) ($orderDetail['subtotal_display'] ?? '-')) . "\n"
             . 'Total Discount: -' . ((string) ($orderDetail['total_discount_display'] ?? '-')) . "\n"
             . 'Grand Total: ' . ((string) ($orderDetail['total_display'] ?? '-')) . "\n"
-            . 'Delivery Information: ' . ($deliverySummary !== '' ? $deliverySummary : 'Pick up at store');
+            . 'Delivery Information: ' . ($deliverySummary !== '' ? $deliverySummary : 'Pick up at store') . "\n"
+            . 'Order Status: ' . $orderStatusLabel . "\n"
+            . 'Payment Status: ' . $paymentStatusLabel . "\n"
+            . 'Additional Note: ' . ((string) ($orderDetail['additional_note'] ?? '-'));
     }
 
     try {
@@ -259,18 +314,20 @@ function admin_orders_send_confirmed_email(array $order): void
             'to_name' => $customerName,
             'subject' => 'Your ZYPP order ' . $orderNo . ' is confirmed',
             'html' => '
-                <h2 style="margin:0 0 16px;color:#241a14;">Order Confirmed</h2>
-                <p>Hello ' . htmlspecialchars($customerName, ENT_QUOTES, 'UTF-8') . ',</p>
-                <p>Your order <strong>' . htmlspecialchars($orderNo, ENT_QUOTES, 'UTF-8') . '</strong> has been confirmed.</p>
-                <p>We have verified your order and will continue with the next fulfillment steps shortly.</p>
-                <p><strong>Order Status</strong> ' . htmlspecialchars($orderStatusLabel, ENT_QUOTES, 'UTF-8') . '<br><strong>Payment Status</strong> ' . htmlspecialchars($paymentStatusLabel, ENT_QUOTES, 'UTF-8') . '</p>
-                ' . $summaryHtml . '
-                <p style="margin:24px 0 0;">
-                    <a href="' . htmlspecialchars($orderUrl, ENT_QUOTES, 'UTF-8') . '" style="background:#b58463;color:#fff;text-decoration:none;padding:12px 18px;border-radius:10px;display:inline-block;">View Order Details</a>
-                </p>
-                <p style="margin:18px 0 0;">Order details link:</p>
-                <p style="margin:0;"><a href="' . htmlspecialchars($orderUrl, ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($orderUrl, ENT_QUOTES, 'UTF-8') . '</a></p>',
-            'text' => "Hello {$customerName},\n\nYour ZYPP order {$orderNo} has been confirmed.\nOrder status: {$orderStatusLabel}\nPayment status: {$paymentStatusLabel}{$summaryText}\n\nOrder details:\n{$orderUrl}",
+                <div style="font-family:Arial,sans-serif;line-height:1.6;color:#2f241f">
+                    <p>Hello ' . htmlspecialchars($customerName, ENT_QUOTES, 'UTF-8') . ',</p>
+                    <p>Your order <strong>' . htmlspecialchars($orderNo, ENT_QUOTES, 'UTF-8') . '</strong> has been updated.</p>
+                    <p>We have verified your order and will continue with the next fulfillment steps shortly.</p>
+                    <p>Order status: ' . htmlspecialchars($orderStatusLabel, ENT_QUOTES, 'UTF-8') . '<br>Payment status: ' . htmlspecialchars($paymentStatusLabel, ENT_QUOTES, 'UTF-8') . '</p>
+                    ' . $summaryHtml . '
+                    <p style="margin:24px 0 0;">
+                        <a href="' . htmlspecialchars($orderUrl, ENT_QUOTES, 'UTF-8') . '" style="background:#b58463;color:#fff;text-decoration:none;padding:12px 18px;border-radius:10px;display:inline-block;">View Order Details</a>
+                    </p>
+                    <p style="margin:18px 0 0;">Order details link:</p>
+                    <p style="margin:0;"><a href="' . htmlspecialchars($orderUrl, ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($orderUrl, ENT_QUOTES, 'UTF-8') . '</a></p>
+                    <p>ZYPP Camera House</p>
+                </div>',
+            'text' => "Hello {$customerName},\n\nYour order {$orderNo} has been updated.\nWe have verified your order and will continue with the next fulfillment steps shortly.\nOrder status: {$orderStatusLabel}\nPayment status: {$paymentStatusLabel}{$summaryText}\n\nOrder details:\n{$orderUrl}\n\nZYPP Camera House",
         ]);
     } catch (Throwable $exception) {
         error_log('[ZYPP] Failed to send confirmed order email: ' . $exception->getMessage());
@@ -327,7 +384,6 @@ function admin_orders_send_status_update_email(array $order, bool $paymentChange
     $reuploadText = '';
 
     if ($orderDetail) {
-        $itemRowsHtml = '';
         $itemLinesText = [];
 
         foreach (($orderDetail['items'] ?? []) as $index => $item) {
@@ -335,68 +391,11 @@ function admin_orders_send_status_update_email(array $order, bool $paymentChange
             $name = (string) ($item['name'] ?? '');
             $priceDisplay = (string) ($item['price_display'] ?? admin_orders_format_mmk($item['price'] ?? 0));
 
-            $itemRowsHtml .= '
-                <tr>
-                    <td style="padding:10px 8px;border:1px solid #3b3b3b;border-radius:4px;text-align:center;">' . ($index + 1) . '</td>
-                    <td style="padding:10px 8px;border:1px solid #3b3b3b;border-radius:4px;text-align:center;">' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '</td>
-                    <td style="padding:10px 8px;border:1px solid #3b3b3b;border-radius:4px;text-align:center;">' . $qty . '</td>
-                    <td style="padding:10px 8px;border:1px solid #3b3b3b;border-radius:4px;text-align:center;">' . htmlspecialchars($priceDisplay, ENT_QUOTES, 'UTF-8') . '</td>
-                </tr>';
-
             $itemLinesText[] = ($index + 1) . '. ' . $name . ' | Qty: ' . $qty . ' | Price: ' . $priceDisplay;
         }
 
         $discountDisplay = admin_orders_format_mmk((float) ($orderDetail['total_discount'] ?? 0));
-        $deliveryInfoLines = [
-            (string) ($orderDetail['delivery_name'] ?? '-'),
-            (string) ($orderDetail['delivery_email'] ?? '-'),
-            (string) ($orderDetail['delivery_phone'] ?? '-'),
-            (string) ($orderDetail['delivery_address'] ?? '-'),
-        ];
-
-        $invoiceHtml = '
-            <div style="margin-top:24px;padding:28px 24px;border:1px solid #d8d8d8;border-radius:14px;background:#ffffff;text-align:center;">
-                <h3 style="margin:0 0 8px;color:#000;font-size:18px;">Order No. ' . htmlspecialchars($orderNo, ENT_QUOTES, 'UTF-8') . '</h3>
-                <p style="margin:0 0 4px;color:#000;">Order Date - ' . htmlspecialchars((string) ($orderDetail['order_date_display'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</p>
-                <p style="margin:0 0 18px;color:#000;">Order Time - ' . htmlspecialchars((string) ($orderDetail['order_time_display'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</p>
-                <h4 style="margin:0 0 14px;color:#000;font-size:16px;">Order Summary</h4>
-                <table style="width:100%;border-collapse:separate;border-spacing:8px;margin:0 auto 18px;">
-                    <thead>
-                        <tr>
-                            <th style="padding:10px 8px;border:1px solid #3b3b3b;border-radius:4px;background:#fff;text-align:center;">No.</th>
-                            <th style="padding:10px 8px;border:1px solid #3b3b3b;border-radius:4px;background:#fff;text-align:center;">Product Name</th>
-                            <th style="padding:10px 8px;border:1px solid #3b3b3b;border-radius:4px;background:#fff;text-align:center;">Qty.</th>
-                            <th style="padding:10px 8px;border:1px solid #3b3b3b;border-radius:4px;background:#fff;text-align:center;">Price</th>
-                        </tr>
-                    </thead>
-                    <tbody>' . $itemRowsHtml . '</tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="3" style="padding:10px 8px;border:1px solid #3b3b3b;border-radius:4px;background:#fff;font-weight:700;text-align:center;">Subtotal</td>
-                            <td style="padding:10px 8px;border:1px solid #3b3b3b;border-radius:4px;background:#fff;text-align:center;">' . htmlspecialchars((string) ($orderDetail['subtotal_display'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</td>
-                        </tr>
-                        <tr>
-                            <td colspan="3" style="padding:10px 8px;border:1px solid #3b3b3b;border-radius:4px;background:#fff;font-weight:700;text-align:center;">Total Discount</td>
-                            <td style="padding:10px 8px;border:1px solid #3b3b3b;border-radius:4px;background:#fff;text-align:center;color:#e53935;">-' . htmlspecialchars($discountDisplay, ENT_QUOTES, 'UTF-8') . '</td>
-                        </tr>
-                        <tr>
-                            <td colspan="3" style="padding:10px 8px;border:1px solid #3b3b3b;border-radius:4px;background:#fff;font-weight:700;text-align:center;">Grand Total</td>
-                            <td style="padding:10px 8px;border:1px solid #3b3b3b;border-radius:4px;background:#fff;text-align:center;">' . htmlspecialchars((string) ($orderDetail['total_display'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</td>
-                        </tr>
-                    </tfoot>
-                </table>
-                <div style="text-align:left;margin-top:18px;">
-                    <h4 style="margin:0 0 10px;color:#000;font-size:16px;">Delivery Information</h4>
-                    <p style="margin:0 0 6px;">' . htmlspecialchars($deliveryInfoLines[0], ENT_QUOTES, 'UTF-8') . '</p>
-                    <p style="margin:0 0 6px;">' . htmlspecialchars($deliveryInfoLines[1], ENT_QUOTES, 'UTF-8') . '</p>
-                    <p style="margin:0 0 6px;">' . htmlspecialchars($deliveryInfoLines[2], ENT_QUOTES, 'UTF-8') . '</p>
-                    <p style="margin:0 0 18px;">' . htmlspecialchars($deliveryInfoLines[3], ENT_QUOTES, 'UTF-8') . '</p>
-                    <p style="margin:0 0 6px;"><strong>Order Status</strong> ' . htmlspecialchars($orderStatusLabel, ENT_QUOTES, 'UTF-8') . '</p>
-                    <p style="margin:0 0 6px;"><strong>Payment Status</strong> <span style="color:' . (strtolower($paymentStatusLabel) === 'paid' ? '#56b356' : (strtolower($paymentStatusLabel) === 'unpaid' ? '#e53935' : '#f5a623')) . ';">' . htmlspecialchars($paymentStatusLabel, ENT_QUOTES, 'UTF-8') . '</span></p>
-                    <p style="margin:0 0 6px;"><strong>Additional Note</strong></p>
-                    <p style="margin:0;">' . htmlspecialchars((string) ($orderDetail['additional_note'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</p>
-                </div>
-            </div>';
+        $invoiceHtml = admin_orders_build_email_invoice_html($orderDetail, $orderNo, $orderStatusLabel, $paymentStatusLabel);
 
         $invoiceText = "\n\nE-Invoice\n"
             . "Order No.: {$orderNo}\n"
@@ -775,8 +774,15 @@ function admin_update_order_statuses(int $orderId, string $orderStatus, ?string 
     }
 
     return [
+        'previous_order_status' => admin_orders_normalize_order_status((string) ($current['order_status'] ?? 'pending')),
+        'previous_payment_status' => admin_orders_normalize_payment_status((string) ($current['payment_status'] ?? 'pending')),
         'order_status' => $effectiveOrderStatus,
         'payment_status' => $normalizedPaymentStatus ?? admin_orders_normalize_payment_status((string) ($current['payment_status'] ?? 'pending')),
+        'status_changed' => strtolower((string) ($current['order_status'] ?? 'pending')) !== strtolower($effectiveOrderStatus)
+            || (
+                $normalizedPaymentStatus !== null
+                && strtolower((string) ($current['payment_status'] ?? 'pending')) !== strtolower($normalizedPaymentStatus)
+            ),
     ];
 }
 

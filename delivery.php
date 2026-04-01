@@ -25,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'delivery_type' => trim((string) ($_POST['delivery_type'] ?? 'delivery')),
             'delivery_method_id' => (int) ($_POST['delivery_method'] ?? 0),
             'payment_method' => trim((string) ($_POST['payment_method'] ?? '')),
+            'selected_address_id' => (int) ($_POST['selected_address_id'] ?? 0),
             'set_default' => !empty($_POST['set_default']),
         ];
         customer_auth_redirect('/delivery.php');
@@ -40,8 +41,12 @@ $stateOptions = (array) ($deliveryLocations['states'] ?? []);
 $selectedState = trim((string) ($prefill['state'] ?? ''));
 $selectedCity = trim((string) ($prefill['city'] ?? ''));
 $selectedTownship = trim((string) ($prefill['township'] ?? ''));
+$savedAddresses = (array) ($prefill['saved_addresses'] ?? []);
+$selectedAddressId = (int) ($prefill['selected_address_id'] ?? 0);
 $cityOptions = [];
 $townshipOptions = [];
+$deliveryCssVersion = @filemtime(__DIR__ . '/assets/css/delivery.css') ?: time();
+$deliveryJsVersion = @filemtime(__DIR__ . '/assets/js/delivery.js') ?: time();
 
 foreach ($stateOptions as $stateOption) {
     if (trim((string) ($stateOption['name'] ?? '')) !== $selectedState) {
@@ -62,7 +67,7 @@ foreach ($stateOptions as $stateOption) {
 <html lang="en">
 <head>
     <?php include 'head.php'; ?>
-    <link rel="stylesheet" href="./assets/css/delivery.css">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/assets/css/delivery.css?v=' . (int) $deliveryCssVersion)); ?>">
 </head>
 <body>
     <?php include 'navbar.php'; ?>
@@ -106,6 +111,50 @@ foreach ($stateOptions as $stateOption) {
                 </div>
 
                 <h3>Delivery Information</h3>
+                <?php if ($savedAddresses !== []): ?>
+                    <div class="field-row">
+                        <div class="field">
+                            <label class="field-label">Saved Address</label>
+                            <div class="custom-select" data-name="selected_address_id" data-address-select>
+                                <button type="button" class="select-trigger">
+                                    <span class="select-label">
+                                        <?php
+                                        $selectedAddressLabel = 'Choose a saved address';
+                                        foreach ($savedAddresses as $savedAddress) {
+                                            if ((int) ($savedAddress['address_id'] ?? 0) !== $selectedAddressId) {
+                                                continue;
+                                            }
+
+                                            $selectedAddressLabel = (string) ($savedAddress['label'] ?? $selectedAddressLabel);
+                                            if (!empty($savedAddress['is_default'])) {
+                                                $selectedAddressLabel .= ' (Default)';
+                                            }
+                                            break;
+                                        }
+                                        echo htmlspecialchars($selectedAddressLabel);
+                                        ?>
+                                    </span>
+                                    <span class="select-arrow"></span>
+                                </button>
+                                <ul class="select-options">
+                                    <?php foreach ($savedAddresses as $savedAddress): ?>
+                                        <li data-value="<?php echo (int) ($savedAddress['address_id'] ?? 0); ?>">
+                                            <?php
+                                            $optionLabel = (string) ($savedAddress['label'] ?? 'Saved address');
+                                            if (!empty($savedAddress['is_default'])) {
+                                                $optionLabel .= ' (Default)';
+                                            }
+                                            echo htmlspecialchars($optionLabel);
+                                            ?>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
+                                <input type="hidden" name="selected_address_id" value="<?php echo $selectedAddressId; ?>">
+                            </div>
+                            <p class="field-hint">Pick one of your saved profile addresses to fill the delivery form instantly.</p>
+                        </div>
+                    </div>
+                <?php endif; ?>
                 <div class="field-row">
                     <div class="field">
                         <input type="text" name="address" placeholder="Address" value="<?php echo htmlspecialchars((string) ($prefill['address'] ?? '')); ?>">
@@ -247,7 +296,8 @@ foreach ($stateOptions as $stateOption) {
     <?php endif; ?>
     <script>
         window.__deliveryLocations = <?php echo json_encode($deliveryLocations, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+        window.__savedAddresses = <?php echo json_encode($savedAddresses, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
     </script>
-    <script src="./assets/js/delivery.js"></script>
+    <script src="<?php echo htmlspecialchars(app_path('/assets/js/delivery.js?v=' . (int) $deliveryJsVersion)); ?>"></script>
 </body>
 </html>

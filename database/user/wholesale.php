@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../admin/notifications.php';
 
 function wholesale_submit_survey(array $input): array
 {
@@ -64,7 +65,7 @@ function wholesale_submit_survey(array $input): array
         ':additional_note' => $additionalNote !== '' ? $additionalNote : null,
     ]);
 
-    return [
+    $result = [
         'answer_id' => (int) $pdo->lastInsertId(),
         'company_name' => $companyName,
         'contact_person' => $contactPerson,
@@ -73,4 +74,8 @@ function wholesale_submit_survey(array $input): array
         'business_type' => $businessType,
         'additional_note' => $additionalNote,
     ];
+
+    admin_notifications_record_wholesale_submission($result);
+
+    return $result;
 }

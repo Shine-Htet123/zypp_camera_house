@@ -30,9 +30,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const paymentMethodTemplate = document.getElementById("payment-method-template");
     const paymentMethodList = document.querySelector("[data-payment-method-list]");
     const paymentMethodAddButton = document.querySelector("[data-payment-method-add]");
+    const heroSlideEditor = document.querySelector("[data-hero-slide-editor]");
+    const heroSlideTabs = heroSlideEditor?.querySelector("[data-hero-slide-tabs]");
+    const heroSlidePanels = heroSlideEditor?.querySelector("[data-hero-slide-panels]");
+    const heroSlideAddButton = heroSlideEditor?.querySelector("[data-hero-slide-add]");
+    const heroSlideCount = heroSlideEditor?.querySelector("[data-hero-slide-count]");
+    const heroSlideTemplate = document.getElementById("home-hero-slide-template");
 
     let currentPage = pageSelect?.value || "";
     let dirtyForm = null;
+    let activeHeroSlideIndex = 0;
 
     const syncHomeButtonControl = (select) => {
         if (!select) {
@@ -465,6 +472,132 @@ document.addEventListener("DOMContentLoaded", () => {
         inputs[inputs.length - 1]?.focus();
     };
 
+    const bindHeroSlidePanel = (panel) => {
+        if (!panel || panel.dataset.heroSlideBound === "true") {
+            return;
+        }
+
+        panel.dataset.heroSlideBound = "true";
+        panel.querySelectorAll("input[type='file']").forEach((input) => bindFilePreviewInput(input));
+        panel.querySelectorAll("[data-home-button-action]").forEach((select) => {
+            syncHomeButtonControl(select);
+            if (select.dataset.heroActionBound === "true") {
+                return;
+            }
+
+            select.dataset.heroActionBound = "true";
+            select.addEventListener("change", () => syncHomeButtonControl(select));
+        });
+
+        const titleInput = panel.querySelector("[data-hero-slide-title-input]");
+        const subtitleInput = panel.querySelector("[data-hero-slide-subtitle-input]");
+        [titleInput, subtitleInput].forEach((input) => {
+            input?.addEventListener("input", () => syncHeroSlideEditor(activeHeroSlideIndex));
+        });
+    };
+
+    const syncHeroSlideEditor = (preferredIndex = activeHeroSlideIndex) => {
+        if (!heroSlideEditor || !heroSlidePanels || !heroSlideTabs) {
+            return;
+        }
+
+        const panels = Array.from(heroSlidePanels.querySelectorAll("[data-hero-slide-panel]"));
+        if (!panels.length) {
+            heroSlideTabs.innerHTML = "";
+            if (heroSlideCount) {
+                heroSlideCount.textContent = "0 slides";
+            }
+            return;
+        }
+
+        activeHeroSlideIndex = Math.min(Math.max(preferredIndex, 0), panels.length - 1);
+        heroSlideTabs.innerHTML = "";
+
+        panels.forEach((panel, index) => {
+            bindHeroSlidePanel(panel);
+
+            const isActive = index === activeHeroSlideIndex;
+            const heading = panel.querySelector("[data-hero-slide-heading]");
+            const titleInput = panel.querySelector("[data-hero-slide-title-input]");
+            const subtitleInput = panel.querySelector("[data-hero-slide-subtitle-input]");
+            const summaryTitle = panel.querySelector("[data-hero-slide-summary-title]");
+            const summarySubtitle = panel.querySelector("[data-hero-slide-summary-subtitle]");
+            const removeButton = panel.querySelector("[data-hero-slide-remove]");
+            const fileInput = panel.querySelector("input[type='file']");
+            const previewNode = panel.querySelector(".cms-image-preview img, .cms-image-preview .cms-image-empty");
+            const titleValue = titleInput?.value.trim() || "";
+            const subtitleValue = subtitleInput?.value.trim() || "";
+            const tabTitle = titleValue || `Slide ${index + 1}`;
+            const tabSubtitle = subtitleValue || "No subtitle yet";
+            const previewId = `hero_preview_${index}`;
+
+            if (heading) {
+                heading.textContent = `Slide ${index + 1}`;
+            }
+
+            if (summaryTitle) {
+                summaryTitle.textContent = tabTitle;
+            }
+
+            if (summarySubtitle) {
+                summarySubtitle.textContent = tabSubtitle;
+            }
+
+            if (fileInput) {
+                fileInput.name = `hero_image_${index}`;
+                fileInput.setAttribute("data-preview-target", previewId);
+                bindFilePreviewInput(fileInput);
+            }
+
+            if (previewNode) {
+                previewNode.id = previewId;
+            }
+
+            if (removeButton) {
+                removeButton.disabled = panels.length === 1;
+                removeButton.title = panels.length === 1 ? "Keep at least one hero slide." : "";
+            }
+
+            panel.hidden = !isActive;
+            panel.classList.toggle("is-active", isActive);
+
+            const tabButton = document.createElement("button");
+            tabButton.type = "button";
+            tabButton.className = `hero-slide-tab${isActive ? " is-active" : ""}`;
+            tabButton.dataset.heroSlideTab = String(index);
+            tabButton.innerHTML = `
+                <span class="hero-slide-tab-index">Slide ${index + 1}</span>
+                <strong>${tabTitle}</strong>
+                <span>${tabSubtitle}</span>
+            `;
+            heroSlideTabs.appendChild(tabButton);
+        });
+
+        if (heroSlideCount) {
+            heroSlideCount.textContent = `${panels.length} slide${panels.length === 1 ? "" : "s"}`;
+        }
+    };
+
+    const appendHeroSlidePanel = () => {
+        if (!heroSlidePanels || !heroSlideTemplate) {
+            return;
+        }
+
+        const fragment = heroSlideTemplate.content.cloneNode(true);
+        heroSlidePanels.appendChild(fragment);
+
+        const panels = heroSlidePanels.querySelectorAll("[data-hero-slide-panel]");
+        const nextIndex = Math.max(0, panels.length - 1);
+        syncHeroSlideEditor(nextIndex);
+
+        const form = heroSlidePanels.closest("[data-content-form]");
+        if (form) {
+            markDirty(form);
+        }
+
+        heroSlidePanels.querySelectorAll("[data-hero-slide-title-input]")[nextIndex]?.focus();
+    };
+
     const syncSection = () => {
         if (!pageSelect) {
             return;
@@ -503,6 +636,46 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("[data-home-button-action]").forEach((select) => {
         syncHomeButtonControl(select);
         select.addEventListener("change", () => syncHomeButtonControl(select));
+    });
+
+    heroSlideAddButton?.addEventListener("click", appendHeroSlidePanel);
+
+    heroSlideEditor?.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+            return;
+        }
+
+        const tabButton = target.closest("[data-hero-slide-tab]");
+        if (tabButton) {
+            syncHeroSlideEditor(Number(tabButton.getAttribute("data-hero-slide-tab") || "0"));
+            return;
+        }
+
+        const removeButton = target.closest("[data-hero-slide-remove]");
+        if (!removeButton || !heroSlidePanels) {
+            return;
+        }
+
+        const panels = heroSlidePanels.querySelectorAll("[data-hero-slide-panel]");
+        if (panels.length <= 1) {
+            return;
+        }
+
+        const panel = removeButton.closest("[data-hero-slide-panel]");
+        if (!panel) {
+            return;
+        }
+
+        const currentPanels = Array.from(heroSlidePanels.querySelectorAll("[data-hero-slide-panel]"));
+        const removedIndex = currentPanels.indexOf(panel);
+        panel.remove();
+        syncHeroSlideEditor(Math.max(0, removedIndex - 1));
+
+        const form = heroSlidePanels.closest("[data-content-form]");
+        if (form) {
+            markDirty(form);
+        }
     });
 
     stateAddButton?.addEventListener("click", () => {
@@ -642,5 +815,6 @@ document.addEventListener("DOMContentLoaded", () => {
     syncSection();
     syncDeliveryLocationControls();
     syncPaymentMethodRows();
+    syncHeroSlideEditor();
     updateBar();
 });

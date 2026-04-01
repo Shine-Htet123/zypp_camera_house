@@ -295,6 +295,7 @@ function admin_content_management_page_options(): array
     return [
         ['value' => 'home', 'label' => 'Home'],
         ['value' => 'footer', 'label' => 'Footer'],
+        ['value' => 'unboxing_influencers', 'label' => 'Unboxing & Influencer Videos'],
         ['value' => 'about', 'label' => 'About'],
         ['value' => 'warranty', 'label' => 'Warranty & FAQs'],
         ['value' => 'delivery', 'label' => 'Delivery Policy'],
@@ -320,16 +321,24 @@ function admin_content_management_fetch_home_button_product_options(): array
 
 function admin_content_management_save_home(array $input, array $files): void
 {
-    $current = site_content_get_home();
     $slides = [];
     $pdo = get_database_connection();
-    for ($index = 0; $index < 3; $index++) {
-        $existing = $current['hero_slides'][$index] ?? [];
+    $slideCount = count((array) ($input['hero_title'] ?? []));
+
+    for ($index = 0; $index < $slideCount; $index++) {
         $imageField = 'hero_image_' . $index;
+        $existingImage = trim((string) ($input['hero_existing_image'][$index] ?? ''));
         $button1Action = trim((string) ($input['hero_button1_action'][$index] ?? 'link'));
         $button2Action = trim((string) ($input['hero_button2_action'][$index] ?? 'link'));
         $button1ProductId = (int) ($input['hero_button1_product_id'][$index] ?? 0);
         $button2ProductId = (int) ($input['hero_button2_product_id'][$index] ?? 0);
+        $title = trim((string) ($input['hero_title'][$index] ?? ''));
+        $subtitle = trim((string) ($input['hero_subtitle'][$index] ?? ''));
+        $button1Text = trim((string) ($input['hero_button1_text'][$index] ?? ''));
+        $button2Text = trim((string) ($input['hero_button2_text'][$index] ?? ''));
+        $button1Url = trim((string) ($input['hero_button1_url'][$index] ?? ''));
+        $button2Url = trim((string) ($input['hero_button2_url'][$index] ?? ''));
+        $hasNewImage = isset($files[$imageField]) && (int) ($files[$imageField]['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
 
         if (!in_array($button1Action, ['link', 'add_to_cart'], true)) {
             $button1Action = 'link';
@@ -355,32 +364,53 @@ function admin_content_management_save_home(array $input, array $files): void
             throw new InvalidArgumentException('Selected product for Home slide ' . ($index + 1) . ' button 2 is invalid.');
         }
 
+        $resolvedImage = admin_content_management_store_image($files[$imageField] ?? null, $existingImage !== '' ? $existingImage : null);
+        $isBlankSlide = $resolvedImage === ''
+            && !$hasNewImage
+            && $title === ''
+            && $subtitle === ''
+            && $button1Text === ''
+            && $button2Text === ''
+            && $button1Url === ''
+            && $button2Url === ''
+            && $button1ProductId <= 0
+            && $button2ProductId <= 0;
+
+        if ($isBlankSlide) {
+            continue;
+        }
+
         $slides[] = [
-            'image' => admin_content_management_store_image($files[$imageField] ?? null, $existing['image'] ?? null),
-            'title' => trim((string) ($input['hero_title'][$index] ?? '')),
+            'image' => $resolvedImage,
+            'title' => $title,
             'title_color' => trim((string) ($input['hero_title_color'][$index] ?? '#2f2419')),
-            'subtitle' => trim((string) ($input['hero_subtitle'][$index] ?? '')),
+            'subtitle' => $subtitle,
             'subtitle_color' => trim((string) ($input['hero_subtitle_color'][$index] ?? '#2f2419')),
-            'button1_text' => trim((string) ($input['hero_button1_text'][$index] ?? '')),
+            'button1_text' => $button1Text,
             'button1_action' => $button1Action,
-            'button1_url' => trim((string) ($input['hero_button1_url'][$index] ?? '')),
+            'button1_url' => $button1Url,
             'button1_product_id' => $button1ProductId,
             'button1_background_color' => trim((string) ($input['hero_button1_background_color'][$index] ?? '#6b5241')),
             'button1_text_color' => trim((string) ($input['hero_button1_text_color'][$index] ?? '#ffffff')),
-            'button2_text' => trim((string) ($input['hero_button2_text'][$index] ?? '')),
+            'button2_text' => $button2Text,
             'button2_action' => $button2Action,
-            'button2_url' => trim((string) ($input['hero_button2_url'][$index] ?? '')),
+            'button2_url' => $button2Url,
             'button2_product_id' => $button2ProductId,
             'button2_background_color' => trim((string) ($input['hero_button2_background_color'][$index] ?? '#ffffff')),
             'button2_text_color' => trim((string) ($input['hero_button2_text_color'][$index] ?? '#6b5241')),
         ];
 
-        if (trim((string) $slides[$index]['image']) === '') {
+        if (trim((string) $resolvedImage) === '') {
             throw new InvalidArgumentException('Hero image is required for slide ' . ($index + 1) . '.');
         }
     }
 
+    if ($slides === []) {
+        throw new InvalidArgumentException('Please keep at least one hero slide with an image.');
+    }
+
     $badges = [];
+    $current = site_content_get_home();
     for ($index = 0; $index < 4; $index++) {
         $existing = $current['trust_badges'][$index] ?? [];
         $imageField = 'trust_badge_image_' . $index;
@@ -390,9 +420,21 @@ function admin_content_management_save_home(array $input, array $files): void
         ];
     }
 
+    $videoSections = [
+        'home' => [
+            'title' => trim((string) ($input['home_video_title'] ?? '')),
+            'description' => trim((string) ($input['home_video_description'] ?? '')),
+        ],
+        'product_details' => [
+            'title' => trim((string) ($input['product_video_title'] ?? '')),
+            'description' => trim((string) ($input['product_video_description'] ?? '')),
+        ],
+    ];
+
     site_content_save_raw('home', [
         'hero_slides' => $slides,
         'trust_badges' => $badges,
+        'video_sections' => $videoSections,
     ]);
 }
 
@@ -408,6 +450,16 @@ function admin_content_management_save_footer(array $input, array $files): void
         ],
         admin_content_management_social_links($input)
     ));
+}
+
+function admin_content_management_save_unboxing_influencers(array $input): void
+{
+    site_content_save_raw('unboxing_influencers', [
+        'unboxing_tab_title' => trim((string) ($input['unboxing_tab_title'] ?? '')),
+        'unboxing_banner_text' => trim((string) ($input['unboxing_banner_text'] ?? '')),
+        'influencer_tab_title' => trim((string) ($input['influencer_tab_title'] ?? '')),
+        'influencer_banner_text' => trim((string) ($input['influencer_banner_text'] ?? '')),
+    ]);
 }
 
 function admin_content_management_save_about(array $input, array $files): void

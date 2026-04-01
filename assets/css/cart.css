@@ -127,28 +127,29 @@
 }
 
 .quantity-cell {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
+    position: relative;
 }
 
 .qty-stack {
     display: grid;
-    grid-template-columns: 18px 48px 18px;
+    grid-template-columns: 24px 58px 24px;
     align-items: center;
     column-gap: 12px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .qty-btn {
-    width: 18px;
-    height: 18px;
+    width: 24px;
+    height: 24px;
     padding: 0;
     border: none;
     border-radius: 3px;
     background: #e8e8e8;
     color: #616161;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 700;
     line-height: 1;
     display: inline-flex;
@@ -158,14 +159,14 @@
 }
 
 .qty-value {
-    min-width: 48px;
-    height: 24px;
+    min-width: 58px;
+    height: 30px;
     padding: 0 10px;
     border: none;
     border-radius: 2px;
     background: #efefef;
     color: #000000;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 400;
     display: inline-block;
     text-align: center;
@@ -181,10 +182,15 @@
 }
 
 .qty-note {
+    position: absolute;
+    top: calc(50% + 28px);
+    left: 50%;
+    transform: translateX(-50%);
     color: #d91c11;
     font-size: 13px;
     font-weight: 400;
     line-height: 1.25;
+    white-space: nowrap;
 }
 
 .qty-note.is-hidden {
@@ -202,10 +208,41 @@
     gap: 4px;
 }
 
+.money-line {
+    display: inline-flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 4px;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.currency-unit {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.discount-main {
+    display: block;
+    width: 100%;
+    color: #000000;
+    white-space: nowrap;
+    font-weight: 500;
+    text-align: center;
+}
+
+.discount-cell {
+    gap: 6px;
+}
+
 .discount-detail {
+    display: block;
+    width: 100%;
     color: var(--text-muted);
     font-size: 12px;
     line-height: 1.25;
+    text-align: center;
 }
 
 .action-cell {
