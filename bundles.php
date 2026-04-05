@@ -10,6 +10,7 @@ header('Expires: 0');
 $currentCustomer = customer_auth_current_user();
 $currentCustomerId = isset($currentCustomer['id']) ? (int) $currentCustomer['id'] : null;
 $bundles = bundle_fetch_customer_bundles($currentCustomerId);
+$bundlesCssVersion = app_asset_version('assets/css/bundles.css');
 $seoTitle = 'Bundle Offers';
 $seoDescription = 'Browse curated product bundles and creator kits with ready-made discounts from ZYPP Camera House.';
 $seoCanonical = app_url('/bundles.php');
@@ -19,7 +20,7 @@ $seoImage = (string) ($bundles[0]['image_url'] ?? '/storage/uploads/contents/log
 <html lang="en">
 <head>
     <?php include __DIR__ . '/head.php'; ?>
-    <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/assets/css/bundles.css')); ?>">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/assets/css/bundles.css?v=' . (int) $bundlesCssVersion)); ?>">
 </head>
 <body>
     <?php include __DIR__ . '/navbar.php'; ?>
@@ -39,14 +40,18 @@ $seoImage = (string) ($bundles[0]['image_url'] ?? '/storage/uploads/contents/log
                 <?php foreach ($bundles as $bundle): ?>
                     <a class="bundle-card" href="<?php echo htmlspecialchars((string) $bundle['detail_url']); ?>">
                         <div class="bundle-card-image">
-                            <?php $stackItems = array_slice($bundle['items'], 0, 4); ?>
-                            <div class="bundle-image-stack bundle-image-stack-card bundle-image-stack--count-<?php echo count($stackItems); ?>" aria-hidden="true">
-                                <?php foreach ($stackItems as $index => $item): ?>
-                                    <div class="bundle-stack-item" style="--stack-index: <?php echo (int) $index; ?>;">
-                                        <img src="<?php echo htmlspecialchars((string) $item['image_url']); ?>" alt="<?php echo htmlspecialchars((string) $item['name']); ?>">
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
+                            <?php if (!empty($bundle['has_custom_image'])): ?>
+                                <img class="bundle-cover-image" src="<?php echo htmlspecialchars((string) $bundle['uploaded_image_url']); ?>" alt="<?php echo htmlspecialchars((string) $bundle['bundle_name']); ?>" loading="lazy" decoding="async">
+                            <?php else: ?>
+                                <?php $stackItems = array_slice($bundle['items'], 0, 4); ?>
+                                <div class="bundle-image-stack bundle-image-stack-card bundle-image-stack--count-<?php echo count($stackItems); ?>" aria-hidden="true">
+                                    <?php foreach ($stackItems as $index => $item): ?>
+                                        <div class="bundle-stack-item" style="--stack-index: <?php echo (int) $index; ?>;">
+                                            <img src="<?php echo htmlspecialchars((string) $item['image_url']); ?>" alt="<?php echo htmlspecialchars((string) $item['name']); ?>" loading="lazy" decoding="async">
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
                         </div>
                         <div class="bundle-card-body">
                             <div class="bundle-card-top">

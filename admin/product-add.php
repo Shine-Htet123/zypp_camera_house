@@ -251,7 +251,7 @@ $subCategories = catalog_fetch_sub_category_options();
     </main>
 
     <div class="form-footer">
-        <div class="unsaved-note">Unsaved data will be deleted</div>
+        <div class="unsaved-note">Unsaved changes will be deleted</div>
         <div class="footer-actions">
             <button type="submit" form="productForm" class="btn-footer save">Add</button>
             <button type="button" class="btn-footer discard">Discard</button>

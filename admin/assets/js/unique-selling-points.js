@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const titleInput = modal?.querySelector('input[name="uspTitle"]');
   const descInput = modal?.querySelector('textarea[name="uspDescription"]');
   const entityIdInput = modal?.querySelector('input[name="entity_id"]');
+  const formState = new WeakMap();
 
   const showAlert = async (options) => {
     if (window.Swal) {
@@ -48,6 +49,32 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       window.AdminLoading?.hide();
     }
+  };
+
+  const captureFormState = (form) => {
+    if (!form) return;
+    const fields = Array.from(form.querySelectorAll('input[name]:not([type="file"]), textarea[name], select[name]'));
+    form.dataset.fileDirty = '0';
+    formState.set(form, fields.map((field) => ({
+      field,
+      value: field.type === 'checkbox' ? field.checked : field.value,
+    })));
+  };
+
+  const isFormDirty = (form) => {
+    const state = formState.get(form);
+    const hasFieldChanges = state ? state.some((item) => {
+      if (!item.field) return false;
+      const currentValue = item.field.type === 'checkbox' ? item.field.checked : item.field.value;
+      return currentValue !== item.value;
+    }) : false;
+
+    return hasFieldChanges || form?.dataset.fileDirty === '1';
+  };
+
+  const syncDirtyState = (form) => {
+    if (!form) return;
+    form.classList.toggle('is-dirty', isFormDirty(form));
   };
 
   const renderRows = (points) => {
@@ -88,11 +115,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const resetModal = () => {
     modalForm?.reset();
+    modalForm?.classList.remove('is-dirty');
     if (entityIdInput) entityIdInput.value = '0';
     if (iconPreview) {
       iconPreview.innerHTML = '<span class="icon-placeholder"></span>';
     }
     if (uploadInput) uploadInput.value = '';
+    captureFormState(modalForm);
   };
 
   const openModal = (mode, row) => {
@@ -110,6 +139,8 @@ document.addEventListener('DOMContentLoaded', () => {
         : '<span class="icon-placeholder"></span>';
     }
     if (uploadInput) uploadInput.value = '';
+    captureFormState(modalForm);
+    syncDirtyState(modalForm);
   };
 
   const closeModal = () => {
@@ -121,8 +152,21 @@ document.addEventListener('DOMContentLoaded', () => {
   uploadBtn?.addEventListener('click', () => uploadInput?.click());
   uploadInput?.addEventListener('change', () => {
     const file = uploadInput.files?.[0];
-    if (!file || !iconPreview) return;
+    if (!iconPreview) return;
+    if (!file) {
+      modalForm.dataset.fileDirty = '0';
+      syncDirtyState(modalForm);
+      return;
+    }
     iconPreview.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="Icon preview" style="width:100%;height:100%;object-fit:contain;">`;
+    modalForm.dataset.fileDirty = '1';
+    syncDirtyState(modalForm);
+  });
+
+  modalForm?.querySelectorAll('input[name]:not([type="file"]), textarea[name], select[name]').forEach((field) => {
+    const sync = () => syncDirtyState(modalForm);
+    field.addEventListener('input', sync);
+    field.addEventListener('change', sync);
   });
 
   closeBtn?.addEventListener('click', () => {

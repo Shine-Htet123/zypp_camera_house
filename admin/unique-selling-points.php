@@ -168,7 +168,7 @@ $points = admin_fetch_unique_selling_points();
                         <textarea name="uspDescription" rows="4"></textarea>
                     </label>
                     <div class="modal-footer">
-                        <span class="modal-note">Unsaved data will be deleted</span>
+                        <span class="modal-note">Unsaved changes will be deleted</span>
                         <div class="modal-actions">
                             <button type="submit" class="btn-footer save">Save</button>
                             <button type="button" class="btn-footer discard">Discard</button>

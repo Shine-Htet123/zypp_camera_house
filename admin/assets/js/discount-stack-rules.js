@@ -10,13 +10,24 @@ const stackRulesInput = document.querySelector('[data-stack-rules]');
 let baselineOrder = [];
 let baselineAllowed = new Map();
 
+const hasChanges = () => {
+    const currentOrder = getCurrentPriorityOrder();
+    if (currentOrder.join('|') !== baselineOrder.join('|')) {
+        return true;
+    }
+
+    const rows = Array.from(document.querySelectorAll('.stack-table tbody tr'));
+    if (rows.length !== baselineAllowed.size) {
+        return true;
+    }
+
+    return rows.some((row, index) => (row.dataset.allowed || 'No') !== (baselineAllowed.get(index) || 'No'));
+};
+
 const getCurrentPriorityOrder = () => Array.from(list?.querySelectorAll('.priority-item') || []).map((node) => node.dataset.type);
 
 const syncPriorityDirtyState = () => {
-    const currentOrder = getCurrentPriorityOrder();
-    if (currentOrder.join('|') !== baselineOrder.join('|')) {
-        setFooterVisible(true);
-    }
+    setFooterVisible(hasChanges());
 };
 
 const moveDraggedItem = (clientY) => {
@@ -245,7 +256,7 @@ if (stackTable) {
                 </button>
             `;
             row.classList.remove('editing');
-            setFooterVisible(true);
+            setFooterVisible(hasChanges());
         }
 
         if (cancelBtn) {
@@ -275,7 +286,7 @@ stackForm?.addEventListener('submit', () => {
 
 footerDiscard?.addEventListener('click', () => {
     restoreState();
-    setFooterVisible(false);
+    setFooterVisible(hasChanges());
 });
 
 if (window.adminDiscountStackFlash && window.Swal) {

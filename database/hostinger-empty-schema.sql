@@ -148,6 +148,7 @@ CREATE TABLE `bundles` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `discount_id` bigint(20) unsigned NOT NULL,
   `bundle_name` varchar(150) NOT NULL,
+  `image_file` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `fk_bundles_discount` (`discount_id`),
@@ -390,10 +391,12 @@ CREATE TABLE `cart_items` (
   `cart_items_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `cart_id` bigint(20) unsigned NOT NULL,
   `product_id` bigint(20) unsigned NOT NULL,
+  `bundle_id` bigint(20) unsigned DEFAULT NULL,
   `quantity` int(11) NOT NULL DEFAULT 1,
   PRIMARY KEY (`cart_items_id`),
   KEY `fk_cart_items_cart` (`cart_id`),
   KEY `fk_cart_items_product` (`product_id`),
+  KEY `idx_cart_items_bundle` (`bundle_id`),
   CONSTRAINT `fk_cart_items_cart` FOREIGN KEY (`cart_id`) REFERENCES `carts` (`cart_id`),
   CONSTRAINT `fk_cart_items_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

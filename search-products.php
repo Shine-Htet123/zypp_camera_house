@@ -20,9 +20,10 @@ if ($query === '') {
 $results = catalog_search_products($query, $limit);
 $items = [];
 $productDetailsPath = app_path('/product-details.php');
+$specsByProduct = catalog_fetch_product_specs_map(array_column($results, 'product_id'));
 
 foreach ($results as $product) {
-    $specs = catalog_fetch_product_specs((int) $product['product_id']);
+    $specs = $specsByProduct[(int) ($product['product_id'] ?? 0)] ?? [];
     $specLabels = [];
 
     foreach ($specs as $spec) {

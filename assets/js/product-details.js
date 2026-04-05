@@ -116,6 +116,18 @@ if (addToCartButton) {
         const qtyValue = document.querySelector(".qty-controls span");
         const productId = Number(productInfo?.dataset.productId || "0");
         const quantity = Math.max(1, Number(qtyValue?.textContent || "1"));
+        const cartAddUrl =
+            typeof window.appPath === "function"
+                ? window.appPath("/auth/cart_add.php")
+                : "/auth/cart_add.php";
+        const showAlert = (options) => {
+            if (typeof Swal !== "undefined") {
+                return Swal.fire(options);
+            }
+
+            window.alert(options?.text || options?.title || "Done.");
+            return Promise.resolve();
+        };
 
         try {
             const body = new URLSearchParams({
@@ -124,17 +136,21 @@ if (addToCartButton) {
                 quantity: String(quantity),
             });
 
-            const response = await fetch("/auth/cart_add.php", {
+            const response = await fetch(cartAddUrl, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
                     "X-Requested-With": "XMLHttpRequest",
                     "Accept": "application/json",
                 },
+                credentials: "same-origin",
                 body: body.toString(),
             });
 
-            const payload = await response.json();
+            const payload = await response.json().catch(() => ({
+                success: false,
+                message: "Failed to add item to cart.",
+            }));
 
             if (!response.ok || !payload.success) {
                 if (payload.login_required) {
@@ -148,21 +164,17 @@ if (addToCartButton) {
                 cartCount.textContent = String(payload.payload.cart_count);
             }
 
-            if (typeof Swal !== "undefined") {
-                Swal.fire({
-                    icon: "success",
-                    title: "Added to cart",
-                    text: payload.message || "The product has been added to your cart.",
-                });
-            }
+            showAlert({
+                icon: "success",
+                title: "Added to cart",
+                text: payload.message || "The product has been added to your cart.",
+            });
         } catch (error) {
-            if (typeof Swal !== "undefined") {
-                Swal.fire({
-                    icon: "error",
-                    title: "Add to cart failed",
-                    text: error.message,
-                });
-            }
+            showAlert({
+                icon: "error",
+                title: "Add to cart failed",
+                text: error.message,
+            });
         }
     });
 }

@@ -71,6 +71,19 @@ document.addEventListener('DOMContentLoaded', () => {
     return '';
   };
 
+  const buildReferralValue = (type, value) => {
+    if (value === null || value === undefined || value === '') {
+      return 'Not set';
+    }
+
+    const formatted = formatNumber(value);
+    if (!formatted) {
+      return 'Not set';
+    }
+
+    return String(type).toLowerCase() === 'fixed' ? `${formatted} MMK` : `${formatted}%`;
+  };
+
   const syncUnit = (select) => {
     if (!select) return;
     const targetId = select.dataset.unitTarget;
@@ -102,7 +115,18 @@ document.addEventListener('DOMContentLoaded', () => {
         data-tier-ref-value="${escapeHtml(tier.referral_discount_value ?? '')}"
       >
         <h3>${escapeHtml(tier.tier_name || '')}</h3>
-        <p>${escapeHtml(buildRange(tier.min_spent, tier.max_spent))}</p>
+        <p class="tier-range">${escapeHtml(buildRange(tier.min_spent, tier.max_spent))}</p>
+        <div class="tier-divider" aria-hidden="true"></div>
+        <div class="tier-details">
+          <div class="tier-detail">
+            <span class="tier-detail-label">Referral Type</span>
+            <strong class="tier-detail-value">${escapeHtml(tier.referral_discount_type_label || 'Not set')}</strong>
+          </div>
+          <div class="tier-detail">
+            <span class="tier-detail-label">Referral Value</span>
+            <strong class="tier-detail-value">${escapeHtml(buildReferralValue(tier.referral_discount_type, tier.referral_discount_value))}</strong>
+          </div>
+        </div>
         <div class="tier-actions">
           <button type="button" class="icon-btn edit-tier" aria-label="Edit tier">
             <i class="fa-regular fa-pen-to-square"></i>

@@ -275,7 +275,7 @@ foreach ($targets['sub_categories'] as $subCategory) {
                 </div>
 
                 <div class="apply-footer">
-                    <span>Unsaved data will be deleted</span>
+                    <span>Unsaved changes will be deleted</span>
                     <div class="apply-actions">
                         <button type="submit" class="btn-save">Save</button>
                         <button type="button" class="btn-discard">Discard</button>

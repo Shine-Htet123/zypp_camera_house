@@ -161,6 +161,15 @@ const openCustomerLoginPanel = () => {
     document.getElementById("user-icon")?.click();
 };
 
+const showCartAlert = (options) => {
+    if (typeof Swal !== "undefined") {
+        return Swal.fire(options);
+    }
+
+    window.alert(options?.text || options?.title || "Done.");
+    return Promise.resolve();
+};
+
 const updateCartCount = (count) => {
     const cartCount = document.querySelector(".cart-count span");
     if (!cartCount || typeof count === "undefined") {
@@ -175,6 +184,10 @@ document.querySelectorAll("[data-home-add-to-cart]").forEach((button) => {
         event.preventDefault();
         const productId = Number(button.dataset.productId || "0");
         const quantity = Math.max(1, Number(button.dataset.quantity || "1"));
+        const cartAddUrl =
+            typeof window.appPath === "function"
+                ? window.appPath("/auth/cart_add.php")
+                : "/auth/cart_add.php";
 
         try {
             const body = new URLSearchParams({
@@ -183,17 +196,21 @@ document.querySelectorAll("[data-home-add-to-cart]").forEach((button) => {
                 quantity: String(quantity),
             });
 
-            const response = await fetch("/auth/cart_add.php", {
+            const response = await fetch(cartAddUrl, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
                     "X-Requested-With": "XMLHttpRequest",
                     "Accept": "application/json",
                 },
+                credentials: "same-origin",
                 body: body.toString(),
             });
 
-            const payload = await response.json();
+            const payload = await response.json().catch(() => ({
+                success: false,
+                message: "Failed to add item to cart.",
+            }));
             if (!response.ok || !payload.success) {
                 if (payload.login_required) {
                     openCustomerLoginPanel();
@@ -203,21 +220,17 @@ document.querySelectorAll("[data-home-add-to-cart]").forEach((button) => {
 
             updateCartCount(payload.payload?.cart_count);
 
-            if (typeof Swal !== "undefined") {
-                Swal.fire({
-                    icon: "success",
-                    title: "Added to cart",
-                    text: payload.message || "The product has been added to your cart.",
-                });
-            }
+            showCartAlert({
+                icon: "success",
+                title: "Added to cart",
+                text: payload.message || "The product has been added to your cart.",
+            });
         } catch (error) {
-            if (typeof Swal !== "undefined") {
-                Swal.fire({
-                    icon: "error",
-                    title: "Add to cart failed",
-                    text: error.message,
-                });
-            }
+            showCartAlert({
+                icon: "error",
+                title: "Add to cart failed",
+                text: error.message,
+            });
         }
     });
 });

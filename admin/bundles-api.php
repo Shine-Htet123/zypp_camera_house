@@ -12,7 +12,7 @@ try {
 
     $action = trim((string) ($_POST['action'] ?? ''));
     if ($action === 'save_bundle') {
-        $bundleId = bundle_save_admin($_POST);
+        $bundleId = bundle_save_admin($_POST, $_FILES);
         echo json_encode([
             'success' => true,
             'message' => 'Bundle saved successfully.',

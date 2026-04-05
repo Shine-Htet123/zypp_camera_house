@@ -237,7 +237,7 @@ $validUsers = admin_fetch_discount_valid_user_options();
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <span>Unsaved data will be deleted</span>
+                    <span>Unsaved changes will be deleted</span>
                     <div class="modal-actions">
                         <button type="submit" class="btn-save">Add</button>
                         <button type="button" class="btn-discard">Discard</button>
@@ -314,7 +314,7 @@ $validUsers = admin_fetch_discount_valid_user_options();
                 </div>
                 <button type="button" class="btn-apply">Apply Discount</button>
                 <div class="modal-footer">
-                    <span>Unsaved data will be deleted</span>
+                    <span>Unsaved changes will be deleted</span>
                     <div class="modal-actions">
                         <button type="submit" class="btn-save">Save</button>
                         <button type="button" class="btn-discard">Discard</button>

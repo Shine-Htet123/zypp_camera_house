@@ -4,8 +4,8 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <?php
-    $baseCssVersion = @filemtime(app_project_path('assets/css/style.css')) ?: time();
-    $adminCssVersion = @filemtime(app_project_path('admin/assets/css/style.css')) ?: time();
+    $baseCssVersion = app_asset_version('assets/css/style.css');
+    $adminCssVersion = app_asset_version('admin/assets/css/style.css');
     ?>
     <link rel="icon" type="image/png" sizes="32x32" href="<?php echo htmlspecialchars(app_path('/assets/images/browser-icon.png')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/assets/css/style.css?v=' . (int) $baseCssVersion)); ?>">

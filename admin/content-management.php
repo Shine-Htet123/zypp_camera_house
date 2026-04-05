@@ -1125,7 +1125,7 @@ $renderHomeHeroSlideEditor = static function (array $slide, $index, array $produ
     </main>
 
     <div class="unsaved-bar" data-unsaved-bar>
-        <span>Unsaved changes</span>
+        <span>Unsaved changes will be deleted</span>
         <div class="unsaved-actions">
             <button type="button" class="btn-save" data-unsaved-save>Save</button>
             <button type="button" class="btn-discard" data-unsaved-discard>Discard</button>

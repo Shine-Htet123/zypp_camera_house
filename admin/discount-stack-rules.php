@@ -118,7 +118,7 @@ $stackRules = admin_fetch_discount_stack_rules();
         </div>
 
         <div class="stack-footer">
-            <span>Unsaved data will be deleted</span>
+            <span>Unsaved changes will be deleted</span>
             <div class="stack-actions-row">
                 <button class="btn-save" type="submit">Save</button>
                 <button class="btn-discard" type="button">Discard</button>

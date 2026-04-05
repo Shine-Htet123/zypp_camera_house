@@ -28,6 +28,136 @@ function bundle_format_datetime(?string $value): string
     return date('d.m.Y H:i:s', $timestamp);
 }
 
+function bundle_column_exists(string $tableName, string $columnName): bool
+{
+    static $cache = [];
+    $cacheKey = $tableName . '.' . $columnName;
+    if (array_key_exists($cacheKey, $cache)) {
+        return $cache[$cacheKey];
+    }
+
+    $pdo = get_database_connection();
+    $statement = $pdo->prepare(
+        'SELECT COUNT(*)
+         FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = :table_name
+           AND COLUMN_NAME = :column_name'
+    );
+    $statement->execute([
+        ':table_name' => $tableName,
+        ':column_name' => $columnName,
+    ]);
+
+    return $cache[$cacheKey] = ((int) $statement->fetchColumn()) > 0;
+}
+
+function bundle_ensure_schema(): void
+{
+    static $ensured = false;
+    if ($ensured) {
+        return;
+    }
+
+    $pdo = get_database_connection();
+
+    if (!bundle_column_exists('bundles', 'image_file')) {
+        $pdo->exec('ALTER TABLE bundles ADD COLUMN image_file VARCHAR(255) DEFAULT NULL AFTER bundle_name');
+    }
+
+    $ensured = true;
+}
+
+function bundle_upload_directory(): string
+{
+    return app_project_path('storage/uploads/bundles');
+}
+
+function bundle_public_image_url(?string $path): string
+{
+    $path = trim((string) $path);
+    if ($path === '') {
+        return '';
+    }
+
+    if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+        return $path;
+    }
+
+    return app_path('/' . ltrim($path, '/'));
+}
+
+function bundle_store_image_upload(?array $file): ?string
+{
+    if (!$file || !is_array($file)) {
+        return null;
+    }
+
+    $error = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+    if ($error === UPLOAD_ERR_NO_FILE) {
+        return null;
+    }
+
+    if ($error !== UPLOAD_ERR_OK) {
+        throw new RuntimeException('Bundle image upload failed.');
+    }
+
+    $tmpName = (string) ($file['tmp_name'] ?? '');
+    if ($tmpName === '' || !is_uploaded_file($tmpName)) {
+        throw new RuntimeException('Invalid bundle image upload.');
+    }
+
+    $originalName = (string) ($file['name'] ?? '');
+    $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+    $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+    if (!in_array($extension, $allowedExtensions, true)) {
+        throw new InvalidArgumentException('Please upload a JPG, PNG, WEBP, or GIF image for the bundle.');
+    }
+
+    $directory = bundle_upload_directory();
+    if (!is_dir($directory) && !mkdir($directory, 0777, true) && !is_dir($directory)) {
+        throw new RuntimeException('Unable to create the bundle image upload directory.');
+    }
+
+    $filename = 'bundle-' . date('YmdHis') . '-' . bin2hex(random_bytes(8)) . '.' . $extension;
+    $destination = $directory . DIRECTORY_SEPARATOR . $filename;
+
+    if (!move_uploaded_file($tmpName, $destination)) {
+        throw new RuntimeException('Unable to store the uploaded bundle image.');
+    }
+
+    return '/storage/uploads/bundles/' . $filename;
+}
+
+function bundle_delete_image_file(?string $path): void
+{
+    $path = trim((string) $path);
+    if ($path === '' || !str_starts_with($path, '/storage/uploads/bundles/')) {
+        return;
+    }
+
+    $absolutePath = app_project_path(ltrim($path, '/'));
+    if (is_file($absolutePath)) {
+        @unlink($absolutePath);
+    }
+}
+
+function bundle_fetch_existing_image_file(int $bundleId): ?string
+{
+    if ($bundleId <= 0) {
+        return null;
+    }
+
+    bundle_ensure_schema();
+
+    $pdo = get_database_connection();
+    $statement = $pdo->prepare('SELECT image_file FROM bundles WHERE id = :bundle_id LIMIT 1');
+    $statement->execute([':bundle_id' => $bundleId]);
+    $value = $statement->fetchColumn();
+
+    return $value !== false ? (string) $value : null;
+}
+
 function bundle_discount_is_active(array $discount): bool
 {
     if (strtolower((string) ($discount['status'] ?? 'inactive')) !== 'active') {
@@ -137,11 +267,14 @@ function bundle_fetch_discount_row(int $discountId): ?array
 
 function bundle_fetch_rows(array $filters = []): array
 {
+    bundle_ensure_schema();
+
     $pdo = get_database_connection();
     $sql = 'SELECT
                 bu.id,
                 bu.discount_id,
                 bu.bundle_name,
+                bu.image_file,
                 bu.created_at,
                 d.public_discount_id,
                 d.name AS discount_name,
@@ -246,6 +379,8 @@ function bundle_hydrate_admin_rows(array $bundles): array
         $bundle['qty'] = array_sum(array_map(static fn (array $item): int => (int) $item['qty'], $items));
         $bundle['created_at_display'] = bundle_format_datetime((string) ($bundle['created_at'] ?? ''));
         $bundle['discount_display'] = (string) ($bundle['discount_name'] ?? '');
+        $bundle['uploaded_image_url'] = bundle_public_image_url($bundle['image_file'] ?? null);
+        $bundle['has_uploaded_image'] = $bundle['uploaded_image_url'] !== '';
         $bundle['items'] = $items;
         $bundle['items_map'] = [];
         foreach ($items as $item) {
@@ -307,6 +442,8 @@ function bundle_validate_items(array $input): array
 
 function bundle_validate_admin_payload(array $input, int $bundleId = 0): array
 {
+    bundle_ensure_schema();
+
     $bundleName = trim((string) ($input['bundle_name'] ?? ''));
     $discountId = (int) ($input['discount_id'] ?? 0);
 
@@ -342,10 +479,16 @@ function bundle_validate_admin_payload(array $input, int $bundleId = 0): array
     ];
 }
 
-function bundle_save_admin(array $input): int
+function bundle_save_admin(array $input, array $files = []): int
 {
+    bundle_ensure_schema();
+
     $bundleId = (int) ($input['bundle_id'] ?? 0);
     $validated = bundle_validate_admin_payload($input, $bundleId);
+    $existingImageFile = $bundleId > 0 ? bundle_fetch_existing_image_file($bundleId) : null;
+    $uploadedImageFile = bundle_store_image_upload($files['bundle_image'] ?? null);
+    $removeImage = in_array(strtolower(trim((string) ($input['remove_image'] ?? '0'))), ['1', 'true', 'yes', 'on'], true);
+    $imageFile = $uploadedImageFile ?? ($removeImage ? null : $existingImageFile);
     $pdo = get_database_connection();
     $pdo->beginTransaction();
 
@@ -354,12 +497,14 @@ function bundle_save_admin(array $input): int
             $statement = $pdo->prepare(
                 'UPDATE bundles
                  SET discount_id = :discount_id,
-                     bundle_name = :bundle_name
+                     bundle_name = :bundle_name,
+                     image_file = :image_file
                  WHERE id = :bundle_id'
             );
             $statement->execute([
                 ':discount_id' => $validated['discount_id'],
                 ':bundle_name' => $validated['bundle_name'],
+                ':image_file' => $imageFile,
                 ':bundle_id' => $bundleId,
             ]);
 
@@ -367,12 +512,13 @@ function bundle_save_admin(array $input): int
                 ->execute([':bundle_id' => $bundleId]);
         } else {
             $statement = $pdo->prepare(
-                'INSERT INTO bundles (discount_id, bundle_name)
-                 VALUES (:discount_id, :bundle_name)'
+                'INSERT INTO bundles (discount_id, bundle_name, image_file)
+                 VALUES (:discount_id, :bundle_name, :image_file)'
             );
             $statement->execute([
                 ':discount_id' => $validated['discount_id'],
                 ':bundle_name' => $validated['bundle_name'],
+                ':image_file' => $imageFile,
             ]);
             $bundleId = (int) $pdo->lastInsertId();
         }
@@ -394,7 +540,16 @@ function bundle_save_admin(array $input): int
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
         }
+        if ($uploadedImageFile !== null) {
+            bundle_delete_image_file($uploadedImageFile);
+        }
         throw $exception;
+    }
+
+    if ($uploadedImageFile !== null && $existingImageFile && $existingImageFile !== $uploadedImageFile) {
+        bundle_delete_image_file($existingImageFile);
+    } elseif ($uploadedImageFile === null && $removeImage && $existingImageFile) {
+        bundle_delete_image_file($existingImageFile);
     }
 
     return $bundleId;
@@ -406,6 +561,9 @@ function bundle_delete_admin(int $bundleId): void
         throw new InvalidArgumentException('Invalid bundle selected.');
     }
 
+    bundle_ensure_schema();
+
+    $existingImageFile = bundle_fetch_existing_image_file($bundleId);
     $pdo = get_database_connection();
     $pdo->beginTransaction();
 
@@ -420,6 +578,10 @@ function bundle_delete_admin(int $bundleId): void
             $pdo->rollBack();
         }
         throw $exception;
+    }
+
+    if ($existingImageFile) {
+        bundle_delete_image_file($existingImageFile);
     }
 }
 
@@ -491,7 +653,9 @@ function bundle_hydrate_customer_rows(array $bundles, ?int $userId = null): arra
         $bundle['discount_value_label'] = strtolower((string) ($bundle['value_type'] ?? 'percentage')) === 'fixed'
             ? number_format((float) ($bundle['value'] ?? 0)) . ' MMK OFF'
             : rtrim(rtrim(number_format((float) ($bundle['value'] ?? 0), 2, '.', ''), '0'), '.') . '% OFF';
-        $bundle['image_url'] = $visibleItems[0]['image_url'];
+        $bundle['uploaded_image_url'] = bundle_public_image_url($bundle['image_file'] ?? null);
+        $bundle['has_custom_image'] = $bundle['uploaded_image_url'] !== '';
+        $bundle['image_url'] = $bundle['has_custom_image'] ? $bundle['uploaded_image_url'] : $visibleItems[0]['image_url'];
         $bundle['availability_count'] = max(0, (int) $bundleStock);
         $bundle['availability_label'] = $bundle['availability_count'] > 0 ? 'Available' : 'Out of Stock';
         $bundle['availability_note'] = $bundle['availability_count'] > 0

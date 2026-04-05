@@ -162,7 +162,7 @@ $maxPrice = $maxPrice > 0 ? (int) ceil($maxPrice / 100000) * 100000 : 1000000;
                             data-price="<?php echo htmlspecialchars((string) $product['price_value']); ?>"
                         >
                             <div class="product-image">
-                                <img src="<?php echo htmlspecialchars($product['image']); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                                <img src="<?php echo htmlspecialchars($product['image']); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>" loading="lazy" decoding="async">
                             </div>
                             <h4><?php echo htmlspecialchars($product['name']); ?></h4>
                             <p class="brand"><?php echo htmlspecialchars($product['brand']); ?></p>
@@ -206,5 +206,3 @@ $maxPrice = $maxPrice > 0 ? (int) ceil($maxPrice / 100000) * 100000 : 1000000;
     <script src="<?php echo htmlspecialchars($productsJsPath); ?>"></script>
 </body>
 </html>
-
-

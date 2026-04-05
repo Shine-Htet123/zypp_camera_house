@@ -9,6 +9,8 @@ $bundleDiscounts = bundle_fetch_discount_options(false);
 $categories = catalog_fetch_category_options();
 $brands = catalog_fetch_brand_options();
 $bundlesApiPath = app_path('/admin/bundles-api.php');
+$bundlesCssVersion = app_asset_version('admin/assets/css/bundles.css');
+$bundlesJsVersion = app_asset_version('admin/assets/js/bundles.js');
 
 $renderBundleProductCards = static function (array $products, array $selectedItems = []): string {
     ob_start();
@@ -50,7 +52,7 @@ $renderBundleProductCards = static function (array $products, array $selectedIte
 <html lang="en">
 <head>
     <?php include __DIR__ . '/head.php'; ?>
-    <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/admin/assets/css/bundles.css')); ?>">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/admin/assets/css/bundles.css?v=' . (int) $bundlesCssVersion)); ?>">
 </head>
 <body class="admin-page">
     <?php include __DIR__ . '/navbar.php'; ?>
@@ -105,6 +107,7 @@ $renderBundleProductCards = static function (array $products, array $selectedIte
                                     data-bundle-public-id="<?php echo htmlspecialchars((string) $bundle['public_bundle_id']); ?>"
                                     data-bundle-name="<?php echo htmlspecialchars((string) $bundle['bundle_name']); ?>"
                                     data-discount-id="<?php echo (int) ($bundle['discount_id'] ?? 0); ?>"
+                                    data-bundle-image-url="<?php echo htmlspecialchars((string) ($bundle['uploaded_image_url'] ?? '')); ?>"
                                     data-bundle-items="<?php echo htmlspecialchars((string) json_encode($bundle['items_map'], JSON_UNESCAPED_SLASHES)); ?>"
                                 >
                                     <td><?php echo htmlspecialchars((string) $bundle['public_bundle_id']); ?></td>
@@ -129,8 +132,9 @@ $renderBundleProductCards = static function (array $products, array $selectedIte
             </button>
             <h2 class="modal-title">Add Bundle</h2>
 
-            <form class="bundle-form-shell" data-bundle-form data-mode="create">
+            <form class="bundle-form-shell" data-bundle-form data-mode="create" enctype="multipart/form-data">
                 <input type="hidden" name="action" value="save_bundle">
+                <input type="hidden" name="remove_image" value="0" data-bundle-image-remove>
                 <div class="bundle-form">
                     <div class="bundle-name-row">
                         <span>Name:</span>
@@ -146,6 +150,20 @@ $renderBundleProductCards = static function (array $products, array $selectedIte
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                    </div>
+                    <div class="bundle-name-row bundle-image-row">
+                        <span>Image:</span>
+                        <div class="bundle-image-field">
+                            <input type="file" name="bundle_image" accept="image/*" class="bundle-image-input" data-bundle-image-input>
+                            <div class="bundle-image-preview" data-bundle-image-preview>
+                                <img src="" alt="Bundle preview" data-bundle-image-preview-img hidden>
+                                <span class="bundle-image-empty" data-bundle-image-empty>Upload a custom bundle image, or leave it blank to keep the auto-generated stack.</span>
+                            </div>
+                            <div class="bundle-image-actions">
+                                <button type="button" class="bundle-image-trigger" data-bundle-image-trigger>Upload Image</button>
+                                <button type="button" class="bundle-image-clear" data-bundle-image-clear>Use Auto Image</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <?php if ($bundleDiscounts === []): ?>
@@ -203,7 +221,7 @@ $renderBundleProductCards = static function (array $products, array $selectedIte
                 <p class="bundle-feedback" data-bundle-feedback aria-live="polite"></p>
 
                 <div class="modal-footer">
-                    <span class="modal-note">Unsaved data will be deleted</span>
+                    <span class="modal-note">Unsaved changes will be deleted</span>
                     <div class="modal-actions">
                         <button type="submit" class="btn-footer save">Save</button>
                         <button type="button" class="btn-footer discard">Discard</button>
@@ -221,9 +239,10 @@ $renderBundleProductCards = static function (array $products, array $selectedIte
             <h2 class="modal-title">Edit Bundle</h2>
             <p class="modal-subtitle">ID: <span id="editBundleId">-</span></p>
 
-            <form class="bundle-form-shell" data-bundle-form data-mode="edit">
+            <form class="bundle-form-shell" data-bundle-form data-mode="edit" enctype="multipart/form-data">
                 <input type="hidden" name="action" value="save_bundle">
                 <input type="hidden" name="bundle_id" value="">
+                <input type="hidden" name="remove_image" value="0" data-bundle-image-remove>
                 <div class="bundle-form">
                     <div class="bundle-name-row">
                         <span>Name:</span>
@@ -239,6 +258,20 @@ $renderBundleProductCards = static function (array $products, array $selectedIte
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                    </div>
+                    <div class="bundle-name-row bundle-image-row">
+                        <span>Image:</span>
+                        <div class="bundle-image-field">
+                            <input type="file" name="bundle_image" accept="image/*" class="bundle-image-input" data-bundle-image-input>
+                            <div class="bundle-image-preview" data-bundle-image-preview>
+                                <img src="" alt="Bundle preview" data-bundle-image-preview-img hidden>
+                                <span class="bundle-image-empty" data-bundle-image-empty>Upload a custom bundle image, or leave it blank to keep the auto-generated stack.</span>
+                            </div>
+                            <div class="bundle-image-actions">
+                                <button type="button" class="bundle-image-trigger" data-bundle-image-trigger>Upload Image</button>
+                                <button type="button" class="bundle-image-clear" data-bundle-image-clear>Use Auto Image</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <?php if ($bundleDiscounts === []): ?>
@@ -296,7 +329,7 @@ $renderBundleProductCards = static function (array $products, array $selectedIte
                 <p class="bundle-feedback" data-bundle-feedback aria-live="polite"></p>
 
                 <div class="modal-footer">
-                    <span class="modal-note">Unsaved data will be deleted</span>
+                    <span class="modal-note">Unsaved changes will be deleted</span>
                     <div class="modal-actions">
                         <button type="button" class="btn-footer delete" id="deleteBundleButton">Delete</button>
                         <button type="submit" class="btn-footer save">Save</button>
@@ -313,7 +346,7 @@ $renderBundleProductCards = static function (array $products, array $selectedIte
             'searchQuery' => $searchQuery,
         ], JSON_UNESCAPED_SLASHES); ?>;
     </script>
-    <script src="<?php echo htmlspecialchars(app_path('/admin/assets/js/bundles.js')); ?>"></script>
+    <script src="<?php echo htmlspecialchars(app_path('/admin/assets/js/bundles.js?v=' . (int) $bundlesJsVersion)); ?>"></script>
     <script src="<?php echo htmlspecialchars(app_path('/admin/assets/js/admin.js')); ?>"></script>
 </body>
 </html>

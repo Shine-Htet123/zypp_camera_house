@@ -8,6 +8,19 @@ const productSearchInput = document.querySelector('[data-product-search]');
 const productSearchButton = document.querySelector('.apply-search .btn-search');
 let baseline = [];
 
+const hasChanges = () => {
+    const current = Array.from(document.querySelectorAll('.apply-pane input[type="checkbox"]')).map((checkbox) => ({
+        checkbox,
+        checked: checkbox.checked
+    }));
+
+    if (current.length !== baseline.length) {
+        return true;
+    }
+
+    return current.some((item, index) => item.checked !== baseline[index]?.checked);
+};
+
 const updateSelectAllState = (pane) => {
     const selectAll = pane.querySelector('[data-select-all]');
     if (!selectAll) return;
@@ -27,6 +40,10 @@ const updateGroupState = (groupRow) => {
 const setFooterVisible = (visible) => {
     if (!footerBar) return;
     footerBar.classList.toggle('visible', visible);
+};
+
+const syncFooterState = () => {
+    setFooterVisible(hasChanges());
 };
 
 const captureState = () => {
@@ -76,7 +93,7 @@ document.querySelectorAll('[data-select-all]').forEach((checkbox) => {
             item.closest('.apply-card')?.classList.toggle('selected', checkbox.checked);
         });
         pane.querySelectorAll('.group-row').forEach((row) => updateGroupState(row));
-        setFooterVisible(true);
+        syncFooterState();
     });
 });
 
@@ -88,7 +105,7 @@ document.querySelectorAll('.apply-card input[type="checkbox"]').forEach((checkbo
         if (pane) updateSelectAllState(pane);
         const groupRow = checkbox.closest('.group-row');
         if (groupRow) updateGroupState(groupRow);
-        setFooterVisible(true);
+        syncFooterState();
     });
 });
 
@@ -112,7 +129,7 @@ document.querySelectorAll('.group-check input[type="checkbox"]').forEach((checkb
         });
         const pane = row.closest('.apply-pane');
         if (pane) updateSelectAllState(pane);
-        setFooterVisible(true);
+        syncFooterState();
     });
 });
 
@@ -127,7 +144,7 @@ form?.addEventListener('submit', () => {
 });
 footerDiscard?.addEventListener('click', () => {
     restoreState();
-    setFooterVisible(false);
+    syncFooterState();
 });
 
 productSearchButton?.addEventListener('click', applyProductSearch);

@@ -290,6 +290,74 @@
     width: 100%;
 }
 
+.bundle-image-row {
+    align-items: start;
+}
+
+.bundle-image-field {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.bundle-image-input {
+    display: none;
+}
+
+.bundle-image-preview {
+    min-height: 160px;
+    border: 1px dashed #d6c9bf;
+    border-radius: 14px;
+    background: #faf7f2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 14px;
+}
+
+.bundle-image-preview img {
+    max-width: 100%;
+    max-height: 130px;
+    object-fit: contain;
+    border-radius: 12px;
+}
+
+.bundle-image-empty {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    line-height: 1.45;
+    text-align: center;
+    max-width: 260px;
+}
+
+.bundle-image-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.bundle-image-trigger,
+.bundle-image-clear {
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.bundle-image-trigger {
+    background: #6b5646;
+    color: #fff;
+}
+
+.bundle-image-clear {
+    background: #ece4dc;
+    color: #5a473b;
+}
+
 .bundle-products h3 {
     font-size: 0.9rem;
     margin: 0 0 10px;
@@ -393,23 +461,47 @@
 }
 
 .modal-footer {
-    background: #fff;
-    border-radius: 999px;
-    padding: 10px 16px;
-    box-shadow: var(--box-shadow-normal);
+    width: fit-content;
+    max-width: calc(100% - 24px);
+    min-height: 0;
+    align-self: center;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-top: 10px;
-    width: min(520px, 90%);
-    margin-left: auto;
-    margin-right: auto;
+    justify-content: flex-start;
+    gap: 18px;
+    margin-top: 0;
+    padding: 0 12px;
+    position: sticky;
+    bottom: 8px;
+    z-index: 5;
+    background: #fff;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    box-shadow: none;
+    max-height: 0;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+    transform: translateY(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease, max-height 0.2s ease, padding 0.2s ease, margin-top 0.2s ease, border-color 0.2s ease;
+}
+
+.bundle-form-shell.is-dirty .modal-footer {
+    margin-top: 6px;
+    min-height: 56px;
+    padding: 12px 18px;
+    border-color: #ececec;
+    max-height: 96px;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+    box-shadow: var(--box-shadow-normal);
 }
 
 .modal-note {
-    color: #a3a3a3;
+    color: var(--text-muted);
     font-size: 0.85rem;
+    white-space: nowrap;
 }
 
 .bundle-form-shell {
@@ -417,6 +509,19 @@
     flex-direction: column;
     gap: 16px;
     min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding-right: 6px;
+    scrollbar-gutter: stable;
+}
+
+.bundle-form-shell::-webkit-scrollbar {
+    width: 8px;
+}
+
+.bundle-form-shell::-webkit-scrollbar-thumb {
+    background: #d4c9c1;
+    border-radius: 999px;
 }
 
 .bundle-feedback {
@@ -434,26 +539,29 @@
 .modal-actions {
     display: flex;
     gap: 10px;
+    flex: 0 0 auto;
+    margin-left: auto;
 }
 
-.btn-footer {
+.modal-actions .btn-footer {
     border: none;
     border-radius: 8px;
-    padding: 6px 18px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    line-height: 1.1;
     cursor: pointer;
-    font-weight: 600;
     color: #fff;
 }
 
-.btn-footer.save {
+.modal-actions .btn-footer.save {
     background: #4caf50;
 }
 
-.btn-footer.discard {
+.modal-actions .btn-footer.discard {
     background: #c0392b;
 }
 
-.btn-footer.delete {
+.modal-actions .btn-footer.delete {
     background: #8f8f8f;
 }
 
@@ -464,6 +572,29 @@
 
     .modal-card {
         width: min(720px, 92vw);
-        overflow-y: auto;
+        overflow: hidden;
+    }
+
+    .bundle-name-row {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-footer {
+        width: 100%;
+        max-width: calc(100% - 16px);
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        border-radius: 16px;
+    }
+
+    .modal-note {
+        white-space: normal;
+        text-align: center;
+    }
+
+    .modal-actions {
+        justify-content: center;
+        margin-left: 0;
     }
 }

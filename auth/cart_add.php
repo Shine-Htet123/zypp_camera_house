@@ -1,12 +1,70 @@
 <?php
 
 require_once __DIR__ . '/../app/services/cart.php';
+require_once __DIR__ . '/../database/bundles.php';
+
+if (!function_exists('customer_cart_add_bundle')) {
+    function customer_cart_add_bundle(array $input): array
+    {
+        $userId = customer_cart_require_user_id();
+        $bundleId = (int) ($input['bundle_id'] ?? 0);
+        $quantity = max(1, (int) ($input['quantity'] ?? 1));
+
+        if ($bundleId <= 0) {
+            throw new InvalidArgumentException('Invalid bundle selected.');
+        }
+
+        $bundle = bundle_fetch_customer_bundle($bundleId, $userId);
+        if (!$bundle) {
+            throw new RuntimeException('This bundle is unavailable right now.');
+        }
+
+        if ((int) ($bundle['availability_count'] ?? 0) <= 0) {
+            throw new RuntimeException('This bundle is currently out of stock.');
+        }
+
+        $existingQuantities = [];
+        foreach (cart_fetch_items_for_user($userId) as $item) {
+            $existingQuantities[(int) ($item['product_id'] ?? 0)] = (int) ($item['quantity'] ?? 0);
+        }
+
+        foreach ((array) ($bundle['items'] ?? []) as $bundleItem) {
+            $productId = (int) ($bundleItem['product_id'] ?? 0);
+            $requiredQty = max(1, (int) ($bundleItem['qty'] ?? 1)) * $quantity;
+            $stockQuantity = max(0, (int) ($bundleItem['stock_quantity'] ?? 0));
+            $existingQty = (int) ($existingQuantities[$productId] ?? 0);
+
+            if ($stockQuantity < $existingQty + $requiredQty) {
+                throw new RuntimeException('Not enough stock is available to add that bundle.');
+            }
+        }
+
+        foreach ((array) ($bundle['items'] ?? []) as $bundleItem) {
+            cart_add_item(
+                $userId,
+                (int) ($bundleItem['product_id'] ?? 0),
+                max(1, (int) ($bundleItem['qty'] ?? 1)) * $quantity,
+                $bundleId
+            );
+        }
+
+        return [
+            'bundle' => $bundle,
+            'cart_count' => cart_count_items_for_user($userId),
+        ];
+    }
+}
 
 $input = $_SERVER['REQUEST_METHOD'] === 'GET' ? $_GET : $_POST;
 
 try {
     $action = trim((string) ($input['action'] ?? 'add_item'));
-    $isBundleAdd = $action === 'add_bundle';
+    $bundleId = (int) ($input['bundle_id'] ?? 0);
+    $productId = (int) ($input['product_id'] ?? 0);
+
+    // Accept bundle adds by bundle id as a fallback so bundle requests still
+    // work even if the action flag is missing or stale client code is loaded.
+    $isBundleAdd = $action === 'add_bundle' || ($bundleId > 0 && $productId <= 0);
     $payload = $isBundleAdd ? customer_cart_add_bundle($input) : customer_cart_add($input);
     $successMessage = $isBundleAdd ? 'Bundle added to cart.' : 'Product added to cart.';
 

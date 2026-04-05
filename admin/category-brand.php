@@ -312,7 +312,7 @@ $brands = catalog_fetch_brand_options();
                         </button>
                     </div>
                     <div class="modal-footer">
-                        <span class="modal-note">Unsaved data will be deleted</span>
+                        <span class="modal-note">Unsaved changes will be deleted</span>
                         <div class="modal-actions">
                             <button type="submit" class="btn-footer save">Save</button>
                             <button type="button" class="btn-footer discard">Discard</button>
@@ -353,7 +353,7 @@ $brands = catalog_fetch_brand_options();
                         </button>
                     </div>
                     <div class="modal-footer">
-                        <span class="modal-note">Unsaved data will be deleted</span>
+                        <span class="modal-note">Unsaved changes will be deleted</span>
                         <div class="modal-actions">
                             <button type="submit" class="btn-footer save">Save</button>
                             <button type="button" class="btn-footer discard">Discard</button>
@@ -393,7 +393,7 @@ $brands = catalog_fetch_brand_options();
                         </select>
                     </label>
                     <div class="modal-footer">
-                        <span class="modal-note">Unsaved data will be deleted</span>
+                        <span class="modal-note">Unsaved changes will be deleted</span>
                         <div class="modal-actions">
                             <button type="submit" class="btn-footer save">Save</button>
                             <button type="button" class="btn-footer discard">Discard</button>

@@ -3,6 +3,26 @@
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../catalog.php';
 
+function cart_ensure_schema(): void
+{
+    static $ensured = false;
+    if ($ensured) {
+        return;
+    }
+
+    $pdo = get_database_connection();
+    $columnExists = $pdo->query("SHOW COLUMNS FROM cart_items LIKE 'bundle_id'")->fetch();
+    if (!$columnExists) {
+        $pdo->exec(
+            'ALTER TABLE cart_items
+             ADD COLUMN bundle_id BIGINT(20) UNSIGNED NULL DEFAULT NULL AFTER product_id,
+             ADD KEY idx_cart_items_bundle (bundle_id)'
+        );
+    }
+
+    $ensured = true;
+}
+
 function cart_fetch_cart_record(int $userId): ?array
 {
     $pdo = get_database_connection();
@@ -232,19 +252,54 @@ function cart_fetch_standard_discount_tier_ids(): array
     return $tierIds;
 }
 
-function cart_fetch_item_record(int $cartId, int $productId): ?array
+function cart_fetch_item_record(int $cartId, int $productId, ?int $bundleId = null): ?array
 {
+    cart_ensure_schema();
+    $pdo = get_database_connection();
+    if ($bundleId !== null && $bundleId > 0) {
+        $statement = $pdo->prepare(
+            'SELECT cart_items_id, cart_id, product_id, bundle_id, quantity
+             FROM cart_items
+             WHERE cart_id = :cart_id AND product_id = :product_id AND bundle_id = :bundle_id
+             LIMIT 1'
+        );
+        $statement->execute([
+            ':cart_id' => $cartId,
+            ':product_id' => $productId,
+            ':bundle_id' => $bundleId,
+        ]);
+    } else {
+        $statement = $pdo->prepare(
+            'SELECT cart_items_id, cart_id, product_id, bundle_id, quantity
+             FROM cart_items
+             WHERE cart_id = :cart_id AND product_id = :product_id AND bundle_id IS NULL
+             LIMIT 1'
+        );
+        $statement->execute([
+            ':cart_id' => $cartId,
+            ':product_id' => $productId,
+        ]);
+    }
+    $row = $statement->fetch();
+
+    return $row ?: null;
+}
+
+function cart_fetch_item_record_by_id(int $cartId, int $cartItemId): ?array
+{
+    cart_ensure_schema();
     $pdo = get_database_connection();
     $statement = $pdo->prepare(
-        'SELECT cart_items_id, cart_id, product_id, quantity
+        'SELECT cart_items_id, cart_id, product_id, bundle_id, quantity
          FROM cart_items
-         WHERE cart_id = :cart_id AND product_id = :product_id
+         WHERE cart_id = :cart_id AND cart_items_id = :cart_items_id
          LIMIT 1'
     );
     $statement->execute([
         ':cart_id' => $cartId,
-        ':product_id' => $productId,
+        ':cart_items_id' => $cartItemId,
     ]);
+
     $row = $statement->fetch();
 
     return $row ?: null;
@@ -264,8 +319,40 @@ function cart_count_items_for_user(int $userId): int
     return (int) $statement->fetchColumn();
 }
 
-function cart_add_item(int $userId, int $productId, int $quantity): array
+function cart_fetch_reserved_quantity_for_product(int $cartId, int $productId, ?int $excludeCartItemId = null): int
 {
+    cart_ensure_schema();
+    $pdo = get_database_connection();
+
+    if ($excludeCartItemId !== null && $excludeCartItemId > 0) {
+        $statement = $pdo->prepare(
+            'SELECT COALESCE(SUM(quantity), 0)
+             FROM cart_items
+             WHERE cart_id = :cart_id AND product_id = :product_id AND cart_items_id <> :cart_items_id'
+        );
+        $statement->execute([
+            ':cart_id' => $cartId,
+            ':product_id' => $productId,
+            ':cart_items_id' => $excludeCartItemId,
+        ]);
+    } else {
+        $statement = $pdo->prepare(
+            'SELECT COALESCE(SUM(quantity), 0)
+             FROM cart_items
+             WHERE cart_id = :cart_id AND product_id = :product_id'
+        );
+        $statement->execute([
+            ':cart_id' => $cartId,
+            ':product_id' => $productId,
+        ]);
+    }
+
+    return (int) $statement->fetchColumn();
+}
+
+function cart_add_item(int $userId, int $productId, int $quantity, ?int $bundleId = null): array
+{
+    cart_ensure_schema();
     if ($userId <= 0) {
         throw new InvalidArgumentException('Invalid user id.');
     }
@@ -290,8 +377,19 @@ function cart_add_item(int $userId, int $productId, int $quantity): array
 
     $quantity = max(1, $quantity);
     $cartId = cart_get_or_create_cart_id($userId);
-    $existing = cart_fetch_item_record($cartId, $productId);
-    $nextQuantity = min($stock, $quantity + (int) ($existing['quantity'] ?? 0));
+    $bundleId = $bundleId !== null && $bundleId > 0 ? $bundleId : null;
+    $existing = cart_fetch_item_record($cartId, $productId, $bundleId);
+    $reservedQuantity = cart_fetch_reserved_quantity_for_product(
+        $cartId,
+        $productId,
+        isset($existing['cart_items_id']) ? (int) $existing['cart_items_id'] : null
+    );
+    $availableForRow = max($stock - $reservedQuantity, 0);
+    $nextQuantity = min($availableForRow, $quantity + (int) ($existing['quantity'] ?? 0));
+
+    if ($nextQuantity <= 0) {
+        throw new RuntimeException('Not enough stock is available.');
+    }
 
     $pdo = get_database_connection();
     if ($existing) {
@@ -305,44 +403,68 @@ function cart_add_item(int $userId, int $productId, int $quantity): array
             ':cart_items_id' => (int) $existing['cart_items_id'],
         ]);
     } else {
-        $statement = $pdo->prepare(
-            'INSERT INTO cart_items (cart_id, product_id, quantity)
-             VALUES (:cart_id, :product_id, :quantity)'
-        );
-        $statement->execute([
-            ':cart_id' => $cartId,
-            ':product_id' => $productId,
-            ':quantity' => $nextQuantity,
-        ]);
+        if ($bundleId !== null) {
+            $statement = $pdo->prepare(
+                'INSERT INTO cart_items (cart_id, product_id, bundle_id, quantity)
+                 VALUES (:cart_id, :product_id, :bundle_id, :quantity)'
+            );
+            $statement->execute([
+                ':cart_id' => $cartId,
+                ':product_id' => $productId,
+                ':bundle_id' => $bundleId,
+                ':quantity' => $nextQuantity,
+            ]);
+        } else {
+            $statement = $pdo->prepare(
+                'INSERT INTO cart_items (cart_id, product_id, bundle_id, quantity)
+                 VALUES (:cart_id, :product_id, NULL, :quantity)'
+            );
+            $statement->execute([
+                ':cart_id' => $cartId,
+                ':product_id' => $productId,
+                ':quantity' => $nextQuantity,
+            ]);
+        }
     }
 
     return cart_fetch_product_for_cart($productId) ?: [];
 }
 
-function cart_update_item_quantity(int $userId, int $productId, int $quantity): void
+function cart_update_item_quantity(int $userId, int $cartItemId, int $quantity): void
 {
+    cart_ensure_schema();
     $cart = cart_fetch_cart_record($userId);
     if (!$cart) {
         throw new RuntimeException('Cart not found.');
     }
 
-    $item = cart_fetch_item_record((int) $cart['cart_id'], $productId);
+    $item = cart_fetch_item_record_by_id((int) $cart['cart_id'], $cartItemId);
     if (!$item) {
         throw new RuntimeException('Cart item not found.');
     }
 
     if ($quantity <= 0) {
-        cart_remove_item($userId, $productId);
+        cart_remove_item($userId, $cartItemId);
         return;
     }
 
+    $productId = (int) ($item['product_id'] ?? 0);
     $product = cart_fetch_product_for_cart($productId);
     if (!$product) {
         throw new RuntimeException('Product not found.');
     }
 
     $stock = max(1, (int) $product['stock_quantity']);
-    $quantity = min(max(1, $quantity), $stock);
+    $reservedQuantity = cart_fetch_reserved_quantity_for_product(
+        (int) $cart['cart_id'],
+        $productId,
+        (int) ($item['cart_items_id'] ?? 0)
+    );
+    $quantity = min(max(1, $quantity), max($stock - $reservedQuantity, 0));
+
+    if ($quantity <= 0) {
+        throw new RuntimeException('Not enough stock is available.');
+    }
 
     $pdo = get_database_connection();
     $statement = $pdo->prepare('UPDATE cart_items SET quantity = :quantity WHERE cart_items_id = :cart_items_id');
@@ -352,23 +474,41 @@ function cart_update_item_quantity(int $userId, int $productId, int $quantity): 
     ]);
 }
 
-function cart_remove_item(int $userId, int $productId): void
+function cart_remove_item(int $userId, int $cartItemId): void
 {
+    cart_ensure_schema();
     $cart = cart_fetch_cart_record($userId);
     if (!$cart) {
         return;
     }
 
     $pdo = get_database_connection();
-    $statement = $pdo->prepare('DELETE FROM cart_items WHERE cart_id = :cart_id AND product_id = :product_id');
+    $statement = $pdo->prepare('DELETE FROM cart_items WHERE cart_id = :cart_id AND cart_items_id = :cart_items_id');
     $statement->execute([
         ':cart_id' => (int) $cart['cart_id'],
-        ':product_id' => $productId,
+        ':cart_items_id' => $cartItemId,
+    ]);
+}
+
+function cart_remove_bundle_items(int $userId, int $bundleId): void
+{
+    cart_ensure_schema();
+    $cart = cart_fetch_cart_record($userId);
+    if (!$cart) {
+        return;
+    }
+
+    $pdo = get_database_connection();
+    $statement = $pdo->prepare('DELETE FROM cart_items WHERE cart_id = :cart_id AND bundle_id = :bundle_id');
+    $statement->execute([
+        ':cart_id' => (int) $cart['cart_id'],
+        ':bundle_id' => $bundleId,
     ]);
 }
 
 function cart_fetch_items_for_user(int $userId): array
 {
+    cart_ensure_schema();
     $cart = cart_fetch_cart_record($userId);
     if (!$cart) {
         return [];
@@ -379,6 +519,7 @@ function cart_fetch_items_for_user(int $userId): array
         'SELECT
             ci.cart_items_id,
             ci.product_id,
+            ci.bundle_id,
             ci.quantity,
             p.name,
             p.price AS unit_price,
@@ -397,7 +538,7 @@ function cart_fetch_items_for_user(int $userId): array
          FROM cart_items ci
          INNER JOIN products p ON p.product_id = ci.product_id
          WHERE ci.cart_id = :cart_id
-         ORDER BY ci.cart_items_id ASC'
+         ORDER BY COALESCE(ci.bundle_id, 0) ASC, ci.cart_items_id ASC'
     );
     $statement->execute([':cart_id' => (int) $cart['cart_id']]);
     $items = $statement->fetchAll();

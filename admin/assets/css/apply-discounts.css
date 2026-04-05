@@ -317,63 +317,63 @@
 
 .apply-footer {
     position: fixed;
-    left: 50%;
-    bottom: 20px;
-    transform: translateX(-50%);
+    left: calc(50% + (var(--admin-sidebar-width) / 2));
+    bottom: 28px;
+    transform: translate(-50%, 120%);
     background: #fff;
-    border-radius: 999px;
-    padding: 0 16px;
-    border: 1px solid transparent;
+    border-radius: 22px;
+    padding: 10px 28px;
+    border: 1px solid #e0e0e0;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 0.82rem;
-    color: #9b9b9b;
-    box-shadow: none;
-    width: min(520px, 92vw);
-    gap: 16px;
-    max-height: 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+    width: min(620px, calc(100vw - 48px));
+    max-width: 620px;
+    gap: 24px;
     opacity: 0;
-    transform: translate(-50%, 6px);
     pointer-events: none;
-    overflow: hidden;
-    transition: opacity 0.2s ease, transform 0.2s ease, max-height 0.2s ease, padding 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-    z-index: 2000;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+    z-index: 40;
 }
 
 .apply-footer.visible {
-    max-height: 80px;
-    padding: 10px 16px;
     opacity: 1;
     transform: translate(-50%, 0);
     pointer-events: auto;
-    border-color: #ececec;
-    box-shadow: var(--box-shadow-normal);
 }
 
 .apply-actions {
     display: flex;
     gap: 10px;
+    flex: 0 0 auto;
+}
+
+.apply-footer > span {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .btn-save {
     background: #4caf50;
     color: #fff;
     border: none;
-    border-radius: 6px;
-    padding: 6px 16px;
+    border-radius: 8px;
+    padding: 8px 14px;
     cursor: pointer;
-    font-size: 0.82rem;
+    font-size: 0.9rem;
 }
 
 .btn-discard {
     background: #c62828;
     color: #fff;
     border: none;
-    border-radius: 6px;
-    padding: 6px 16px;
+    border-radius: 8px;
+    padding: 8px 14px;
     cursor: pointer;
-    font-size: 0.82rem;
+    font-size: 0.9rem;
 }
 
 .apply-empty {
@@ -391,5 +391,27 @@
 @media (max-width: 900px) {
     .apply-layout {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .apply-footer {
+        max-width: calc(100% - 32px);
+        width: auto;
+        left: 16px;
+        right: 16px;
+        transform: translate(0, 120%);
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+        padding: 12px 16px;
+    }
+
+    .apply-footer.visible {
+        transform: translate(0, 0);
+    }
+
+    .apply-actions {
+        justify-content: center;
     }
 }

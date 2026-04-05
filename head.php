@@ -3,12 +3,12 @@
     require_once __DIR__ . '/config/app.php';
     require_once __DIR__ . '/app/services/seo.php';
 
-    $loadingCssVersion = @filemtime(app_project_path('assets/css/loading.css')) ?: time();
-    $navbarCssVersion = @filemtime(app_project_path('assets/css/navbar.css')) ?: time();
-    $footerCssVersion = @filemtime(app_project_path('assets/css/footer.css')) ?: time();
-    $loadingJsVersion = @filemtime(app_project_path('assets/js/loading.js')) ?: time();
-    $scrollRevealJsVersion = @filemtime(app_project_path('assets/js/scroll-reveal.js')) ?: time();
-    $navbarJsVersion = @filemtime(app_project_path('assets/js/navbar.js')) ?: time();
+    $loadingCssVersion = app_asset_version('assets/css/loading.css');
+    $navbarCssVersion = app_asset_version('assets/css/navbar.css');
+    $footerCssVersion = app_asset_version('assets/css/footer.css');
+    $loadingJsVersion = app_asset_version('assets/js/loading.js');
+    $scrollRevealJsVersion = app_asset_version('assets/js/scroll-reveal.js');
+    $navbarJsVersion = app_asset_version('assets/js/navbar.js');
     $seoMeta = seo_meta_payload([
         'title' => $seoTitle ?? '',
         'description' => $seoDescription ?? '',

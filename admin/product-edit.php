@@ -270,7 +270,7 @@ $primaryImageKey = !empty($images[0]['image_id']) ? 'existing:' . $images[0]['im
     </main>
 
     <div class="form-footer">
-        <div class="unsaved-note">Unsaved data will be deleted</div>
+        <div class="unsaved-note">Unsaved changes will be deleted</div>
         <div class="footer-actions">
             <button type="submit" form="productForm" class="btn-footer save">Save</button>
             <button type="button" class="btn-footer discard">Discard</button>

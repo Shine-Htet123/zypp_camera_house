@@ -65,6 +65,143 @@ function customer_cart_line_total(int $subtotal, int $lineDiscount): int
     return max($subtotal - $lineDiscount, 0);
 }
 
+function customer_cart_build_display_rows(int $userId, array $items): array
+{
+    if ($items === []) {
+        return [];
+    }
+
+    $rows = [];
+    $itemsByBundleId = [];
+    $bundleIds = [];
+
+    foreach ($items as $item) {
+        $bundleId = (int) ($item['bundle_id'] ?? 0);
+        if ($bundleId > 0) {
+            $itemsByBundleId[$bundleId][] = $item;
+            $bundleIds[$bundleId] = true;
+            continue;
+        }
+
+        $rows[] = [
+            'row_type' => 'product',
+            'cart_item_id' => (int) ($item['cart_items_id'] ?? 0),
+            'product_id' => (int) ($item['product_id'] ?? 0),
+            'name' => (string) ($item['name'] ?? ''),
+            'image' => (string) ($item['image'] ?? ''),
+            'quantity' => (int) ($item['quantity'] ?? 0),
+            'stock' => (int) ($item['stock'] ?? 0),
+            'unit_price' => (int) ($item['unit_price'] ?? 0),
+            'line_subtotal' => (int) ($item['line_subtotal'] ?? 0),
+            'line_discount' => (int) ($item['line_discount'] ?? 0),
+            'line_total' => (int) ($item['line_total'] ?? 0),
+            'discount_summary' => (string) ($item['discount_summary'] ?? ''),
+            'matched_bundle_names' => array_values((array) ($item['matched_bundle_names'] ?? [])),
+            'show_low_stock' => !empty($item['show_low_stock']),
+            'stock_note' => !empty($item['show_low_stock'])
+                ? 'Hurry! Only ' . (int) ($item['stock'] ?? 0) . ' Left!'
+                : '',
+        ];
+    }
+
+    if ($bundleIds === []) {
+        return $rows;
+    }
+
+    $bundleMap = [];
+    foreach (bundle_fetch_customer_bundles($userId) as $bundle) {
+        $bundleMap[(int) ($bundle['id'] ?? 0)] = $bundle;
+    }
+
+    foreach (array_keys($bundleIds) as $bundleId) {
+        $bundle = $bundleMap[$bundleId] ?? null;
+        $bundleItems = $itemsByBundleId[$bundleId] ?? [];
+        if (!$bundle || $bundleItems === []) {
+            continue;
+        }
+
+        $bundleQuantity = null;
+        $maxBundleQuantity = null;
+        $lineSubtotal = 0;
+        $lineDiscount = 0;
+        $lineTotal = 0;
+        $groupedByProductId = [];
+
+        foreach ($bundleItems as $item) {
+            $productId = (int) ($item['product_id'] ?? 0);
+            $groupedByProductId[$productId] = $item;
+            $lineSubtotal += (int) ($item['line_subtotal'] ?? 0);
+            $lineDiscount += (int) ($item['line_discount'] ?? 0);
+            $lineTotal += (int) ($item['line_total'] ?? 0);
+        }
+
+        foreach ((array) ($bundle['items'] ?? []) as $bundleItem) {
+            $productId = (int) ($bundleItem['product_id'] ?? 0);
+            $requiredQty = max(1, (int) ($bundleItem['qty'] ?? 1));
+            $cartItem = $groupedByProductId[$productId] ?? null;
+            if (!$cartItem) {
+                continue;
+            }
+
+            $currentQty = max(0, (int) ($cartItem['quantity'] ?? 0));
+            $bundleApplications = intdiv($currentQty, $requiredQty);
+            $bundleQuantity = $bundleQuantity === null ? $bundleApplications : min($bundleQuantity, $bundleApplications);
+
+            $reservedElsewhere = 0;
+            foreach ($items as $otherItem) {
+                if ((int) ($otherItem['product_id'] ?? 0) !== $productId) {
+                    continue;
+                }
+
+                if ((int) ($otherItem['bundle_id'] ?? 0) === $bundleId) {
+                    continue;
+                }
+
+                $reservedElsewhere += (int) ($otherItem['quantity'] ?? 0);
+            }
+
+            $availableForBundle = max(0, (int) ($cartItem['stock'] ?? 0) - $reservedElsewhere);
+            $bundleStock = intdiv($availableForBundle, $requiredQty);
+            $maxBundleQuantity = $maxBundleQuantity === null ? $bundleStock : min($maxBundleQuantity, $bundleStock);
+        }
+
+        $bundleQuantity = max(1, (int) ($bundleQuantity ?? 1));
+        $maxBundleQuantity = max($bundleQuantity, (int) ($maxBundleQuantity ?? $bundleQuantity));
+
+        $rows[] = [
+            'row_type' => 'bundle',
+            'bundle_id' => $bundleId,
+            'name' => (string) ($bundle['bundle_name'] ?? 'Bundle'),
+            'image' => (string) ($bundle['image_url'] ?? ''),
+            'has_custom_image' => !empty($bundle['has_custom_image']),
+            'quantity' => $bundleQuantity,
+            'stock' => $maxBundleQuantity,
+            'unit_price' => $lineSubtotal,
+            'line_subtotal' => $lineSubtotal,
+            'line_discount' => $lineDiscount,
+            'line_total' => $lineTotal,
+            'discount_summary' => $lineDiscount > 0
+                ? '- ' . customer_cart_format_mmk($lineDiscount) . ' MMK total'
+                : 'No discount',
+            'matched_bundle_names' => [],
+            'show_low_stock' => $maxBundleQuantity > 0 && $maxBundleQuantity <= 5,
+            'stock_note' => $maxBundleQuantity > 0 && $maxBundleQuantity <= 5
+                ? 'Hurry! Only ' . $maxBundleQuantity . ' bundle(s) left!'
+                : '',
+            'included_items' => array_map(
+                static fn (array $bundleItem): array => [
+                    'name' => (string) ($bundleItem['name'] ?? 'Item'),
+                    'qty' => max(1, (int) ($bundleItem['qty'] ?? 1)),
+                    'image_url' => (string) ($bundleItem['image_url'] ?? ''),
+                ],
+                (array) ($bundle['items'] ?? [])
+            ),
+        ];
+    }
+
+    return $rows;
+}
+
 function customer_cart_sort_bundles_for_pricing(array $bundles): array
 {
     usort($bundles, static function (array $left, array $right): int {
@@ -118,6 +255,140 @@ function customer_cart_allocate_bundle_discount(array $participants, int $bundle
     return $allocations;
 }
 
+function customer_cart_apply_explicit_bundle_pricing(int $userId, array $bundles, array &$items): bool
+{
+    $bundleIds = array_values(array_unique(array_filter(
+        array_map(static fn (array $item): int => (int) ($item['bundle_id'] ?? 0), $items),
+        static fn (int $bundleId): bool => $bundleId > 0
+    )));
+
+    if ($bundleIds === []) {
+        return false;
+    }
+
+    $bundleMap = [];
+    foreach ($bundles as $bundle) {
+        $bundleMap[(int) ($bundle['id'] ?? 0)] = $bundle;
+    }
+
+    $hasBundlePricing = false;
+
+    foreach ($bundleIds as $bundleId) {
+        $bundle = $bundleMap[$bundleId] ?? bundle_fetch_customer_bundle($bundleId, $userId);
+        if (!$bundle) {
+            continue;
+        }
+
+        $productRows = [];
+        $productQuantities = [];
+
+        foreach ($items as $index => $item) {
+            if ((int) ($item['bundle_id'] ?? 0) !== $bundleId) {
+                continue;
+            }
+
+            $productId = (int) ($item['product_id'] ?? 0);
+            if ($productId <= 0) {
+                continue;
+            }
+
+            $productRows[$productId][] = $index;
+            $productQuantities[$productId] = (int) ($productQuantities[$productId] ?? 0) + (int) ($item['quantity'] ?? 0);
+        }
+
+        if ($productRows === []) {
+            continue;
+        }
+
+        $participants = [];
+        $bundleApplications = null;
+
+        foreach ((array) ($bundle['items'] ?? []) as $bundleItem) {
+            $productId = (int) ($bundleItem['product_id'] ?? 0);
+            $requiredQty = max(1, (int) ($bundleItem['qty'] ?? 1));
+            if ($productId <= 0 || empty($productRows[$productId])) {
+                $bundleApplications = 0;
+                break;
+            }
+
+            $availableQty = max(0, (int) ($productQuantities[$productId] ?? 0));
+            $applicationsForItem = intdiv($availableQty, $requiredQty);
+            $bundleApplications = $bundleApplications === null
+                ? $applicationsForItem
+                : min($bundleApplications, $applicationsForItem);
+        }
+
+        if (($bundleApplications ?? 0) <= 0) {
+            continue;
+        }
+
+        foreach ((array) ($bundle['items'] ?? []) as $bundleItem) {
+            $productId = (int) ($bundleItem['product_id'] ?? 0);
+            $requiredQty = max(1, (int) ($bundleItem['qty'] ?? 1)) * $bundleApplications;
+            $firstRowIndex = $productRows[$productId][0] ?? null;
+            if ($firstRowIndex === null) {
+                continue;
+            }
+
+            $item = $items[$firstRowIndex];
+            $lineSubtotal = customer_cart_line_subtotal((float) ($item['unit_price'] ?? 0), $requiredQty);
+
+            $participants[] = [
+                'product_id' => $productId,
+                'quantity' => $requiredQty,
+                'subtotal' => $lineSubtotal,
+            ];
+        }
+
+        $bundleSubtotal = array_sum(array_column($participants, 'subtotal'));
+        $bundleDiscount = (int) round(bundle_calculate_discount_amount($bundleSubtotal, $bundle));
+        if ($bundleDiscount <= 0) {
+            continue;
+        }
+
+        $allocations = customer_cart_allocate_bundle_discount($participants, $bundleDiscount);
+        if ($allocations === []) {
+            continue;
+        }
+
+        foreach ($participants as $participant) {
+            $productId = (int) ($participant['product_id'] ?? 0);
+            $requiredQty = (int) ($participant['quantity'] ?? 0);
+            $remainingQty = $requiredQty;
+            $remainingDiscount = (int) ($allocations[$productId] ?? 0);
+            $rowIndexes = $productRows[$productId] ?? [];
+
+            foreach ($rowIndexes as $position => $rowIndex) {
+                if ($remainingQty <= 0) {
+                    break;
+                }
+
+                $rowQuantity = max(0, (int) ($items[$rowIndex]['quantity'] ?? 0));
+                $reservedQty = min($rowQuantity, $remainingQty);
+                if ($reservedQty <= 0) {
+                    continue;
+                }
+
+                $rowDiscount = $position === count($rowIndexes) - 1
+                    ? $remainingDiscount
+                    : (int) round(((int) ($allocations[$productId] ?? 0)) * ($reservedQty / max($requiredQty, 1)));
+                $rowDiscount = max(0, min($rowDiscount, $remainingDiscount));
+
+                $items[$rowIndex]['bundle_reserved_quantity'] += $reservedQty;
+                $items[$rowIndex]['bundle_line_discount'] += $rowDiscount;
+                $items[$rowIndex]['matched_bundle_names'][] = (string) ($bundle['bundle_name'] ?? 'Bundle');
+
+                $remainingQty -= $reservedQty;
+                $remainingDiscount -= $rowDiscount;
+            }
+        }
+
+        $hasBundlePricing = true;
+    }
+
+    return $hasBundlePricing;
+}
+
 function customer_cart_apply_bundle_pricing(int $userId, array $items): array
 {
     if ($userId <= 0 || $items === []) {
@@ -135,22 +406,34 @@ function customer_cart_apply_bundle_pricing(int $userId, array $items): array
         ];
     }
 
-    $itemIndexByProductId = [];
-    $availableQuantities = [];
-
-    foreach ($items as $index => &$item) {
-        $productId = (int) ($item['product_id'] ?? 0);
-        $itemIndexByProductId[$productId] = $index;
-        $availableQuantities[$productId] = (int) ($item['quantity'] ?? 0);
+    foreach ($items as &$item) {
         $item['bundle_reserved_quantity'] = 0;
         $item['bundle_line_discount'] = 0;
         $item['matched_bundle_names'] = [];
     }
     unset($item);
 
-    $hasBundlePricing = false;
+    $hasBundlePricing = customer_cart_apply_explicit_bundle_pricing($userId, $bundles, $items);
+
+    $itemIndexByProductId = [];
+    $availableQuantities = [];
+
+    foreach ($items as $index => &$item) {
+        if ((int) ($item['bundle_id'] ?? 0) > 0) {
+            continue;
+        }
+
+        $productId = (int) ($item['product_id'] ?? 0);
+        $itemIndexByProductId[$productId] = $index;
+        $availableQuantities[$productId] = (int) ($item['quantity'] ?? 0);
+    }
+    unset($item);
 
     foreach ($bundles as $bundle) {
+        if ($itemIndexByProductId === []) {
+            break;
+        }
+
         $participants = [];
         $bundleApplications = null;
 
@@ -306,12 +589,25 @@ function customer_cart_fetch_view_model(): array
 
     return [
         'items' => $items,
+        'display_rows' => customer_cart_build_display_rows((int) $user['id'], $items),
         'items_total' => $itemsTotal,
         'subtotal' => $subtotal,
         'total_discount' => $totalDiscount,
         'additional_note' => (string) ($_SESSION['cart_additional_note'] ?? ''),
         'requires_login' => false,
         'has_bundle_pricing' => !empty($bundlePricing['has_bundle_pricing']),
+    ];
+}
+
+function customer_cart_build_client_payload(array $cart): array
+{
+    return [
+        'cart_count' => customer_cart_count(),
+        'items_total' => (int) ($cart['items_total'] ?? 0),
+        'subtotal' => (int) ($cart['subtotal'] ?? 0),
+        'total_discount' => (int) ($cart['total_discount'] ?? 0),
+        'has_bundle_pricing' => !empty($cart['has_bundle_pricing']),
+        'display_rows' => array_values((array) ($cart['display_rows'] ?? [])),
     ];
 }
 
@@ -372,7 +668,8 @@ function customer_cart_add_bundle(array $input): array
         cart_add_item(
             $userId,
             (int) ($bundleItem['product_id'] ?? 0),
-            max(1, (int) ($bundleItem['qty'] ?? 1)) * $quantity
+            max(1, (int) ($bundleItem['qty'] ?? 1)) * $quantity,
+            $bundleId
         );
     }
 
@@ -385,44 +682,107 @@ function customer_cart_add_bundle(array $input): array
 function customer_cart_update(array $input): array
 {
     $userId = customer_cart_require_user_id();
+    $bundleId = (int) ($input['bundle_id'] ?? 0);
+    $cartItemId = (int) ($input['cart_item_id'] ?? 0);
     $productId = (int) ($input['product_id'] ?? 0);
     $quantity = (int) ($input['quantity'] ?? 1);
 
-    if ($productId <= 0) {
+    if ($bundleId <= 0 && $cartItemId <= 0 && $productId <= 0) {
         throw new InvalidArgumentException('Invalid cart item.');
     }
 
-    cart_update_item_quantity($userId, $productId, $quantity);
+    if ($bundleId > 0) {
+        $bundle = bundle_fetch_customer_bundle($bundleId, $userId);
+        if (!$bundle) {
+            throw new InvalidArgumentException('Bundle not found.');
+        }
+
+        if ($quantity <= 0) {
+            cart_remove_bundle_items($userId, $bundleId);
+        } else {
+            $itemsByProductId = [];
+            foreach (cart_fetch_items_for_user($userId) as $item) {
+                if ((int) ($item['bundle_id'] ?? 0) !== $bundleId) {
+                    continue;
+                }
+
+                $itemsByProductId[(int) ($item['product_id'] ?? 0)] = $item;
+            }
+
+            foreach ((array) ($bundle['items'] ?? []) as $bundleItem) {
+                $bundleProductId = (int) ($bundleItem['product_id'] ?? 0);
+                $row = $itemsByProductId[$bundleProductId] ?? null;
+                if (!$row) {
+                    throw new RuntimeException('Bundle item is missing from the cart.');
+                }
+
+                cart_update_item_quantity(
+                    $userId,
+                    (int) ($row['cart_items_id'] ?? 0),
+                    max(1, (int) ($bundleItem['qty'] ?? 1)) * $quantity
+                );
+            }
+        }
+
+        $cart = customer_cart_fetch_view_model();
+
+        return customer_cart_build_client_payload($cart);
+    }
+
+    if ($cartItemId <= 0) {
+        foreach (cart_fetch_items_for_user($userId) as $item) {
+            if ((int) ($item['product_id'] ?? 0) === $productId) {
+                $cartItemId = (int) ($item['cart_items_id'] ?? 0);
+                break;
+            }
+        }
+    }
+
+    if ($cartItemId <= 0) {
+        throw new InvalidArgumentException('Cart item not found.');
+    }
+
+    cart_update_item_quantity($userId, $cartItemId, $quantity);
     $cart = customer_cart_fetch_view_model();
 
-    return [
-        'cart_count' => cart_count_items_for_user($userId),
-        'items_total' => $cart['items_total'],
-        'subtotal' => $cart['subtotal'],
-        'total_discount' => $cart['total_discount'],
-        'requires_refresh' => !empty($cart['has_bundle_pricing']),
-    ];
+    return customer_cart_build_client_payload($cart);
 }
 
 function customer_cart_remove(array $input): array
 {
     $userId = customer_cart_require_user_id();
+    $bundleId = (int) ($input['bundle_id'] ?? 0);
+    $cartItemId = (int) ($input['cart_item_id'] ?? 0);
     $productId = (int) ($input['product_id'] ?? 0);
 
-    if ($productId <= 0) {
+    if ($bundleId <= 0 && $cartItemId <= 0 && $productId <= 0) {
         throw new InvalidArgumentException('Invalid cart item.');
     }
 
-    cart_remove_item($userId, $productId);
+    if ($bundleId > 0) {
+        cart_remove_bundle_items($userId, $bundleId);
+        $cart = customer_cart_fetch_view_model();
+
+        return customer_cart_build_client_payload($cart);
+    }
+
+    if ($cartItemId <= 0) {
+        foreach (cart_fetch_items_for_user($userId) as $item) {
+            if ((int) ($item['product_id'] ?? 0) === $productId) {
+                $cartItemId = (int) ($item['cart_items_id'] ?? 0);
+                break;
+            }
+        }
+    }
+
+    if ($cartItemId <= 0) {
+        throw new InvalidArgumentException('Cart item not found.');
+    }
+
+    cart_remove_item($userId, $cartItemId);
     $cart = customer_cart_fetch_view_model();
 
-    return [
-        'cart_count' => cart_count_items_for_user($userId),
-        'items_total' => $cart['items_total'],
-        'subtotal' => $cart['subtotal'],
-        'total_discount' => $cart['total_discount'],
-        'requires_refresh' => !empty($cart['has_bundle_pricing']),
-    ];
+    return customer_cart_build_client_payload($cart);
 }
 
 function customer_cart_save_note(array $input): array

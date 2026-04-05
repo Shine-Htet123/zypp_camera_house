@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const heroSlideTemplate = document.getElementById("home-hero-slide-template");
 
     let currentPage = pageSelect?.value || "";
-    let dirtyForm = null;
+    const formState = new WeakMap();
     let activeHeroSlideIndex = 0;
 
     const syncHomeButtonControl = (select) => {
@@ -79,21 +79,97 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const getActiveForm = () => getActiveSection()?.querySelector("[data-content-form]") || null;
 
+    const serializeForm = (form) => {
+        if (!form) {
+            return "";
+        }
+
+        const fields = Array.from(form.querySelectorAll("input[name], select[name], textarea[name]"));
+
+        return JSON.stringify(fields.map((field) => {
+            const key = field.name;
+
+            if (field instanceof HTMLInputElement) {
+                if (field.type === "file") {
+                    const files = Array.from(field.files || []).map((file) => ({
+                        name: file.name,
+                        size: file.size,
+                        type: file.type,
+                    }));
+
+                    return [
+                        key,
+                        {
+                            type: "file",
+                            disabled: field.disabled,
+                            files,
+                        },
+                    ];
+                }
+
+                if (field.type === "checkbox" || field.type === "radio") {
+                    return [
+                        key,
+                        {
+                            type: field.type,
+                            disabled: field.disabled,
+                            checked: field.checked,
+                            value: field.value,
+                        },
+                    ];
+                }
+            }
+
+            return [
+                key,
+                {
+                    disabled: field.disabled,
+                    value: field.value,
+                },
+            ];
+        }));
+    };
+
+    const captureFormState = (form) => {
+        if (!form) {
+            return;
+        }
+
+        formState.set(form, serializeForm(form));
+    };
+
+    const isFormDirty = (form) => serializeForm(form) !== (formState.get(form) || "");
+
+    const getDirtyForms = () => forms.filter((form) => isFormDirty(form));
+
+    const getDirtyForm = () => {
+        const activeForm = getActiveForm();
+        if (activeForm && isFormDirty(activeForm)) {
+            return activeForm;
+        }
+
+        return getDirtyForms()[0] || null;
+    };
+
+    const buildPageUrl = (value) => {
+        const url = new URL(window.location.href);
+        url.searchParams.set("page", value);
+        return url.toString();
+    };
+
     const updateBar = () => {
         if (!unsavedBar) {
             return;
         }
 
-        unsavedBar.classList.toggle("is-visible", Boolean(dirtyForm));
+        unsavedBar.classList.toggle("is-visible", getDirtyForms().length > 0);
     };
 
-    const markDirty = (form) => {
-        dirtyForm = form;
-        updateBar();
-    };
+    const syncDirtyState = (form) => {
+        if (!form) {
+            return;
+        }
 
-    const clearDirty = () => {
-        dirtyForm = null;
         updateBar();
     };
 
@@ -303,7 +379,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const form = container.closest("[data-content-form]");
         if (form) {
-            markDirty(form);
+            syncDirtyState(form);
         }
 
         const latestField = container.querySelector(focusSelector);
@@ -325,7 +401,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const form = input.closest("[data-content-form]");
             if (form) {
-                markDirty(form);
+                syncDirtyState(form);
             }
 
             if (!file) {
@@ -465,7 +541,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const form = paymentMethodList.closest("[data-content-form]");
         if (form) {
-            markDirty(form);
+            syncDirtyState(form);
         }
 
         const inputs = paymentMethodList.querySelectorAll("[data-payment-method-label]");
@@ -592,41 +668,65 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const form = heroSlidePanels.closest("[data-content-form]");
         if (form) {
-            markDirty(form);
+            syncDirtyState(form);
         }
 
         heroSlidePanels.querySelectorAll("[data-hero-slide-title-input]")[nextIndex]?.focus();
     };
 
-    const syncSection = () => {
-        if (!pageSelect) {
+    const syncSection = (value = pageSelect?.value || "") => {
+        if (!pageSelect || value === "") {
             return;
         }
 
-        const value = pageSelect.value;
         sections.forEach((section) => {
             section.classList.toggle("is-active", section.dataset.page === value);
         });
 
+        pageSelect.value = value;
         currentPage = value;
-        const url = new URL(window.location.href);
-        url.searchParams.set("page", value);
-        window.history.replaceState({}, "", url.toString());
+        window.history.replaceState({}, "", buildPageUrl(value));
     };
 
-    pageSelect?.addEventListener("change", () => {
-        if (dirtyForm) {
-            pageSelect.value = currentPage;
+    pageSelect?.addEventListener("change", async () => {
+        if (!pageSelect) {
             return;
         }
 
-        syncSection();
+        const nextPage = pageSelect.value;
+        if (nextPage === "" || nextPage === currentPage) {
+            return;
+        }
+
+        if (getDirtyForm()) {
+            const confirmation = window.Swal
+                ? await window.Swal.fire({
+                    icon: "warning",
+                    title: "Discard unsaved changes?",
+                    text: "Switching pages will remove your unsaved changes.",
+                    showCancelButton: true,
+                    confirmButtonText: "Discard changes",
+                    cancelButtonText: "Stay here",
+                    confirmButtonColor: "#c0392b",
+                })
+                : { isConfirmed: window.confirm("Switching pages will remove your unsaved changes. Continue?") };
+
+            if (!confirmation.isConfirmed) {
+                pageSelect.value = currentPage;
+                return;
+            }
+        }
+
+        window.location.assign(buildPageUrl(nextPage));
     });
 
     forms.forEach((form) => {
-        form.addEventListener("input", () => markDirty(form));
-        form.addEventListener("change", () => markDirty(form));
-        form.addEventListener("submit", () => clearDirty());
+        form.addEventListener("input", () => syncDirtyState(form));
+        form.addEventListener("change", () => syncDirtyState(form));
+        form.addEventListener("submit", () => {
+            captureFormState(form);
+            syncDirtyState(form);
+        });
     });
 
     document.querySelectorAll("input[type='file'][data-preview-target]").forEach((input) => {
@@ -674,7 +774,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const form = heroSlidePanels.closest("[data-content-form]");
         if (form) {
-            markDirty(form);
+            syncDirtyState(form);
         }
     });
 
@@ -718,7 +818,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const form = container?.closest("[data-content-form]");
         if (form) {
-            markDirty(form);
+            syncDirtyState(form);
         }
     });
 
@@ -750,7 +850,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const form = paymentMethodList.closest("[data-content-form]");
         if (form) {
-            markDirty(form);
+            syncDirtyState(form);
         }
     });
 
@@ -804,7 +904,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
     saveButton?.addEventListener("click", () => {
-        const form = dirtyForm || getActiveForm();
+        const form = getDirtyForm() || getActiveForm();
         form?.requestSubmit();
     });
 
@@ -816,5 +916,6 @@ document.addEventListener("DOMContentLoaded", () => {
     syncDeliveryLocationControls();
     syncPaymentMethodRows();
     syncHeroSlideEditor();
+    forms.forEach((form) => captureFormState(form));
     updateBar();
 });

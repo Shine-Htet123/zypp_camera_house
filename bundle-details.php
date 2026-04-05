@@ -11,6 +11,8 @@ $bundleId = (int) ($_GET['id'] ?? 0);
 $currentCustomer = customer_auth_current_user();
 $currentCustomerId = isset($currentCustomer['id']) ? (int) $currentCustomer['id'] : null;
 $bundle = bundle_fetch_customer_bundle($bundleId, $currentCustomerId);
+$bundleDetailsCssVersion = app_asset_version('assets/css/bundle-details.css');
+$bundleDetailsJsVersion = app_asset_version('assets/js/bundle-details.js');
 $seoCanonical = $bundle ? app_url('/bundle-details.php?id=' . (int) $bundle['id']) : app_url('/bundle-details.php');
 $seoImage = (string) ($bundle['image_url'] ?? '/storage/uploads/contents/logo.png');
 $seoNoIndex = !$bundle;
@@ -31,7 +33,82 @@ if (!$bundle) {
 <html lang="en">
 <head>
     <?php include __DIR__ . '/head.php'; ?>
-    <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/assets/css/bundle-details.css')); ?>">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(app_path('/assets/css/bundle-details.css?v=' . (int) $bundleDetailsCssVersion)); ?>">
+    <style>
+        .bundle-action-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .bundle-qty-controls {
+            display: grid;
+            grid-template-columns: 40px 58px 40px;
+            align-items: center;
+            border-radius: 999px;
+            background: #f3ece6;
+            overflow: hidden;
+        }
+
+        .bundle-qty-controls button {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            color: #4a372c;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .bundle-qty-controls span {
+            text-align: center;
+            font-weight: 700;
+            color: #241a14;
+        }
+
+        .bundle-buy-btn {
+            min-height: 44px;
+            padding: 0 22px;
+            border: none;
+            border-radius: 999px;
+            background: #5d4e47;
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            touch-action: manipulation;
+        }
+
+        .bundle-buy-btn:hover:not(:disabled) {
+            background: #463934;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(93, 78, 71, 0.24);
+        }
+
+        .bundle-buy-btn:disabled {
+            background: #b7aea8;
+            cursor: not-allowed;
+        }
+
+        .bundle-purchase-panel > * + * {
+            margin-top: 6px;
+        }
+
+        .bundle-price-row {
+            margin-top: 4px;
+        }
+
+        .bundle-stat-grid {
+            margin-top: 14px;
+        }
+    </style>
 </head>
 <body>
     <?php include __DIR__ . '/navbar.php'; ?>
@@ -52,14 +129,18 @@ if (!$bundle) {
         <?php else: ?>
             <section class="bundle-hero-card">
                 <div class="bundle-hero-image">
-                    <?php $stackItems = array_slice($bundle['items'], 0, 4); ?>
-                    <div class="bundle-image-stack bundle-image-stack-hero bundle-image-stack--count-<?php echo count($stackItems); ?>" aria-hidden="true">
-                        <?php foreach ($stackItems as $index => $item): ?>
-                            <div class="bundle-stack-item" style="--stack-index: <?php echo (int) $index; ?>;">
-                                <img src="<?php echo htmlspecialchars((string) $item['image_url']); ?>" alt="<?php echo htmlspecialchars((string) $item['name']); ?>">
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
+                    <?php if (!empty($bundle['has_custom_image'])): ?>
+                        <img class="bundle-cover-image" src="<?php echo htmlspecialchars((string) $bundle['uploaded_image_url']); ?>" alt="<?php echo htmlspecialchars((string) $bundle['bundle_name']); ?>" loading="lazy" decoding="async">
+                    <?php else: ?>
+                        <?php $stackItems = array_slice($bundle['items'], 0, 4); ?>
+                        <div class="bundle-image-stack bundle-image-stack-hero bundle-image-stack--count-<?php echo count($stackItems); ?>" aria-hidden="true">
+                            <?php foreach ($stackItems as $index => $item): ?>
+                                <div class="bundle-stack-item" style="--stack-index: <?php echo (int) $index; ?>;">
+                                    <img src="<?php echo htmlspecialchars((string) $item['image_url']); ?>" alt="<?php echo htmlspecialchars((string) $item['name']); ?>" loading="lazy" decoding="async">
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
                 <div class="bundle-hero-content">
                     <div
@@ -67,6 +148,7 @@ if (!$bundle) {
                         data-bundle-info
                         data-bundle-id="<?php echo (int) $bundle['id']; ?>"
                         data-bundle-stock="<?php echo (int) $bundle['availability_count']; ?>"
+                        data-bundle-cart-url="<?php echo htmlspecialchars(app_path('/auth/cart_add.php')); ?>"
                     >
                     <span class="bundle-badge"><?php echo htmlspecialchars((string) $bundle['discount_value_label']); ?></span>
                     <h1><?php echo htmlspecialchars((string) $bundle['bundle_name']); ?></h1>
@@ -118,7 +200,7 @@ if (!$bundle) {
                     <?php foreach ($bundle['items'] as $item): ?>
                         <a class="bundle-item-card" href="<?php echo htmlspecialchars((string) $item['detail_url']); ?>">
                             <div class="bundle-item-image">
-                                <img src="<?php echo htmlspecialchars((string) $item['image_url']); ?>" alt="<?php echo htmlspecialchars((string) $item['name']); ?>">
+                                <img src="<?php echo htmlspecialchars((string) $item['image_url']); ?>" alt="<?php echo htmlspecialchars((string) $item['name']); ?>" loading="lazy" decoding="async">
                             </div>
                             <div class="bundle-item-copy">
                                 <h3><?php echo htmlspecialchars((string) $item['name']); ?></h3>
@@ -136,6 +218,6 @@ if (!$bundle) {
     </main>
 
     <?php include __DIR__ . '/footer.php'; ?>
-    <script src="<?php echo htmlspecialchars(app_path('/assets/js/bundle-details.js')); ?>"></script>
+    <script src="<?php echo htmlspecialchars(app_path('/assets/js/bundle-details.js?v=' . (int) $bundleDetailsJsVersion)); ?>"></script>
 </body>
 </html>

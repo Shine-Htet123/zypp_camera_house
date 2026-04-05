@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const subCategoryTableBody = document.querySelector('.cols-subcategory tbody');
   const brandTableBody = document.querySelector('.cols-brand tbody');
   const deleteForm = document.getElementById('categoryBrandDeleteForm');
+  const formState = new WeakMap();
 
   const modals = {
     category: {
@@ -80,6 +81,32 @@ document.addEventListener('DOMContentLoaded', () => {
     overlay.setAttribute('aria-hidden', 'true');
   };
 
+  const captureFormState = (form) => {
+    if (!form) return;
+    const fields = Array.from(form.querySelectorAll('input[name]:not([type="file"]), select[name], textarea[name]'));
+    form.dataset.fileDirty = '0';
+    formState.set(form, fields.map((field) => ({
+      field,
+      value: field.type === 'checkbox' ? field.checked : field.value,
+    })));
+  };
+
+  const isFormDirty = (form) => {
+    const state = formState.get(form);
+    const hasFieldChanges = state ? state.some((item) => {
+      if (!item.field) return false;
+      const currentValue = item.field.type === 'checkbox' ? item.field.checked : item.field.value;
+      return currentValue !== item.value;
+    }) : false;
+
+    return hasFieldChanges || form?.dataset.fileDirty === '1';
+  };
+
+  const syncDirtyState = (form) => {
+    if (!form) return;
+    form.classList.toggle('is-dirty', isFormDirty(form));
+  };
+
   const resetModal = (type) => {
     const config = modals[type];
     const overlay = config?.overlay;
@@ -87,6 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const form = overlay.querySelector('form');
     form?.reset();
+    form?.classList.remove('is-dirty');
     const idInput = form?.querySelector('input[name="entity_id"]');
     if (idInput) idInput.value = '0';
 
@@ -102,6 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const input = overlay.querySelector(`#${config.imageInput}`);
       if (input) input.value = '';
     }
+
+    captureFormState(form);
   };
 
   const openModal = (type, values = {}) => {
@@ -155,6 +185,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const fileInput = overlay.querySelector(`#${config.imageInput}`);
       if (fileInput) fileInput.value = '';
     }
+
+    requestAnimationFrame(() => {
+      captureFormState(form);
+      syncDirtyState(form);
+    });
   };
 
   const renderStatus = (featured) => {
@@ -289,7 +324,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeBtn = overlay.querySelector('.modal-close');
     const discardBtn = overlay.querySelector('.btn-footer.discard');
 
-    closeBtn?.addEventListener('click', () => closeModal(overlay));
+    closeBtn?.addEventListener('click', () => {
+      resetModal(type);
+      closeModal(overlay);
+    });
     discardBtn?.addEventListener('click', () => {
       resetModal(type);
       closeModal(overlay);
@@ -307,11 +345,24 @@ document.addEventListener('DOMContentLoaded', () => {
       const preview = overlay.querySelector(`#${config.imagePreview}`);
       input?.addEventListener('change', () => {
         const file = input.files?.[0];
-        if (!file || !preview) return;
+        if (!preview) return;
+        if (!file) {
+          form.dataset.fileDirty = '0';
+          syncDirtyState(form);
+          return;
+        }
         preview.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="Preview" style="width:100%;height:100%;object-fit:contain;">`;
         preview.classList.add('has-image');
+        form.dataset.fileDirty = '1';
+        syncDirtyState(form);
       });
     }
+
+    form?.querySelectorAll('input[name]:not([type="file"]), select[name], textarea[name]').forEach((field) => {
+      const sync = () => syncDirtyState(form);
+      field.addEventListener('input', sync);
+      field.addEventListener('change', sync);
+    });
 
     form?.addEventListener('submit', async (event) => {
       event.preventDefault();

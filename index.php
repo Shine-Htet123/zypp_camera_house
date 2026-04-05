@@ -181,6 +181,8 @@ $buildHeroButton = static function (array $slide, string $buttonKey): ?array {
                         <img
                             src="<?= htmlspecialchars((string) $brand['logo_url']) ?>"
                             alt="<?= htmlspecialchars((string) $brand['name']) ?>"
+                            loading="lazy"
+                            decoding="async"
                         >
                     </a>
                 <?php endforeach; ?>
@@ -224,7 +226,7 @@ $buildHeroButton = static function (array $slide, string $buttonKey): ?array {
                 <?php foreach ($featuredCategories as $category): ?>
                     <a href="<?= htmlspecialchars((string) $category['href']) ?>" class="featured-category">
                         <div class="category-img">
-                            <img src="<?= htmlspecialchars((string) $category['image_url']) ?>" alt="<?= htmlspecialchars((string) $category['name']) ?>">
+                            <img src="<?= htmlspecialchars((string) $category['image_url']) ?>" alt="<?= htmlspecialchars((string) $category['name']) ?>" loading="lazy" decoding="async">
                         </div>
                         <div class="category-text">
                             <h3><?= htmlspecialchars((string) $category['name']) ?></h3>
@@ -251,7 +253,7 @@ $buildHeroButton = static function (array $slide, string $buttonKey): ?array {
                         <a class="product-card" href="<?= htmlspecialchars((string) $product['detail_url']) ?>">
                             <div class="product-card-content">
                                 <div class="product-img-box">
-                                    <img src="<?= htmlspecialchars((string) $product['image_url']) ?>" alt="<?= htmlspecialchars((string) $product['name']) ?>">
+                                    <img src="<?= htmlspecialchars((string) $product['image_url']) ?>" alt="<?= htmlspecialchars((string) $product['name']) ?>" loading="lazy" decoding="async">
                                 </div>
                                 <div class="product-description">
                                     <h3 class="product-name"><?= htmlspecialchars((string) $product['name']) ?></h3>
@@ -338,7 +340,7 @@ $buildHeroButton = static function (array $slide, string $buttonKey): ?array {
             <?php foreach ($trustBadges as $badge): ?>
                 <div class="badge">
                     <div class="badge-icon">
-                        <img src="<?= htmlspecialchars(site_content_image_url((string) ($badge['image'] ?? ''), '')) ?>" alt="<?= htmlspecialchars((string) ($badge['title'] ?? '')) ?>">
+                        <img src="<?= htmlspecialchars(site_content_image_url((string) ($badge['image'] ?? ''), '')) ?>" alt="<?= htmlspecialchars((string) ($badge['title'] ?? '')) ?>" loading="lazy" decoding="async">
                     </div>
                     <h4><?= htmlspecialchars((string) ($badge['title'] ?? '')) ?></h4>
                 </div>

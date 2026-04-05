@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const emptyRow = document.querySelector('.bundles-empty-row');
     const editBundleId = document.getElementById('editBundleId');
     const deleteBundleButton = document.getElementById('deleteBundleButton');
+    const previewUrls = new WeakMap();
+    const formState = new WeakMap();
 
     const openModal = (overlay) => {
         if (!overlay) return;
@@ -23,6 +25,32 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!overlay) return;
         overlay.classList.remove('open');
         overlay.setAttribute('aria-hidden', 'true');
+    };
+
+    const captureFormState = (form) => {
+        if (!form) return;
+        const fields = Array.from(form.querySelectorAll('input[name]:not([type="file"]), select[name], textarea[name]'));
+        form.dataset.fileDirty = '0';
+        formState.set(form, fields.map((field) => ({
+            field,
+            value: field.type === 'checkbox' ? field.checked : field.value,
+        })));
+    };
+
+    const isFormDirty = (form) => {
+        const state = formState.get(form);
+        const hasFieldChanges = state ? state.some((item) => {
+            if (!item.field) return false;
+            const currentValue = item.field.type === 'checkbox' ? item.field.checked : item.field.value;
+            return currentValue !== item.value;
+        }) : false;
+
+        return hasFieldChanges || form?.dataset.fileDirty === '1';
+    };
+
+    const syncDirtyState = (form) => {
+        if (!form) return;
+        form.classList.toggle('is-dirty', isFormDirty(form));
     };
 
     const clearFeedback = (modal) => {
@@ -67,12 +95,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (qtyValue) qtyValue.textContent = String(nextQuantity);
         if (input) input.value = String(nextQuantity);
         card.classList.toggle('selected', nextQuantity > 0);
+        syncDirtyState(card.closest('[data-bundle-form]'));
     };
 
     const resetForm = (modal) => {
         const form = modal?.querySelector('[data-bundle-form]');
         if (!form) return;
         form.reset();
+        form.classList.remove('is-dirty');
         clearFeedback(modal);
         resetQuantities(modal);
         form.querySelectorAll('[data-bundle-search], [data-bundle-category-filter], [data-bundle-brand-filter], [data-bundle-availability-filter]').forEach((field) => {
@@ -80,6 +110,78 @@ document.addEventListener('DOMContentLoaded', () => {
                 field.value = '';
             }
         });
+        const removeInput = form.querySelector('[data-bundle-image-remove]');
+        if (removeInput) {
+            removeInput.value = '0';
+        }
+        modal.dataset.bundleImageUrl = '';
+        setImagePreview(modal, '');
+        captureFormState(form);
+    };
+
+    const releasePreviewUrl = (modal) => {
+        const currentUrl = previewUrls.get(modal);
+        if (currentUrl) {
+            URL.revokeObjectURL(currentUrl);
+            previewUrls.delete(modal);
+        }
+    };
+
+    const setImagePreview = (modal, imageUrl, emptyText) => {
+        if (!modal) return;
+
+        const preview = modal.querySelector('[data-bundle-image-preview]');
+        const image = modal.querySelector('[data-bundle-image-preview-img]');
+        const empty = modal.querySelector('[data-bundle-image-empty]');
+        if (!preview || !image || !empty) {
+            return;
+        }
+
+        const nextUrl = String(imageUrl || '').trim();
+        const nextEmptyText = emptyText || 'Upload a custom bundle image, or leave it blank to keep the auto-generated stack.';
+
+        if (nextUrl !== '') {
+            image.src = nextUrl;
+            image.hidden = false;
+            empty.hidden = true;
+        } else {
+            image.src = '';
+            image.hidden = true;
+            empty.textContent = nextEmptyText;
+            empty.hidden = false;
+        }
+    };
+
+    const clearSelectedImage = (modal, keepExisting = false) => {
+        if (!modal) return;
+        releasePreviewUrl(modal);
+
+        const input = modal.querySelector('[data-bundle-image-input]');
+        const removeInput = modal.querySelector('[data-bundle-image-remove]');
+        const existingUrl = String(modal.dataset.bundleImageUrl || '').trim();
+        if (input) {
+            input.value = '';
+        }
+
+        if (keepExisting && existingUrl !== '') {
+            if (removeInput) {
+                removeInput.value = '0';
+            }
+            setImagePreview(modal, existingUrl);
+            return;
+        }
+
+        const removedExisting = existingUrl !== '';
+        if (removeInput) {
+            removeInput.value = removedExisting ? '1' : '0';
+        }
+        setImagePreview(
+            modal,
+            '',
+            removedExisting
+                ? 'This uploaded image will be removed after save. The auto-generated bundle image will be used instead.'
+                : 'Upload a custom bundle image, or leave it blank to keep the auto-generated stack.'
+        );
     };
 
     const applyModalFilters = (modal) => {
@@ -142,6 +244,9 @@ document.addEventListener('DOMContentLoaded', () => {
         form.querySelector('input[name="bundle_id"]').value = String(row.dataset.bundleId || '');
         form.querySelector('input[name="bundle_name"]').value = row.dataset.bundleName || '';
         form.querySelector('select[name="discount_id"]').value = row.dataset.discountId || '';
+        form.querySelector('[data-bundle-image-remove]').value = '0';
+        editModal.dataset.bundleImageUrl = String(row.dataset.bundleImageUrl || '');
+        setImagePreview(editModal, editModal.dataset.bundleImageUrl || '');
         if (editBundleId) {
             editBundleId.textContent = row.dataset.bundlePublicId || '-';
         }
@@ -152,6 +257,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (card) {
                 syncCardQuantity(card, qty);
             }
+        });
+        requestAnimationFrame(() => {
+            captureFormState(form);
+            syncDirtyState(form);
         });
     };
 
@@ -274,12 +383,17 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     document.querySelectorAll('.modal-close').forEach((button) => {
-        button.addEventListener('click', () => closeModal(button.closest('.modal-overlay')));
+        button.addEventListener('click', () => {
+            const overlay = button.closest('.modal-overlay');
+            resetForm(overlay);
+            closeModal(overlay);
+        });
     });
 
     document.querySelectorAll('.modal-overlay').forEach((overlay) => {
         overlay.addEventListener('click', (event) => {
             if (event.target === overlay) {
+                resetForm(overlay);
                 closeModal(overlay);
             }
         });
@@ -331,12 +445,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('[data-bundle-form]').forEach((form) => {
         const modal = form.closest('.modal-overlay');
+        const imageInput = form.querySelector('[data-bundle-image-input]');
+        const imageTrigger = form.querySelector('[data-bundle-image-trigger]');
+        const imageClear = form.querySelector('[data-bundle-image-clear]');
+
+        imageTrigger?.addEventListener('click', () => imageInput?.click());
+        imageClear?.addEventListener('click', () => {
+            clearSelectedImage(modal);
+            syncDirtyState(form);
+        });
+        imageInput?.addEventListener('change', () => {
+            const file = imageInput.files?.[0];
+            const removeInput = form.querySelector('[data-bundle-image-remove]');
+            releasePreviewUrl(modal);
+
+            if (!file) {
+                form.dataset.fileDirty = '0';
+                clearSelectedImage(modal, true);
+                syncDirtyState(form);
+                return;
+            }
+
+            const previewUrl = URL.createObjectURL(file);
+            previewUrls.set(modal, previewUrl);
+            if (removeInput) {
+                removeInput.value = '0';
+            }
+            setImagePreview(modal, previewUrl);
+            form.dataset.fileDirty = '1';
+            syncDirtyState(form);
+        });
+
+        form.querySelectorAll('input[name]:not([type="file"]), select[name], textarea[name]').forEach((field) => {
+            const sync = () => syncDirtyState(form);
+            field.addEventListener('input', sync);
+            field.addEventListener('change', sync);
+        });
+
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
             await submitForm(modal);
         });
 
         form.querySelector('.btn-footer.discard')?.addEventListener('click', () => {
+            resetForm(modal);
             closeModal(modal);
         });
     });

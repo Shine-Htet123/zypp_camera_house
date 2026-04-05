@@ -390,6 +390,40 @@ function catalog_fetch_product_specs(int $productId): array
     return $statement->fetchAll();
 }
 
+function catalog_fetch_product_specs_map(array $productIds): array
+{
+    $productIds = array_values(array_unique(array_filter(array_map('intval', $productIds), static fn (int $id): bool => $id > 0)));
+    if ($productIds === []) {
+        return [];
+    }
+
+    $pdo = get_database_connection();
+    $placeholders = implode(', ', array_fill(0, count($productIds), '?'));
+    $statement = $pdo->prepare(
+        'SELECT product_id, spec_id, spec_name, spec_value
+         FROM product_specifications
+         WHERE product_id IN (' . $placeholders . ')
+         ORDER BY product_id ASC, spec_id ASC'
+    );
+    $statement->execute($productIds);
+
+    $grouped = [];
+    foreach ($statement->fetchAll() ?: [] as $row) {
+        $productId = (int) ($row['product_id'] ?? 0);
+        if ($productId <= 0) {
+            continue;
+        }
+
+        if (!isset($grouped[$productId])) {
+            $grouped[$productId] = [];
+        }
+
+        $grouped[$productId][] = $row;
+    }
+
+    return $grouped;
+}
+
 function catalog_fetch_product_colors(int $productId): array
 {
     if (!catalog_table_exists('product_colors')) {

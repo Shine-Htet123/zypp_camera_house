@@ -268,10 +268,13 @@
     opacity: 0;
     transform: translateY(12px) scale(0.98);
     transition: opacity 0.2s ease, transform 0.2s ease;
+    max-height: calc(100vh - 80px);
+    overflow: hidden;
+    flex-direction: column;
 }
 
 .discount-modal.open {
-    display: block;
+    display: flex;
     opacity: 1;
     transform: translateY(0) scale(1);
 }
@@ -313,6 +316,20 @@
     flex-direction: column;
     gap: 12px;
     padding-bottom: 56px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 6px;
+    scrollbar-gutter: stable;
+}
+
+.discount-form::-webkit-scrollbar {
+    width: 8px;
+}
+
+.discount-form::-webkit-scrollbar-thumb {
+    background: #d4c9c1;
+    border-radius: 999px;
 }
 
 .form-row {
@@ -444,8 +461,12 @@
     border: 1px solid #ececec;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
+    gap: 18px;
     flex-wrap: nowrap;
+    width: fit-content;
+    max-width: 100%;
+    align-self: center;
     font-size: 0.82rem;
     color: #9b9b9b;
     box-shadow: var(--box-shadow-normal);
@@ -453,6 +474,9 @@
     transform: translateY(6px);
     pointer-events: none;
     transition: opacity 0.2s ease, transform 0.2s ease;
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
 }
 
 .discount-modal.dirty .modal-footer {
@@ -462,7 +486,7 @@
 }
 
 .modal-footer span {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     white-space: nowrap;
 }
 
@@ -571,6 +595,8 @@
     }
 
     .modal-footer {
+        width: 100%;
+        align-self: stretch;
         flex-direction: column;
         align-items: stretch;
         gap: 10px;

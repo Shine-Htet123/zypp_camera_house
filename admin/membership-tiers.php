@@ -66,6 +66,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $flash = $consumeFlash();
 $tiers = admin_fetch_membership_tiers();
+$formatReferralValue = static function (array $tier): string {
+    if ($tier['referral_discount_value'] === null || $tier['referral_discount_value'] === '') {
+        return 'Not set';
+    }
+
+    $suffix = strtolower((string) ($tier['referral_discount_type'] ?? '')) === 'fixed' ? ' MMK' : '%';
+    return number_format((float) $tier['referral_discount_value']) . $suffix;
+};
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -96,7 +104,18 @@ $tiers = admin_fetch_membership_tiers();
                             data-tier-ref-value="<?php echo htmlspecialchars($tier['referral_discount_value'] !== null ? (string) $tier['referral_discount_value'] : ''); ?>"
                         >
                             <h3><?php echo htmlspecialchars((string) $tier['tier_name']); ?></h3>
-                            <p><?php echo htmlspecialchars((string) $tier['range']); ?></p>
+                            <p class="tier-range"><?php echo htmlspecialchars((string) $tier['range']); ?></p>
+                            <div class="tier-divider" aria-hidden="true"></div>
+                            <div class="tier-details">
+                                <div class="tier-detail">
+                                    <span class="tier-detail-label">Referral Type</span>
+                                    <strong class="tier-detail-value"><?php echo htmlspecialchars((string) ($tier['referral_discount_type_label'] !== '' ? $tier['referral_discount_type_label'] : 'Not set')); ?></strong>
+                                </div>
+                                <div class="tier-detail">
+                                    <span class="tier-detail-label">Referral Value</span>
+                                    <strong class="tier-detail-value"><?php echo htmlspecialchars($formatReferralValue($tier)); ?></strong>
+                                </div>
+                            </div>
                             <div class="tier-actions">
                                 <button type="button" class="icon-btn edit-tier" aria-label="Edit tier">
                                     <i class="fa-regular fa-pen-to-square"></i>

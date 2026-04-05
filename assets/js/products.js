@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const loadingOverlay = document.querySelector('.product-loading');
   const emptyState = document.querySelector('.product-empty-state');
   const itemsPerPage = 9;
-  const MIN_FILTER_LOADING_MS = 1000;
+  const MIN_FILTER_LOADING_MS = 200;
   let currentPage = 1;
   let loadingTimer = null;
 
@@ -57,7 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
       rangeFill.style.width = `${Math.max(endPercent - startPercent, 0)}%`;
     }
 
-    // Keep the active thumb on top so both min and max handles remain draggable.
     if (minRangeInput && maxRangeInput) {
       minRangeInput.style.zIndex = activeInput === minRangeInput ? '3' : '2';
       maxRangeInput.style.zIndex = activeInput === maxRangeInput ? '3' : '2';
@@ -193,7 +192,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.querySelectorAll('input[data-filter-group]').forEach((input) => {
-    input.addEventListener('change', applyWithLoading);
+    input.addEventListener('change', () => {
+      currentPage = 1;
+      applyWithLoading();
+    });
   });
 
   pagination?.addEventListener('click', (event) => {

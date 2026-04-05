@@ -20,7 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const maxImages = 5;
   let imageFiles = new DataTransfer();
   let selectedImageIndex = 0;
-  let formDirty = false;
+  let baselineState = '';
+  let baselineCaptureFrame = 0;
+  let baselineLocked = false;
 
   const showAlert = async (options) => {
     if (window.Swal) {
@@ -61,15 +63,58 @@ document.addEventListener('DOMContentLoaded', () => {
     return '';
   };
 
-  const setDirty = () => {
-    if (formDirty) return;
-    formDirty = true;
-    formFooter?.classList.add('is-visible');
+  const serializeForm = () => {
+    if (!productForm) return '';
+
+    return JSON.stringify(Array.from(new FormData(productForm).entries()).map(([key, value]) => ([
+      key,
+      value instanceof File
+        ? {
+            name: value.name,
+            size: value.size,
+            type: value.type,
+            lastModified: value.lastModified,
+          }
+        : value,
+    ])));
   };
 
-  const clearDirty = () => {
-    formDirty = false;
-    formFooter?.classList.remove('is-visible');
+  const syncDirtyState = () => {
+    const currentState = serializeForm();
+    if (!baselineLocked) {
+      baselineState = currentState;
+      formFooter?.classList.remove('is-visible');
+      return;
+    }
+
+    const isDirty = currentState !== baselineState;
+    formFooter?.classList.toggle('is-visible', isDirty);
+  };
+
+  const captureFormState = () => {
+    baselineLocked = false;
+    baselineState = serializeForm();
+    syncDirtyState();
+  };
+
+  const captureSettledFormState = () => {
+    captureFormState();
+
+    if (baselineCaptureFrame) {
+      window.cancelAnimationFrame(baselineCaptureFrame);
+    }
+
+    baselineCaptureFrame = window.requestAnimationFrame(() => {
+      baselineCaptureFrame = 0;
+      syncSubCategories();
+      captureFormState();
+    });
+  };
+
+  const lockBaseline = () => {
+    if (baselineLocked || !productForm) return;
+    baselineState = serializeForm();
+    baselineLocked = true;
   };
 
   const syncSubCategories = () => {
@@ -109,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!value || !list) return;
     list.appendChild(buildListItem(value, inputName, label));
     input.value = '';
-    setDirty();
+    syncDirtyState();
   };
 
   const startInlineEdit = (item) => {
@@ -152,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     input.addEventListener('blur', () => finish(true));
-    input.addEventListener('input', setDirty);
+    input.addEventListener('input', syncDirtyState);
   };
 
   const syncFilesToInput = () => {
@@ -248,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
     resetDynamicLists();
     resetImageState();
     syncSubCategories();
-    clearDirty();
+    captureSettledFormState();
   };
 
   const submitProductForm = async () => {
@@ -298,11 +343,17 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   if (productForm) {
+    productForm.addEventListener('pointerdown', lockBaseline);
+    productForm.addEventListener('focusin', lockBaseline);
+    productForm.addEventListener('keydown', (event) => {
+      if (event.key === 'Tab' || event.altKey || event.ctrlKey || event.metaKey) return;
+      lockBaseline();
+    });
     productForm.addEventListener('input', (event) => {
       if (event.target?.classList?.contains('spec-edit-input')) return;
-      setDirty();
+      syncDirtyState();
     });
-    productForm.addEventListener('change', setDirty);
+    productForm.addEventListener('change', syncDirtyState);
     productForm.addEventListener('submit', async (event) => {
       const message = validateForm();
       event.preventDefault();
@@ -335,7 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const deleteBtn = e.target.closest('.icon-btn.delete');
       if (deleteBtn) {
         deleteBtn.closest('.spec-item')?.remove();
-        setDirty();
+        syncDirtyState();
         return;
       }
 
@@ -373,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
     delete uploadInput.dataset.replaceIndex;
     syncFilesToInput();
     refreshTiles();
-    setDirty();
+    syncDirtyState();
   });
 
   previews?.addEventListener('click', (e) => {
@@ -396,7 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       selectedImageIndex = Math.max(Math.min(selectedImageIndex, imageFiles.files.length - 1), 0);
       refreshTiles();
-      setDirty();
+      syncDirtyState();
       return;
     }
 
@@ -409,12 +460,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target.closest('.primary-radio')) {
       updatePrimarySelection(index);
       updateActiveSelection(index);
-      setDirty();
+      syncDirtyState();
       return;
     }
 
     updateActiveSelection(index);
-    setDirty();
   });
 
   categorySelect?.addEventListener('change', syncSubCategories);
@@ -423,6 +473,10 @@ document.addEventListener('DOMContentLoaded', () => {
   discardBtn?.addEventListener('click', () => {
     resetProductForm();
   });
+
+  captureSettledFormState();
+
+  window.addEventListener('pageshow', captureSettledFormState);
 
   if (window.adminProductAddFlash && window.adminProductAddFlash.type === 'error' && window.Swal) {
     Swal.fire({

@@ -1,41 +1,33 @@
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.querySelector('.summary-card');
   const flash = window.__cartFlash || null;
+  const dynamicContainer = form?.querySelector('[data-cart-dynamic]') || null;
+  const checkoutActions = document.querySelector('[data-cart-checkout-actions]');
+  const cartActionUrl =
+    form?.getAttribute('action') ||
+    (typeof window.appPath === 'function' ? window.appPath('/cart.php') : '/cart.php');
+
+  const showAlert = (options) => {
+    if (typeof Swal !== 'undefined') {
+      return Swal.fire(options);
+    }
+
+    const fallbackMessage = options?.text || options?.title || 'Done.';
+    window.alert(fallbackMessage);
+    return Promise.resolve({ isConfirmed: true });
+  };
 
   if (!form) {
     return;
   }
 
-  if (flash && typeof Swal !== 'undefined' && flash.message) {
-    Swal.fire({
+  if (flash && flash.message) {
+    showAlert({
       icon: flash.type === 'success' ? 'success' : 'error',
       title: flash.type === 'success' ? 'Updated' : 'Cart',
       text: flash.message,
     });
   }
-
-  const subtotalEl = form.querySelector('[data-cart-subtotal]');
-  const itemsTotalEl = form.querySelector('[data-cart-items-total]');
-  const discountEl = form.querySelector('[data-cart-discount]');
-  const hasBundlePricing = form.dataset.cartHasBundlePricing === '1';
-
-  const formatNumber = (value) => Number(value || 0).toLocaleString();
-
-  const formatDiscountSummary = (discountValue, discountType) => {
-    if (Number(discountValue || 0) <= 0) {
-      return 'No discount';
-    }
-
-    return `- ${formatNumber(discountValue)} ${discountType === 'fixed' ? 'MMK' : '%'} each`;
-  };
-
-  const calculateRowDiscount = (subtotal, discountValue, discountType, quantity) => {
-    if (discountType === 'fixed') {
-      return Math.min(discountValue * quantity, subtotal);
-    }
-
-    return Math.round(subtotal * (discountValue / 100));
-  };
 
   const clampQuantity = (value, max) => {
     const parsed = Number.parseInt(value, 10);
@@ -47,85 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return Math.min(parsed, max);
   };
 
-  const syncStockNote = (row) => {
-    const stock = Number.parseInt(row.dataset.stock || '0', 10);
-    const note = row.querySelector('[data-stock-note]');
-    const count = row.querySelector('[data-stock-count]');
-
-    if (!note || !count) {
-      return;
-    }
-
-    count.textContent = stock;
-    note.classList.toggle('is-hidden', !(stock > 0 && stock <= 10));
-  };
-
-  const updateRow = (row) => {
-    if (hasBundlePricing) {
-      return;
-    }
-
-    const qtyInput = row.querySelector('[data-qty-input]');
-
-    if (!qtyInput) {
-      return;
-    }
-
-    const stock = Number.parseInt(row.dataset.stock || '1', 10);
-    const unitPrice = Number.parseInt(row.dataset.unitPrice || '0', 10);
-    const discountValue = Number.parseInt(row.dataset.discountValue || '0', 10);
-    const discountType = row.dataset.discountType || 'percentage';
-    const quantity = clampQuantity(qtyInput.value, Math.max(stock, 1));
-    const subtotal = unitPrice * quantity;
-    const lineDiscount = calculateRowDiscount(subtotal, discountValue, discountType, quantity);
-    const lineTotal = Math.max(subtotal - lineDiscount, 0);
-    const lineTotalEl = row.querySelector('[data-line-total]');
-    const discountTextEl = row.querySelector('[data-discount-text]');
-
-    qtyInput.value = quantity;
-
-    if (lineTotalEl) {
-      lineTotalEl.textContent = formatNumber(lineTotal);
-    }
-
-    if (discountTextEl) {
-      discountTextEl.textContent = formatDiscountSummary(discountValue, discountType);
-    }
-
-    row.dataset.lineDiscount = String(lineDiscount);
-    row.dataset.lineSubtotal = String(subtotal);
-    row.dataset.lineTotal = String(lineTotal);
-    syncStockNote(row);
-  };
-
-  const updateTotals = () => {
-    if (hasBundlePricing) {
-      return;
-    }
-
-    let itemsTotal = 0;
-    let subtotal = 0;
-    let discount = 0;
-
-    form.querySelectorAll('[data-cart-row]').forEach((row) => {
-      itemsTotal += Number.parseInt(row.dataset.lineSubtotal || '0', 10);
-      subtotal += Number.parseInt(row.dataset.lineTotal || '0', 10);
-      discount += Number.parseInt(row.dataset.lineDiscount || '0', 10);
-    });
-
-    if (itemsTotalEl) {
-      itemsTotalEl.textContent = formatNumber(itemsTotal);
-    }
-
-    if (subtotalEl) {
-      subtotalEl.textContent = formatNumber(subtotal);
-    }
-
-    if (discountEl) {
-      discountEl.textContent = formatNumber(discount);
-    }
-  };
-
   const syncNavbarCount = (count) => {
     const cartCount = document.querySelector('.cart-count span');
     if (cartCount && typeof count !== 'undefined') {
@@ -133,18 +46,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  const syncCartFromPayload = (payload) => {
+    if (!payload) {
+      return;
+    }
+
+    if (dynamicContainer && typeof payload.cart_html === 'string') {
+      dynamicContainer.innerHTML = payload.cart_html;
+    }
+
+    if (checkoutActions && typeof payload.checkout_html === 'string') {
+      checkoutActions.innerHTML = payload.checkout_html;
+    }
+
+    syncNavbarCount(payload.cart_count);
+  };
+
   const postCartAction = async (payload) => {
-    const response = await fetch('/cart.php', {
+    const response = await fetch(cartActionUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
         'X-Requested-With': 'XMLHttpRequest',
         'Accept': 'application/json',
       },
+      credentials: 'same-origin',
       body: new URLSearchParams(payload).toString(),
     });
 
-    const data = await response.json();
+    const data = await response.json().catch(() => ({
+      success: false,
+      message: 'Cart update failed.',
+    }));
+
     if (!response.ok || !data.success) {
       if (data.login_required) {
         document.getElementById('user-icon')?.click();
@@ -160,20 +94,21 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const productId = row.dataset.productId || '';
+    const cartItemId = row.dataset.cartItemId || '';
+    const bundleId = row.dataset.bundleId || '';
+    const rowType = row.dataset.rowType || 'product';
     const payload = await postCartAction({
       action: 'remove_item',
-      product_id: productId,
+      ...(rowType === 'bundle' ? { bundle_id: bundleId } : { cart_item_id: cartItemId }),
     });
 
-    if (hasBundlePricing || payload.requires_refresh) {
-      window.location.reload();
-      return;
-    }
+    syncCartFromPayload(payload);
 
-    row.remove();
-    updateTotals();
-    syncNavbarCount(payload.cart_count);
+    showAlert({
+      icon: 'success',
+      title: 'Removed',
+      text: 'The product was removed from your cart.',
+    });
   };
 
   const confirmRemove = (row) => {
@@ -182,10 +117,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (typeof Swal === 'undefined') {
+      const confirmed = window.confirm('This product will be removed from your cart.');
+      if (confirmed) {
+        removeRow(row).catch((error) => {
+          showAlert({ icon: 'error', title: 'Remove failed', text: error.message });
+        });
+      }
       return;
     }
 
-    Swal.fire({
+    showAlert({
       title: 'Remove this item?',
       text: 'This product will be removed from your cart.',
       icon: 'warning',
@@ -197,21 +138,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }).then((result) => {
       if (result.isConfirmed) {
         removeRow(row).catch((error) => {
-          if (typeof Swal !== 'undefined') {
-            Swal.fire({ icon: 'error', title: 'Remove failed', text: error.message });
-          }
+          showAlert({ icon: 'error', title: 'Remove failed', text: error.message });
         });
       }
     });
   };
-
-  if (!hasBundlePricing) {
-    form.querySelectorAll('[data-cart-row]').forEach((row) => {
-      updateRow(row);
-    });
-
-    updateTotals();
-  }
 
   form.addEventListener('click', (event) => {
     const actionButton = event.target.closest('[data-qty-action]');
@@ -236,26 +167,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const max = Math.max(Number.parseInt(row.dataset.stock || '1', 10), 1);
     const current = clampQuantity(qtyInput.value, max);
     const next = actionButton.dataset.qtyAction === 'increase' ? current + 1 : current - 1;
+    const rowType = row.dataset.rowType || 'product';
 
     qtyInput.value = clampQuantity(next, max);
-    if (!hasBundlePricing) {
-      updateRow(row);
-      updateTotals();
-    }
     postCartAction({
       action: 'update_item',
-      product_id: row.dataset.productId || '',
+      ...(rowType === 'bundle'
+        ? { bundle_id: row.dataset.bundleId || '' }
+        : { cart_item_id: row.dataset.cartItemId || '' }),
       quantity: qtyInput.value,
     }).then((payload) => {
-      if (hasBundlePricing || payload.requires_refresh) {
-        window.location.reload();
-        return;
-      }
-      syncNavbarCount(payload.cart_count);
+      syncCartFromPayload(payload);
     }).catch((error) => {
-      if (typeof Swal !== 'undefined') {
-        Swal.fire({ icon: 'error', title: 'Update failed', text: error.message });
-      }
+      showAlert({ icon: 'error', title: 'Update failed', text: error.message });
     });
   });
 
@@ -269,25 +193,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!row) {
       return;
     }
-
-    if (!hasBundlePricing) {
-      updateRow(row);
-      updateTotals();
-    }
+    const rowType = row.dataset.rowType || 'product';
     postCartAction({
       action: 'update_item',
-      product_id: row.dataset.productId || '',
+      ...(rowType === 'bundle'
+        ? { bundle_id: row.dataset.bundleId || '' }
+        : { cart_item_id: row.dataset.cartItemId || '' }),
       quantity: event.target.value,
     }).then((payload) => {
-      if (hasBundlePricing || payload.requires_refresh) {
-        window.location.reload();
-        return;
-      }
-      syncNavbarCount(payload.cart_count);
+      syncCartFromPayload(payload);
     }).catch((error) => {
-      if (typeof Swal !== 'undefined') {
-        Swal.fire({ icon: 'error', title: 'Update failed', text: error.message });
-      }
+      showAlert({ icon: 'error', title: 'Update failed', text: error.message });
     });
   });
 

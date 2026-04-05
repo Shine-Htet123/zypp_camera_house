@@ -65,3 +65,16 @@ function app_project_path(string $path = ''): string
 
     return $root . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
 }
+
+function app_asset_version(string $path): int
+{
+    static $versions = [];
+
+    if (isset($versions[$path])) {
+        return $versions[$path];
+    }
+
+    $versions[$path] = (int) (@filemtime(app_project_path($path)) ?: time());
+
+    return $versions[$path];
+}

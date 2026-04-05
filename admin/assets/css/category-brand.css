@@ -189,7 +189,7 @@
     flex-direction: column;
     gap: 16px;
     max-height: calc(100vh - 80px);
-    overflow-y: auto;
+    overflow: hidden;
     transform: translateY(18px) scale(0.98);
     opacity: 0;
     transition: transform 0.2s ease, opacity 0.2s ease;
@@ -222,6 +222,20 @@
     flex-direction: column;
     gap: 16px;
     align-items: stretch;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 6px;
+    scrollbar-gutter: stable;
+}
+
+.modal-form::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-form::-webkit-scrollbar-thumb {
+    background: #d4c9c1;
+    border-radius: 999px;
 }
 
 .modal-field {
@@ -296,11 +310,33 @@
     align-items: center;
     justify-content: center;
     gap: 16px;
-    margin-top: 4px;
-    padding: 10px 12px;
-    border: 1px solid #ededed;
+    margin-top: 0;
+    padding: 0 12px;
+    border: 1px solid transparent;
     border-radius: 14px;
     box-shadow: none;
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    background: #fff;
+    max-height: 0;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    overflow: hidden;
+    transform: translateY(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease, max-height 0.2s ease, padding 0.2s ease, margin-top 0.2s ease, border-color 0.2s ease;
+}
+
+.modal-form.is-dirty .modal-footer {
+    margin-top: 4px;
+    padding: 10px 12px;
+    border-color: #ededed;
+    max-height: 80px;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
 }
 
 .modal-note {

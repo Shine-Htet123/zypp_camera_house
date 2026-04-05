@@ -138,7 +138,7 @@ if (!$product) {
                     <div class="thumbnail-row" id="thumbnail-row">
                         <?php foreach ($product['images'] as $index => $image): ?>
                             <button class="thumb<?php echo $index === 0 ? ' active' : ''; ?>" data-src="<?php echo htmlspecialchars($image['url']); ?>">
-                                <img src="<?php echo htmlspecialchars($image['url']); ?>" alt="<?php echo htmlspecialchars($product['name']); ?> thumbnail <?php echo $index + 1; ?>">
+                                <img src="<?php echo htmlspecialchars($image['url']); ?>" alt="<?php echo htmlspecialchars($product['name']); ?> thumbnail <?php echo $index + 1; ?>" loading="lazy" decoding="async">
                             </button>
                         <?php endforeach; ?>
                     </div>
@@ -263,7 +263,7 @@ if (!$product) {
                             <a href="<?php echo htmlspecialchars(app_path('/product-details.php?id=' . (int) $relatedProduct['product_id'])); ?>" class="product-card">
                                 <div class="product-card-content">
                                     <div class="product-img-box">
-                                        <img src="<?php echo htmlspecialchars($relatedProduct['image_url']); ?>" alt="<?php echo htmlspecialchars($relatedProduct['name']); ?>">
+                                        <img src="<?php echo htmlspecialchars($relatedProduct['image_url']); ?>" alt="<?php echo htmlspecialchars($relatedProduct['name']); ?>" loading="lazy" decoding="async">
                                     </div>
                                     <div class="product-description">
                                         <h4 class="product-name"><?php echo htmlspecialchars($relatedProduct['name']); ?></h4>

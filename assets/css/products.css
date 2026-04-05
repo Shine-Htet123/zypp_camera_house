@@ -393,6 +393,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    text-decoration: none;
 }
 
 .page-btn.active {
@@ -406,9 +407,14 @@
     color: var(--brand-primary);
 }
 
-.page-btn:disabled {
+.page-btn:disabled,
+.page-btn.is-disabled {
     opacity: 0.4;
     cursor: not-allowed;
+}
+
+.page-btn.is-disabled {
+    pointer-events: none;
 }
 
 .floating-chat,
